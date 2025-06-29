@@ -1,0 +1,29 @@
+{
+	"name": "mcp-server-framework",
+	"version": "1.0.0",
+	"description": "A comprehensive framework for building Model Context Protocol (MCP) servers",
+	"private": true,
+	"workspaces": [
+		"packages/*"
+	],
+	"scripts": {
+		"test": "jest --passWithNoTests",
+		"lint": "biome check .",
+		"lint:fix": "biome check . --write"
+	},
+	"keywords": [
+		"mcp",
+		"model-context-protocol",
+		"server",
+		"framework"
+	],
+	"author": "",
+	"license": "MIT",
+	"packageManager": "pnpm@10.12.1",
+	"devDependencies": {
+		"@biomejs/biome": "^2.0.6",
+		"@types/jest": "^30.0.0",
+		"jest": "^30.0.3",
+		"ts-jest": "^29.4.0"
+	}
+}

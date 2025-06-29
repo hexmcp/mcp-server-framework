@@ -1,0 +1,14 @@
+{
+	"name": "@mcp-server-framework/core",
+	"version": "1.0.0",
+	"description": "Core functionality for MCP Server Framework",
+	"main": "index.js",
+	"scripts": {
+		"test": "echo \"No tests yet\""
+	},
+	"keywords": [
+		"mcp",
+		"core"
+	],
+	"license": "MIT"
+}
