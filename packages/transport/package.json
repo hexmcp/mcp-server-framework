@@ -1,0 +1,60 @@
+{
+  "name": "@mcp-server-framework/transport",
+  "version": "0.0.0",
+  "description": "Transport abstraction layer for MCP Server Framework",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "src",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "transport",
+    "server",
+    "framework",
+    "abstraction",
+    "interface",
+    "typescript",
+    "transport-agnostic"
+  ],
+  "author": "",
+  "license": "MIT",
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "devDependencies": {
+    "@types/jest": "^30.0.0",
+    "jest": "^30.0.3",
+    "typescript": "^5.8.3"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/your-org/mcp-server-framework.git",
+    "directory": "packages/transport"
+  },
+  "bugs": {
+    "url": "https://github.com/your-org/mcp-server-framework/issues"
+  },
+  "homepage": "https://github.com/your-org/mcp-server-framework/tree/main/packages/transport#readme"
+}
