@@ -1,22 +1,69 @@
 {
 	"compilerOptions": {
-		"target": "ES2020",
-		"module": "commonjs",
-		"lib": ["ES2020"],
+		"target": "ES2022",
+		"module": "Node16",
+		"lib": ["ES2022"],
+		"moduleResolution": "Node16",
 		"outDir": "./dist",
 		"rootDir": "./packages",
-		"strict": true,
-		"esModuleInterop": true,
-		"skipLibCheck": true,
-		"forceConsistentCasingInFileNames": true,
 		"declaration": true,
 		"declarationMap": true,
 		"sourceMap": true,
-		"moduleResolution": "node",
+		"removeComments": false,
+		"importHelpers": true,
+		"strict": true,
+		"noImplicitAny": true,
+		"strictNullChecks": true,
+		"strictFunctionTypes": true,
+		"strictBindCallApply": true,
+		"strictPropertyInitialization": true,
+		"noImplicitThis": true,
+		"noImplicitReturns": true,
+		"noFallthroughCasesInSwitch": true,
+		"noUncheckedIndexedAccess": true,
+		"noImplicitOverride": true,
+		"exactOptionalPropertyTypes": true,
+		// Module Resolution and Interop
+		"esModuleInterop": true,
 		"allowSyntheticDefaultImports": true,
+		"resolveJsonModule": true,
+		"isolatedModules": true,
+		// Advanced Options
+		"skipLibCheck": true,
+		"forceConsistentCasingInFileNames": true,
+		"preserveWatchOutput": true,
+		"pretty": true,
+		"newLine": "lf",
+		"stripInternal": true,
 		"experimentalDecorators": true,
-		"emitDecoratorMetadata": true
+		"emitDecoratorMetadata": true,
+		"baseUrl": ".",
+		"paths": {
+			"@mcp-server-framework/core": ["packages/core/src"],
+			"@mcp-server-framework/core/*": ["packages/core/src/*"],
+			"@mcp-server-framework/*": ["packages/*/src"]
+		}
 	},
-	"include": ["packages/**/*"],
-	"exclude": ["node_modules", "dist", "**/*.test.ts", "**/__tests__/**"]
+	"include": [
+		"packages/**/*.ts",
+		"packages/**/*.tsx",
+		"packages/**/*.js",
+		"packages/**/*.jsx",
+		"packages/**/*.json"
+	],
+	"exclude": [
+		"node_modules",
+		"dist",
+		"**/*.test.ts",
+		"**/*.test.tsx",
+		"**/*.spec.ts",
+		"**/*.spec.tsx",
+		"**/__tests__/**",
+		"**/__mocks__/**",
+		"**/coverage/**"
+	],
+	"ts-node": {
+		"esm": true,
+		"experimentalSpecifierResolution": "node"
+	}
 }

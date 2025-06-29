@@ -1,6 +1,6 @@
 {
 	"name": "@mcp-server-framework/core",
-	"version": "1.0.0",
+	"version": "0.0.0",
 	"description": "Core functionality for MCP Server Framework",
 	"main": "index.js",
 	"scripts": {
