@@ -10,6 +10,6 @@
   "ignore": [],
   "snapshot": {
     "useCalculatedVersion": true,
-    "prereleaseTemplate": "dev-{tag}"
+    "prereleaseTemplate": "{tag}"
   }
 }

@@ -1,5 +1,18 @@
 name: Release
 
+# This workflow creates version bump pull requests when changes are pushed to main.
+# It does NOT publish packages to npm automatically - publishing is disabled until MVP completion.
+#
+# Current behavior:
+# 1. Runs quality checks (linting, type checking, tests)
+# 2. Creates "Version Packages" pull requests with changelog updates
+# 3. When version PR is merged, packages are versioned but NOT published
+#
+# To enable publishing after MVP completion:
+# 1. Add NPM_TOKEN to repository secrets
+# 2. Update the changesets action to include publish step
+# 3. Update version-packages script to include publishing
+
 on:
   push:
     branches:
@@ -9,7 +22,7 @@ concurrency: ${{ github.workflow }}-${{ github.ref }}
 
 jobs:
   release:
-    name: Release
+    name: Create Release PR
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -42,14 +55,16 @@ jobs:
       - name: Run tests
         run: pnpm run test
 
-      - name: Create Release Pull Request or Publish to npm
+      # Create version bump PRs without publishing to npm
+      # Publishing will be enabled after MVP completion
+      - name: Create Release Pull Request
         id: changesets
         uses: changesets/action@v1
         with:
-          version: pnpm run version-packages
-          publish: pnpm run version-packages
-          commit: "chore: release packages"
-          title: "chore: release packages"
+          version: changeset version
+          commit: "chore: version packages"
+          title: "chore: version packages"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          # NPM_TOKEN not needed since we're not publishing yet
+          # Will be added when ready for public releases after MVP completion
