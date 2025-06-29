@@ -1,7 +1,7 @@
 {
   "name": "mcp-server-framework",
   "version": "independent",
-  "description": "A comprehensive framework for building Model Context Protocol (MCP) servers",
+  "description": "A comprehensive framework for building Model Context Protocol (MCP) servers with transport-agnostic codecs and utilities",
   "private": true,
   "workspaces": [
     "packages/*"
@@ -22,7 +22,12 @@
     "mcp",
     "model-context-protocol",
     "server",
-    "framework"
+    "framework",
+    "json-rpc",
+    "codec",
+    "transport-agnostic",
+    "typescript",
+    "monorepo"
   ],
   "author": "",
   "license": "MIT",

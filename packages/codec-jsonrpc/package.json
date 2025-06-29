@@ -1,0 +1,66 @@
+{
+  "name": "@hexmcp/codec-jsonrpc",
+  "version": "0.0.0",
+  "description": "Transport-agnostic JSON-RPC 2.0 encoder/decoder library for MCP servers and clients",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "src",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "keywords": [
+    "json-rpc",
+    "json-rpc-2.0",
+    "jsonrpc",
+    "rpc",
+    "codec",
+    "encoder",
+    "decoder",
+    "mcp",
+    "model-context-protocol",
+    "transport-agnostic",
+    "typescript",
+    "validation",
+    "error-handling",
+    "stateless",
+    "type-safe"
+  ],
+  "author": "",
+  "license": "MIT",
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "devDependencies": {
+    "@types/jest": "^30.0.0",
+    "jest": "^30.0.3",
+    "typescript": "^5.8.3"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/your-org/mcp-server-framework.git",
+    "directory": "packages/codec-jsonrpc"
+  },
+  "bugs": {
+    "url": "https://github.com/your-org/mcp-server-framework/issues"
+  },
+  "homepage": "https://github.com/your-org/mcp-server-framework/tree/main/packages/codec-jsonrpc#readme"
+}

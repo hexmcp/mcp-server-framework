@@ -13,4 +13,18 @@ module.exports = {
   ],
   moduleFileExtensions: ["ts", "tsx", "js", "jsx", "json", "node"],
   passWithNoTests: true,
+  projects: [
+    {
+      displayName: "core",
+      testMatch: ["<rootDir>/packages/core/**/*.(test|spec).+(ts|tsx|js)"],
+      preset: "ts-jest",
+      testEnvironment: "node",
+    },
+    {
+      displayName: "codec-jsonrpc",
+      testMatch: ["<rootDir>/packages/codec-jsonrpc/**/*.(test|spec).+(ts|tsx|js)"],
+      preset: "ts-jest",
+      testEnvironment: "node",
+    },
+  ],
 };

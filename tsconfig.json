@@ -39,6 +39,8 @@
     "paths": {
       "@mcp-server-framework/core": ["packages/core/src"],
       "@mcp-server-framework/core/*": ["packages/core/src/*"],
+      "@hexmcp/codec-jsonrpc": ["packages/codec-jsonrpc/src"],
+      "@hexmcp/codec-jsonrpc/*": ["packages/codec-jsonrpc/src/*"],
       "@mcp-server-framework/*": ["packages/*/src"]
     }
   },
