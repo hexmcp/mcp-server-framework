@@ -1,6 +1,6 @@
 {
   "name": "@hexmcp/codec-jsonrpc",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Transport-agnostic JSON-RPC 2.0 encoder/decoder library for MCP servers and clients",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
