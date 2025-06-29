@@ -1,6 +1,6 @@
 {
   "name": "mcp-server-framework",
-  "version": "0.0.0",
+  "version": "independent",
   "description": "A comprehensive framework for building Model Context Protocol (MCP) servers",
   "private": true,
   "workspaces": [
@@ -12,7 +12,10 @@
     "typecheck": "tsc --noEmit",
     "typecheck:test": "tsc --project tsconfig.test.json --noEmit",
     "lint": "biome check .",
-    "lint:fix": "biome check . --write"
+    "lint:fix": "biome check . --write",
+    "changeset": "changeset",
+    "version-packages": "changeset version && changeset publish",
+    "version:dry": "changeset version --snapshot dev && changeset status"
   },
   "keywords": [
     "mcp",
@@ -30,6 +33,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^2.0.6",
+    "@changesets/cli": "^2.29.5",
     "@commitlint/cli": "^19.8.1",
     "@commitlint/config-conventional": "^19.8.1",
     "@types/jest": "^30.0.0",
