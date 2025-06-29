@@ -180,8 +180,15 @@ describe("RpcError", () => {
 
       expect(json.code).toBe(123);
       expect(json.message).toBe("Test error");
-      expect(json.stack).toBeDefined();
-      expect(json.stack).toContain("RpcError");
+
+      // Type guard to check if stack property exists
+      if ("stack" in json) {
+        expect(json.stack).toBeDefined();
+        expect(json.stack).toContain("RpcError");
+      } else {
+        // biome-ignore lint/correctness/noUndeclaredVariables: Jest global
+        fail("Expected stack property to be present in debug mode");
+      }
     });
 
     it("should handle factory methods with debug masking", () => {
