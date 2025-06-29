@@ -132,7 +132,7 @@ describe("MockTransport", () => {
     beforeEach(() => {
       receivedMessages = [];
       mockDispatch = (message, respond, metadata) => {
-        receivedMessages.push({ message, metadata });
+        receivedMessages.push(metadata ? { message, metadata } : { message });
         respond({ echo: message });
       };
     });
