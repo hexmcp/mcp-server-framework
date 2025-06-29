@@ -110,6 +110,18 @@
                   "kind": "typeLike"
                 },
                 "formats": ["PascalCase"]
+              },
+              {
+                "selector": {
+                  "kind": "enum"
+                },
+                "formats": ["PascalCase", "CONSTANT_CASE"]
+              },
+              {
+                "selector": {
+                  "kind": "enumMember"
+                },
+                "formats": ["CONSTANT_CASE", "PascalCase"]
               }
             ]
           }
