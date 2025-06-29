@@ -1,6 +1,6 @@
 {
 	"name": "mcp-server-framework",
-	"version": "1.0.0",
+	"version": "0.0.0",
 	"description": "A comprehensive framework for building Model Context Protocol (MCP) servers",
 	"private": true,
 	"workspaces": [
