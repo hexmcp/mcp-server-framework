@@ -12,7 +12,13 @@ export enum JSON_RPC_ERROR_CODES {
   INTERNAL_ERROR = -32603,
 }
 
+function isDebugMode(): boolean {
+  return process.env.MCPKIT_DEBUG === "1";
+}
+
 export class RpcError extends Error {
+  private originalStack: string | undefined;
+
   constructor(
     public readonly code: number,
     message: string,
@@ -24,6 +30,16 @@ export class RpcError extends Error {
     if (Error.captureStackTrace) {
       Error.captureStackTrace(this, RpcError);
     }
+
+    this.originalStack = this.stack;
+
+    if (!isDebugMode()) {
+      delete this.stack;
+    }
+  }
+
+  get debugStack(): string | undefined {
+    return this.originalStack;
   }
 
   static parseError(data?: unknown): RpcError {
@@ -51,10 +67,19 @@ export class RpcError extends Error {
   }
 
   toJSON() {
-    return {
+    const result = {
       code: this.code,
       message: this.message,
       ...(this.data !== undefined && { data: this.data }),
     };
+
+    if (isDebugMode() && this.originalStack) {
+      return {
+        ...result,
+        stack: this.originalStack,
+      };
+    }
+
+    return result;
   }
 }

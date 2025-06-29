@@ -20,10 +20,10 @@ describe("RpcError", () => {
       expect(error.data).toBeUndefined();
     });
 
-    it("should have proper stack trace", () => {
+    it("should have proper debug stack trace", () => {
       const error = new RpcError(789, "Stack test");
-      expect(error.stack).toBeDefined();
-      expect(error.stack).toContain("RpcError");
+      expect(error.debugStack).toBeDefined();
+      expect(error.debugStack).toContain("RpcError");
     });
   });
 
@@ -127,6 +127,72 @@ describe("RpcError", () => {
         message: "Test",
       });
       expect("data" in json).toBe(false);
+    });
+  });
+
+  describe("debug masking", () => {
+    const originalEnv = process.env.MCPKIT_DEBUG;
+
+    afterEach(() => {
+      if (originalEnv !== undefined) {
+        process.env.MCPKIT_DEBUG = originalEnv;
+      } else {
+        delete process.env.MCPKIT_DEBUG;
+      }
+    });
+
+    it("should mask stack traces when debug mode is disabled", () => {
+      delete process.env.MCPKIT_DEBUG;
+      const error = new RpcError(123, "Test error");
+
+      expect(error.stack).toBeUndefined();
+      expect(error.debugStack).toBeDefined();
+      expect(error.debugStack).toContain("RpcError");
+    });
+
+    it("should preserve stack traces when debug mode is enabled", () => {
+      process.env.MCPKIT_DEBUG = "1";
+      const error = new RpcError(123, "Test error");
+
+      expect(error.stack).toBeDefined();
+      expect(error.stack).toContain("RpcError");
+      expect(error.debugStack).toBeDefined();
+      expect(error.debugStack).toBe(error.stack);
+    });
+
+    it("should not include stack in JSON when debug mode is disabled", () => {
+      delete process.env.MCPKIT_DEBUG;
+      const error = new RpcError(123, "Test error", { extra: "data" });
+      const json = error.toJSON();
+
+      expect(json).toEqual({
+        code: 123,
+        message: "Test error",
+        data: { extra: "data" },
+      });
+      expect("stack" in json).toBe(false);
+    });
+
+    it("should include stack in JSON when debug mode is enabled", () => {
+      process.env.MCPKIT_DEBUG = "1";
+      const error = new RpcError(123, "Test error");
+      const json = error.toJSON();
+
+      expect(json.code).toBe(123);
+      expect(json.message).toBe("Test error");
+      expect(json.stack).toBeDefined();
+      expect(json.stack).toContain("RpcError");
+    });
+
+    it("should handle factory methods with debug masking", () => {
+      delete process.env.MCPKIT_DEBUG;
+      const error = RpcError.parseError({ details: "test" });
+
+      expect(error.stack).toBeUndefined();
+      expect(error.debugStack).toBeDefined();
+
+      const json = error.toJSON();
+      expect("stack" in json).toBe(false);
     });
   });
 

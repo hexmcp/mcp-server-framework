@@ -112,6 +112,26 @@ const invalidParams = RpcError.invalidParams();
 const internalError = RpcError.internalError();
 ```
 
+### Debug Mode
+
+The package supports debug mode for enhanced error information:
+
+```typescript
+// Enable debug mode via environment variable
+process.env.MCPKIT_DEBUG = "1";
+
+const error = new RpcError(-32000, "Server error");
+
+// In debug mode:
+// - error.stack contains the full stack trace
+// - error.toJSON() includes the stack trace
+
+// In production mode (default):
+// - error.stack is undefined (masked for security)
+// - error.debugStack contains the original stack trace
+// - error.toJSON() excludes the stack trace
+```
+
 ## Error Codes
 
 Standard JSON-RPC 2.0 error codes are available:
