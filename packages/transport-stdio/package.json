@@ -1,0 +1,70 @@
+{
+  "name": "@hexmcp/transport-stdio",
+  "version": "0.0.0",
+  "description": "STDIO transport implementation for MCP Server Framework using JSON-RPC 2.0 over NDJSON",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "src",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "transport",
+    "stdio",
+    "stdin",
+    "stdout",
+    "ndjson",
+    "json-rpc",
+    "json-rpc-2.0",
+    "server",
+    "framework",
+    "typescript",
+    "transport-agnostic"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@hexmcp/transport": "workspace:*",
+    "@hexmcp/codec-jsonrpc": "workspace:*",
+    "tslib": "^2.8.1"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "devDependencies": {
+    "@types/jest": "^30.0.0",
+    "@types/node": "^22.0.0",
+    "jest": "^30.0.3",
+    "typescript": "^5.8.3"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/your-org/mcp-server-framework.git",
+    "directory": "packages/transport-stdio"
+  },
+  "bugs": {
+    "url": "https://github.com/your-org/mcp-server-framework/issues"
+  },
+  "homepage": "https://github.com/your-org/mcp-server-framework/tree/main/packages/transport-stdio#readme"
+}

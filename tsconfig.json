@@ -43,6 +43,10 @@
       "@mcp-server-framework/transport/*": ["packages/transport/src/*"],
       "@hexmcp/codec-jsonrpc": ["packages/codec-jsonrpc/src"],
       "@hexmcp/codec-jsonrpc/*": ["packages/codec-jsonrpc/src/*"],
+      "@hexmcp/transport": ["packages/transport/src"],
+      "@hexmcp/transport/*": ["packages/transport/src/*"],
+      "@hexmcp/transport-stdio": ["packages/transport-stdio/src"],
+      "@hexmcp/transport-stdio/*": ["packages/transport-stdio/src/*"],
       "@mcp-server-framework/*": ["packages/*/src"]
     }
   },
