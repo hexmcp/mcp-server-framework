@@ -8,3 +8,6 @@
 
 // Re-export all lifecycle functionality
 export * from './lifecycle/index.js';
+
+// Re-export all middleware functionality
+export * from './middleware/index.js';

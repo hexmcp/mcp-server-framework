@@ -188,4 +188,5 @@ export interface LifecycleManager {
 export interface RequestGate {
   canProcessRequest(method: string): boolean;
   validateRequest(method: string): void;
+  getValidationError(method: string): { code: number; message: string; data?: unknown } | null;
 }

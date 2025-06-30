@@ -64,7 +64,6 @@ describe('Transport Orchestrator', () => {
 
       try {
         await startAllTransports(registry, mockDispatch);
-        // biome-ignore lint/correctness/noUndeclaredVariables: Jest global
         fail('Expected TransportOrchestrationError to be thrown');
       } catch (error) {
         expect(error).toBeInstanceOf(TransportOrchestrationError);
@@ -98,7 +97,6 @@ describe('Transport Orchestrator', () => {
 
       try {
         await startAllTransports(registry, mockDispatch);
-        // biome-ignore lint/correctness/noUndeclaredVariables: Jest global
         fail('Expected TransportOrchestrationError to be thrown');
       } catch (error) {
         expect(error).toBeInstanceOf(TransportOrchestrationError);

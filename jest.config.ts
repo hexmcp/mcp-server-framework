@@ -10,6 +10,9 @@ const config: Config = {
   },
   moduleNameMapper: {
     '^(\\.{1,2}/.*)\\.js$': '$1',
+    '^@hexmcp/codec-jsonrpc$': '<rootDir>/packages/codec-jsonrpc/src/index.ts',
+    '^@hexmcp/transport$': '<rootDir>/packages/transport/src/index.ts',
+    '^@hexmcp/core$': '<rootDir>/packages/core/src/index.ts',
   },
   collectCoverageFrom: ['packages/**/*.{ts,tsx}', '!packages/**/*.d.ts', '!packages/**/node_modules/**'],
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
@@ -22,6 +25,9 @@ const config: Config = {
       testEnvironment: 'node',
       moduleNameMapper: {
         '^(\\.{1,2}/.*)\\.js$': '$1',
+        '^@hexmcp/codec-jsonrpc$': '<rootDir>/packages/codec-jsonrpc/src/index.ts',
+        '^@hexmcp/transport$': '<rootDir>/packages/transport/src/index.ts',
+        '^@hexmcp/core$': '<rootDir>/packages/core/src/index.ts',
       },
     },
     {
@@ -29,12 +35,24 @@ const config: Config = {
       testMatch: ['<rootDir>/packages/transport/**/*.(test|spec).+(ts|tsx|js)'],
       preset: 'ts-jest',
       testEnvironment: 'node',
+      moduleNameMapper: {
+        '^(\\.{1,2}/.*)\\.js$': '$1',
+        '^@hexmcp/codec-jsonrpc$': '<rootDir>/packages/codec-jsonrpc/src/index.ts',
+        '^@hexmcp/transport$': '<rootDir>/packages/transport/src/index.ts',
+        '^@hexmcp/core$': '<rootDir>/packages/core/src/index.ts',
+      },
     },
     {
       displayName: 'codec-jsonrpc',
       testMatch: ['<rootDir>/packages/codec-jsonrpc/**/*.(test|spec).+(ts|tsx|js)'],
       preset: 'ts-jest',
       testEnvironment: 'node',
+      moduleNameMapper: {
+        '^(\\.{1,2}/.*)\\.js$': '$1',
+        '^@hexmcp/codec-jsonrpc$': '<rootDir>/packages/codec-jsonrpc/src/index.ts',
+        '^@hexmcp/transport$': '<rootDir>/packages/transport/src/index.ts',
+        '^@hexmcp/core$': '<rootDir>/packages/core/src/index.ts',
+      },
     },
   ],
 };

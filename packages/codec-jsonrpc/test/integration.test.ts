@@ -91,7 +91,6 @@ describe('Integration Tests', () => {
 
       try {
         decodeJsonRpcRequest(invalidJson);
-        // biome-ignore lint/correctness/noUndeclaredVariables: Jest global
         fail('Should have thrown an error');
       } catch (error) {
         expect(error).toBeInstanceOf(RpcError);
