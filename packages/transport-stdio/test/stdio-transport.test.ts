@@ -1,9 +1,9 @@
-import { Readable } from "node:stream";
-import { JSON_RPC_ERROR_CODES } from "@hexmcp/codec-jsonrpc";
-import type { TransportDispatch } from "@hexmcp/transport";
-import { StdioTransport } from "../src/stdio-transport";
+import { Readable } from 'node:stream';
+import { JSON_RPC_ERROR_CODES } from '@hexmcp/codec-jsonrpc';
+import type { TransportDispatch } from '@hexmcp/transport';
+import { StdioTransport } from '../src/stdio-transport';
 
-describe("StdioTransport", () => {
+describe('StdioTransport', () => {
   let transport: StdioTransport;
   let mockStdout: jest.SpyInstance;
   let mockStdin: Readable;
@@ -11,7 +11,7 @@ describe("StdioTransport", () => {
 
   beforeEach(() => {
     transport = new StdioTransport();
-    mockStdout = jest.spyOn(process.stdout, "write").mockImplementation(() => true);
+    mockStdout = jest.spyOn(process.stdout, 'write').mockImplementation(() => true);
 
     mockStdin = new Readable({
       read() {
@@ -20,7 +20,7 @@ describe("StdioTransport", () => {
     });
 
     originalStdin = process.stdin;
-    Object.defineProperty(process, "stdin", {
+    Object.defineProperty(process, 'stdin', {
       value: mockStdin,
       configurable: true,
     });
@@ -30,47 +30,47 @@ describe("StdioTransport", () => {
     await transport.stop();
     mockStdout.mockRestore();
 
-    Object.defineProperty(process, "stdin", {
+    Object.defineProperty(process, 'stdin', {
       value: originalStdin,
       configurable: true,
     });
   });
 
-  describe("interface compliance", () => {
-    it("should have correct name", () => {
-      expect(transport.name).toBe("stdio");
+  describe('interface compliance', () => {
+    it('should have correct name', () => {
+      expect(transport.name).toBe('stdio');
     });
 
-    it("should implement ServerTransport interface", () => {
-      expect(typeof transport.start).toBe("function");
-      expect(typeof transport.stop).toBe("function");
-      expect(typeof transport.name).toBe("string");
+    it('should implement ServerTransport interface', () => {
+      expect(typeof transport.start).toBe('function');
+      expect(typeof transport.stop).toBe('function');
+      expect(typeof transport.name).toBe('string');
     });
   });
 
-  describe("lifecycle management", () => {
-    it("should start successfully with dispatch function", async () => {
+  describe('lifecycle management', () => {
+    it('should start successfully with dispatch function', async () => {
       const dispatch = jest.fn();
 
       await expect(transport.start(dispatch)).resolves.toBeUndefined();
     });
 
-    it("should throw error when starting already started transport", async () => {
+    it('should throw error when starting already started transport', async () => {
       const dispatch = jest.fn();
 
       await transport.start(dispatch);
 
-      await expect(transport.start(dispatch)).rejects.toThrow("StdioTransport is already started");
+      await expect(transport.start(dispatch)).rejects.toThrow('StdioTransport is already started');
     });
 
-    it("should stop gracefully", async () => {
+    it('should stop gracefully', async () => {
       const dispatch = jest.fn();
 
       await transport.start(dispatch);
       await expect(transport.stop()).resolves.toBeUndefined();
     });
 
-    it("should handle multiple stop calls without throwing", async () => {
+    it('should handle multiple stop calls without throwing', async () => {
       const dispatch = jest.fn();
 
       await transport.start(dispatch);
@@ -78,12 +78,12 @@ describe("StdioTransport", () => {
       await expect(transport.stop()).resolves.toBeUndefined();
     });
 
-    it("should handle stop before start", async () => {
+    it('should handle stop before start', async () => {
       await expect(transport.stop()).resolves.toBeUndefined();
     });
   });
 
-  describe("message processing", () => {
+  describe('message processing', () => {
     let dispatch: jest.MockedFunction<TransportDispatch>;
 
     beforeEach(async () => {
@@ -99,48 +99,48 @@ describe("StdioTransport", () => {
       });
     };
 
-    it("should process valid JSON-RPC request", async () => {
+    it('should process valid JSON-RPC request', async () => {
       const request = '{"jsonrpc":"2.0","id":1,"method":"test","params":{"foo":"bar"}}';
 
       await sendMessage(request);
 
       expect(dispatch).toHaveBeenCalledWith(
         {
-          jsonrpc: "2.0",
+          jsonrpc: '2.0',
           id: 1,
-          method: "test",
-          params: { foo: "bar" },
+          method: 'test',
+          params: { foo: 'bar' },
         },
         expect.any(Function),
         {
           transport: {
-            name: "stdio",
+            name: 'stdio',
           },
         }
       );
     });
 
-    it("should process valid JSON-RPC notification", async () => {
+    it('should process valid JSON-RPC notification', async () => {
       const notification = '{"jsonrpc":"2.0","method":"notify","params":["hello"]}';
 
       await sendMessage(notification);
 
       expect(dispatch).toHaveBeenCalledWith(
         {
-          jsonrpc: "2.0",
-          method: "notify",
-          params: ["hello"],
+          jsonrpc: '2.0',
+          method: 'notify',
+          params: ['hello'],
         },
         expect.any(Function),
         {
           transport: {
-            name: "stdio",
+            name: 'stdio',
           },
         }
       );
     });
 
-    it("should handle invalid JSON with parse error response", async () => {
+    it('should handle invalid JSON with parse error response', async () => {
       const invalidJson = '{"jsonrpc":"2.0","id":1,"method":"test"';
 
       await sendMessage(invalidJson);
@@ -150,7 +150,7 @@ describe("StdioTransport", () => {
       expect(mockStdout).toHaveBeenCalledWith(expect.stringContaining('"message":"Parse error"'));
     });
 
-    it("should handle malformed JSON-RPC with parse error response", async () => {
+    it('should handle malformed JSON-RPC with parse error response', async () => {
       const malformed = '{"version":"1.0","id":1}';
 
       await sendMessage(malformed);
@@ -160,7 +160,7 @@ describe("StdioTransport", () => {
     });
   });
 
-  describe("response handling", () => {
+  describe('response handling', () => {
     let dispatch: jest.MockedFunction<TransportDispatch>;
 
     beforeEach(async () => {
@@ -168,33 +168,25 @@ describe("StdioTransport", () => {
       await transport.start(dispatch);
     });
 
-    it("should write response as NDJSON to stdout", async () => {
+    it('should write response as NDJSON to stdout', async () => {
       const request = '{"jsonrpc":"2.0","id":1,"method":"test"}';
 
       await sendMessage(request);
 
-      const [, respond] = dispatch.mock.calls[0] as [
-        unknown,
-        (response: unknown) => Promise<void>,
-        unknown,
-      ];
-      const response = { jsonrpc: "2.0", id: 1, result: "success" };
+      const [, respond] = dispatch.mock.calls[0] as [unknown, (response: unknown) => Promise<void>, unknown];
+      const response = { jsonrpc: '2.0', id: 1, result: 'success' };
 
       respond(response);
 
       expect(mockStdout).toHaveBeenCalledWith('{"jsonrpc":"2.0","id":1,"result":"success"}\n');
     });
 
-    it("should handle response serialization errors gracefully", async () => {
+    it('should handle response serialization errors gracefully', async () => {
       const request = '{"jsonrpc":"2.0","id":1,"method":"test"}';
 
       await sendMessage(request);
 
-      const [, respond] = dispatch.mock.calls[0] as [
-        unknown,
-        (response: unknown) => Promise<void>,
-        unknown,
-      ];
+      const [, respond] = dispatch.mock.calls[0] as [unknown, (response: unknown) => Promise<void>, unknown];
       const circularResponse = {};
       (circularResponse as any).self = circularResponse;
 
@@ -215,7 +207,7 @@ describe("StdioTransport", () => {
     };
   });
 
-  describe("NDJSON protocol compliance", () => {
+  describe('NDJSON protocol compliance', () => {
     let dispatch: jest.MockedFunction<TransportDispatch>;
 
     beforeEach(async () => {
@@ -239,7 +231,7 @@ describe("StdioTransport", () => {
       });
     };
 
-    it("should process multiple NDJSON lines", async () => {
+    it('should process multiple NDJSON lines', async () => {
       const line1 = '{"jsonrpc":"2.0","id":1,"method":"first"}';
       const line2 = '{"jsonrpc":"2.0","id":2,"method":"second"}';
 
@@ -248,26 +240,26 @@ describe("StdioTransport", () => {
       expect(dispatch).toHaveBeenCalledTimes(2);
       expect(dispatch).toHaveBeenNthCalledWith(
         1,
-        expect.objectContaining({ id: 1, method: "first" }),
+        expect.objectContaining({ id: 1, method: 'first' }),
         expect.any(Function),
         expect.any(Object)
       );
       expect(dispatch).toHaveBeenNthCalledWith(
         2,
-        expect.objectContaining({ id: 2, method: "second" }),
+        expect.objectContaining({ id: 2, method: 'second' }),
         expect.any(Function),
         expect.any(Object)
       );
     });
 
-    it("should handle empty lines gracefully", async () => {
-      await sendMessage("");
+    it('should handle empty lines gracefully', async () => {
+      await sendMessage('');
 
       expect(dispatch).not.toHaveBeenCalled();
       expect(mockStdout).toHaveBeenCalledWith(expect.stringContaining('"code":-32700'));
     });
 
-    it("should maintain line boundaries correctly", async () => {
+    it('should maintain line boundaries correctly', async () => {
       const request = '{"jsonrpc":"2.0","id":1,"method":"test"}';
 
       mockStdin.push(request.slice(0, 10));
@@ -279,7 +271,7 @@ describe("StdioTransport", () => {
     });
   });
 
-  describe("error edge cases", () => {
+  describe('error edge cases', () => {
     let dispatch: jest.MockedFunction<TransportDispatch>;
 
     beforeEach(async () => {
@@ -295,7 +287,7 @@ describe("StdioTransport", () => {
       });
     };
 
-    it("should not process messages after stop", async () => {
+    it('should not process messages after stop', async () => {
       await transport.stop();
 
       const request = '{"jsonrpc":"2.0","id":1,"method":"test"}';
@@ -304,15 +296,15 @@ describe("StdioTransport", () => {
       expect(dispatch).not.toHaveBeenCalled();
     });
 
-    it("should handle stdin close event gracefully", async () => {
-      mockStdin.emit("close");
+    it('should handle stdin close event gracefully', async () => {
+      mockStdin.emit('close');
       await new Promise((resolve) => setTimeout(resolve, 5));
 
-      expect(transport.name).toBe("stdio");
+      expect(transport.name).toBe('stdio');
     });
   });
 
-  describe("parse error responses", () => {
+  describe('parse error responses', () => {
     let dispatch: jest.MockedFunction<TransportDispatch>;
 
     beforeEach(async () => {
@@ -328,33 +320,27 @@ describe("StdioTransport", () => {
       });
     };
 
-    it("should return parse error with null id for invalid JSON", async () => {
-      await sendMessage("invalid json");
+    it('should return parse error with null id for invalid JSON', async () => {
+      await sendMessage('invalid json');
 
-      expect(mockStdout).toHaveBeenCalledWith(
-        expect.stringMatching(/"jsonrpc":"2\.0".*"id":null.*"error".*"code":-32700/)
-      );
+      expect(mockStdout).toHaveBeenCalledWith(expect.stringMatching(/"jsonrpc":"2\.0".*"id":null.*"error".*"code":-32700/));
     });
 
-    it("should return parse error for empty string", async () => {
-      await sendMessage("");
+    it('should return parse error for empty string', async () => {
+      await sendMessage('');
 
-      expect(mockStdout).toHaveBeenCalledWith(
-        expect.stringContaining(`"code":${JSON_RPC_ERROR_CODES.PARSE_ERROR}`)
-      );
+      expect(mockStdout).toHaveBeenCalledWith(expect.stringContaining(`"code":${JSON_RPC_ERROR_CODES.PARSE_ERROR}`));
     });
 
-    it("should return parse error for non-object JSON", async () => {
-      await sendMessage("42");
+    it('should return parse error for non-object JSON', async () => {
+      await sendMessage('42');
 
-      expect(mockStdout).toHaveBeenCalledWith(
-        expect.stringContaining(`"code":${JSON_RPC_ERROR_CODES.PARSE_ERROR}`)
-      );
+      expect(mockStdout).toHaveBeenCalledWith(expect.stringContaining(`"code":${JSON_RPC_ERROR_CODES.PARSE_ERROR}`));
     });
   });
 });
 
-describe("StdioTransport Integration", () => {
+describe('StdioTransport Integration', () => {
   let transport: StdioTransport;
   let mockStdout: jest.SpyInstance;
   let mockStdin: Readable;
@@ -362,7 +348,7 @@ describe("StdioTransport Integration", () => {
 
   beforeEach(() => {
     transport = new StdioTransport();
-    mockStdout = jest.spyOn(process.stdout, "write").mockImplementation(() => true);
+    mockStdout = jest.spyOn(process.stdout, 'write').mockImplementation(() => true);
 
     mockStdin = new Readable({
       read() {
@@ -371,7 +357,7 @@ describe("StdioTransport Integration", () => {
     });
 
     originalStdin = process.stdin;
-    Object.defineProperty(process, "stdin", {
+    Object.defineProperty(process, 'stdin', {
       value: mockStdin,
       configurable: true,
     });
@@ -381,7 +367,7 @@ describe("StdioTransport Integration", () => {
     await transport.stop();
     mockStdout.mockRestore();
 
-    Object.defineProperty(process, "stdin", {
+    Object.defineProperty(process, 'stdin', {
       value: originalStdin,
       configurable: true,
     });
@@ -403,12 +389,12 @@ describe("StdioTransport Integration", () => {
     });
   };
 
-  it("should work with transport registry pattern", async () => {
+  it('should work with transport registry pattern', async () => {
     const dispatch = jest.fn();
 
-    expect(transport.name).toBe("stdio");
-    expect(typeof transport.start).toBe("function");
-    expect(typeof transport.stop).toBe("function");
+    expect(transport.name).toBe('stdio');
+    expect(typeof transport.start).toBe('function');
+    expect(typeof transport.stop).toBe('function');
 
     await transport.start(dispatch);
 
@@ -417,20 +403,20 @@ describe("StdioTransport Integration", () => {
 
     expect(dispatch).toHaveBeenCalledWith(
       expect.objectContaining({
-        jsonrpc: "2.0",
-        id: "test-123",
-        method: "ping",
+        jsonrpc: '2.0',
+        id: 'test-123',
+        method: 'ping',
       }),
       expect.any(Function),
       expect.objectContaining({
-        transport: { name: "stdio" },
+        transport: { name: 'stdio' },
       })
     );
 
     await transport.stop();
   });
 
-  it("should handle concurrent message processing", async () => {
+  it('should handle concurrent message processing', async () => {
     const dispatch = jest.fn();
     await transport.start(dispatch);
 
@@ -445,9 +431,9 @@ describe("StdioTransport Integration", () => {
     expect(dispatch).toHaveBeenCalledTimes(3);
 
     const responses = [
-      { jsonrpc: "2.0", id: 1, result: "first-result" },
-      { jsonrpc: "2.0", id: 2, result: "second-result" },
-      { jsonrpc: "2.0", id: 3, result: "third-result" },
+      { jsonrpc: '2.0', id: 1, result: 'first-result' },
+      { jsonrpc: '2.0', id: 2, result: 'second-result' },
+      { jsonrpc: '2.0', id: 3, result: 'third-result' },
     ];
 
     dispatch.mock.calls.forEach(([, respond], index) => {
@@ -460,7 +446,7 @@ describe("StdioTransport Integration", () => {
     });
   });
 
-  it("should provide correct metadata structure", async () => {
+  it('should provide correct metadata structure', async () => {
     const dispatch = jest.fn();
     await transport.start(dispatch);
 
@@ -471,7 +457,7 @@ describe("StdioTransport Integration", () => {
 
     expect(metadata).toEqual({
       transport: {
-        name: "stdio",
+        name: 'stdio',
       },
     });
   });

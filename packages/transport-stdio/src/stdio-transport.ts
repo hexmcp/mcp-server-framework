@@ -1,13 +1,9 @@
-import * as readline from "node:readline";
-import {
-  decodeJsonRpcMessage,
-  encodeJsonRpcParseError,
-  type JsonRpcMessage,
-} from "@hexmcp/codec-jsonrpc";
-import type { ServerTransport, TransportDispatch, TransportMetadata } from "@hexmcp/transport";
+import * as readline from 'node:readline';
+import { decodeJsonRpcMessage, encodeJsonRpcParseError, type JsonRpcMessage } from '@hexmcp/codec-jsonrpc';
+import type { ServerTransport, TransportDispatch, TransportMetadata } from '@hexmcp/transport';
 
 export class StdioTransport implements ServerTransport {
-  readonly name = "stdio";
+  readonly name = 'stdio';
 
   private dispatch?: TransportDispatch | undefined;
   private readlineInterface?: readline.Interface | undefined;
@@ -16,7 +12,7 @@ export class StdioTransport implements ServerTransport {
 
   async start(dispatch: TransportDispatch): Promise<void> {
     if (this.isStarted) {
-      throw new Error("StdioTransport is already started");
+      throw new Error('StdioTransport is already started');
     }
 
     this.dispatch = dispatch;
@@ -29,7 +25,7 @@ export class StdioTransport implements ServerTransport {
       crlfDelay: Number.POSITIVE_INFINITY,
     });
 
-    this.readlineInterface.on("line", (line: string) => {
+    this.readlineInterface.on('line', (line: string) => {
       if (this.isStopping || !this.dispatch) {
         return;
       }
@@ -37,7 +33,7 @@ export class StdioTransport implements ServerTransport {
       this.handleLine(line);
     });
 
-    this.readlineInterface.on("close", () => {
+    this.readlineInterface.on('close', () => {
       if (!this.isStopping) {
         this.isStopping = true;
         this.cleanup();
