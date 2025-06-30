@@ -50,7 +50,7 @@
       "@mcp-server-framework/*": ["packages/*/src"]
     }
   },
-  "include": ["packages/**/*.ts", "packages/**/*.tsx", "packages/**/*.js", "packages/**/*.jsx", "packages/**/*.json"],
+  "include": ["packages/**/*.ts", "packages/**/*.tsx", "packages/**/*.json"],
   "exclude": [
     "node_modules",
     "dist",

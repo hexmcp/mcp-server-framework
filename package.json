@@ -48,6 +48,11 @@
     "jest": "^30.0.3",
     "lint-staged": "^16.1.2",
     "ts-jest": "^29.4.0",
+    "ts-node": "^10.9.2",
     "typescript": "^5.8.3"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.13.2",
+    "tslib": "^2.8.1"
   }
 }
