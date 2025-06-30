@@ -38,17 +38,14 @@ export class McpCapabilityRegistry implements CapabilityRegistry {
     const capabilities = { ...this._capabilities };
 
     if (this._primitiveRegistry) {
-      // Add prompts capability if prompts are registered
       if (this._primitiveRegistry.hasPrompts()) {
         capabilities.prompts = capabilities.prompts || {};
       }
 
-      // Add tools capability if tools are registered
       if (this._primitiveRegistry.hasTools()) {
         capabilities.tools = capabilities.tools || {};
       }
 
-      // Add resources capability if resources are registered
       if (this._primitiveRegistry.hasResources()) {
         capabilities.resources = capabilities.resources || {
           subscribe: false,

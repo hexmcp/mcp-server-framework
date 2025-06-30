@@ -75,7 +75,6 @@ export class McpRequestGate implements RequestGate {
 
     switch (category) {
       case RequestCategory.ALWAYS_ALLOWED:
-        // These requests are always allowed regardless of state
         return;
 
       case RequestCategory.INITIALIZATION:
@@ -87,7 +86,6 @@ export class McpRequestGate implements RequestGate {
         return;
 
       default:
-        // Unknown request method - treat as operational
         this._validateOperationalRequest(method);
         return;
     }

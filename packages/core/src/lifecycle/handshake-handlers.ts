@@ -54,7 +54,6 @@ export class McpHandshakeHandlers {
         return this._createErrorResponse(request.id, ErrorCode.InvalidParams, 'Missing required capabilities in initialize request');
       }
 
-      // Perform initialization through lifecycle manager
       const result = await this._lifecycleManager.initialize(request);
 
       return this._createSuccessResponse(request.id, result);
@@ -63,7 +62,6 @@ export class McpHandshakeHandlers {
         return this._createErrorResponse(request.id, ErrorCode.InvalidRequest, error.message);
       }
 
-      // Handle other initialization errors
       const message = error instanceof Error ? error.message : 'Initialization failed';
       return this._createErrorResponse(
         request.id,
