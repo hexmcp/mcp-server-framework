@@ -1,5 +1,5 @@
 import type { ServerCapabilities } from '@modelcontextprotocol/sdk/types.js';
-import type { CapabilityRegistry, PrimitiveRegistry } from './types.js';
+import type { CapabilityRegistry, PrimitiveRegistry } from './types';
 
 /**
  * Default server capabilities for MCP servers

@@ -1,4 +1,4 @@
-import { McpCapabilityRegistry, MockPrimitiveRegistry } from '../../dist/lifecycle/index.js';
+import { McpCapabilityRegistry, MockPrimitiveRegistry } from '../../src/lifecycle/index';
 
 describe('McpCapabilityRegistry', () => {
   let capabilityRegistry: McpCapabilityRegistry;

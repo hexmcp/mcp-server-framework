@@ -6,9 +6,9 @@ import {
   McpLifecycleManager,
   McpRequestGate,
   MockPrimitiveRegistry,
-} from '../../dist/lifecycle/index.js';
+} from '../../src/lifecycle/index';
 
-import { OPERATIONAL_REQUESTS, VALID_INITIALIZE_REQUEST_WITH_ID, VALID_INITIALIZED_NOTIFICATION } from '../fixtures/handshake-fixtures.ts';
+import { OPERATIONAL_REQUESTS, VALID_INITIALIZE_REQUEST_WITH_ID, VALID_INITIALIZED_NOTIFICATION } from '../fixtures/handshake-fixtures';
 
 describe('MCP Lifecycle Integration', () => {
   let lifecycleManager: McpLifecycleManager;

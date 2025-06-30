@@ -7,16 +7,7 @@
   },
   "files": {
     "ignoreUnknown": false,
-    "includes": [
-      "packages/**/*.ts",
-      "packages/**/*.tsx",
-      "packages/**/*.js",
-      "packages/**/*.jsx",
-      "packages/**/*.json",
-      "*.ts",
-      "*.js",
-      "*.json"
-    ]
+    "includes": ["packages/**/*.ts", "packages/**/*.tsx", "packages/**/*.json", "*.ts", "*.json"]
   },
   "formatter": {
     "enabled": true,
@@ -206,7 +197,7 @@
       }
     },
     {
-      "includes": ["**/jest.config.js", "**/jest.config.ts"],
+      "includes": ["**/jest.config.ts"],
       "linter": {
         "rules": {
           "style": {

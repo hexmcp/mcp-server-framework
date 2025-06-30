@@ -4,16 +4,16 @@
 export {
   McpCapabilityRegistry,
   MockPrimitiveRegistry,
-} from './capability-registry.js';
+} from './capability-registry';
 // Handshake handlers
-export { McpHandshakeHandlers } from './handshake-handlers.js';
+export { McpHandshakeHandlers } from './handshake-handlers';
 // Request gating
 export {
   McpRequestGate,
   RequestCategory,
-} from './request-gate.js';
+} from './request-gate';
 // Core state machine
-export { McpLifecycleManager } from './state-machine.js';
+export { McpLifecycleManager } from './state-machine';
 export {
   AlreadyInitializedError,
   type CapabilityRegistry,
@@ -29,4 +29,4 @@ export {
   type ShutdownEvent,
   type StateChangeEvent,
   VALID_TRANSITIONS,
-} from './types.js';
+} from './types';

@@ -5,9 +5,9 @@ import {
   McpRequestGate,
   MockPrimitiveRegistry,
   RequestCategory,
-} from '../../dist/lifecycle/index.js';
+} from '../../src/lifecycle/index';
 
-import { ALWAYS_ALLOWED_REQUESTS, OPERATIONAL_REQUESTS, VALID_INITIALIZE_REQUEST } from '../fixtures/handshake-fixtures.ts';
+import { ALWAYS_ALLOWED_REQUESTS, OPERATIONAL_REQUESTS, VALID_INITIALIZE_REQUEST } from '../fixtures/handshake-fixtures';
 
 describe('McpRequestGate', () => {
   let requestGate: McpRequestGate;

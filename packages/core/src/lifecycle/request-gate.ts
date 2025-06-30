@@ -1,6 +1,6 @@
 import type { ErrorCode } from '@modelcontextprotocol/sdk/types.js';
-import type { LifecycleManager, RequestGate } from './types.js';
-import { AlreadyInitializedError, LifecycleViolationError, NotInitializedError } from './types.js';
+import type { LifecycleManager, RequestGate } from './types';
+import { AlreadyInitializedError, LifecycleViolationError, NotInitializedError } from './types';
 
 /**
  * Request categories for lifecycle validation

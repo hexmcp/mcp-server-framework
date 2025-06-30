@@ -4,7 +4,7 @@ import {
   McpHandshakeHandlers,
   McpLifecycleManager,
   MockPrimitiveRegistry,
-} from '../../dist/lifecycle/index.js';
+} from '../../src/lifecycle/index';
 
 import {
   INVALID_PROTOCOL_VERSION_REQUEST,
@@ -15,7 +15,7 @@ import {
   SHUTDOWN_REQUEST_NO_REASON,
   VALID_INITIALIZE_REQUEST_WITH_ID,
   VALID_INITIALIZED_NOTIFICATION,
-} from '../fixtures/handshake-fixtures.ts';
+} from '../fixtures/handshake-fixtures';
 
 describe('McpHandshakeHandlers', () => {
   let handlers: McpHandshakeHandlers;

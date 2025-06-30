@@ -1,8 +1,8 @@
 import type { InitializedNotification, InitializeRequest, InitializeResult } from '@modelcontextprotocol/sdk/types.js';
 import { ErrorCode } from '@modelcontextprotocol/sdk/types.js';
 
-import type { LifecycleManager } from './types.js';
-import { AlreadyInitializedError, LifecycleViolationError } from './types.js';
+import type { LifecycleManager } from './types';
+import { AlreadyInitializedError, LifecycleViolationError } from './types';
 
 /**
  * JSON-RPC error response structure

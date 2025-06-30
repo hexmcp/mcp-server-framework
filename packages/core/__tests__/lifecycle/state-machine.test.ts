@@ -8,9 +8,9 @@ import {
   McpLifecycleManager,
   MockPrimitiveRegistry,
   NotInitializedError,
-} from '../../dist/lifecycle/index.js';
+} from '../../src/lifecycle/index';
 
-import { INVALID_PROTOCOL_VERSION_REQUEST, VALID_INITIALIZE_REQUEST } from '../fixtures/handshake-fixtures.ts';
+import { INVALID_PROTOCOL_VERSION_REQUEST, VALID_INITIALIZE_REQUEST } from '../fixtures/handshake-fixtures';
 
 describe('McpLifecycleManager', () => {
   let lifecycleManager: McpLifecycleManager;
