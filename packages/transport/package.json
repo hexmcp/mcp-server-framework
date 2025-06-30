@@ -1,6 +1,6 @@
 {
   "name": "@mcp-server-framework/transport",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Transport abstraction layer for MCP Server Framework",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
