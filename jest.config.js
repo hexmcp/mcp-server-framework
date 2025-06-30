@@ -21,6 +21,12 @@ module.exports = {
       testEnvironment: "node",
     },
     {
+      displayName: "transport",
+      testMatch: ["<rootDir>/packages/transport/**/*.(test|spec).+(ts|tsx|js)"],
+      preset: "ts-jest",
+      testEnvironment: "node",
+    },
+    {
       displayName: "codec-jsonrpc",
       testMatch: ["<rootDir>/packages/codec-jsonrpc/**/*.(test|spec).+(ts|tsx|js)"],
       preset: "ts-jest",
