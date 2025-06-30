@@ -1,9 +1,9 @@
-import { RpcError } from "./errors";
-import type { JsonRpcError, JsonRpcSuccess } from "./types";
+import { RpcError } from './errors';
+import type { JsonRpcError, JsonRpcSuccess } from './types';
 
 export function encodeJsonRpcSuccess<T>(id: string | number | null, result: T): JsonRpcSuccess<T> {
   return {
-    jsonrpc: "2.0",
+    jsonrpc: '2.0',
     id,
     result,
   };
@@ -11,7 +11,7 @@ export function encodeJsonRpcSuccess<T>(id: string | number | null, result: T): 
 
 export function encodeJsonRpcError(id: string | number | null, error: RpcError): JsonRpcError {
   return {
-    jsonrpc: "2.0",
+    jsonrpc: '2.0',
     id,
     error: {
       code: error.code,
@@ -21,14 +21,9 @@ export function encodeJsonRpcError(id: string | number | null, error: RpcError):
   };
 }
 
-export function encodeJsonRpcErrorFromPlain(
-  id: string | number | null,
-  code: number,
-  message: string,
-  data?: unknown
-): JsonRpcError {
+export function encodeJsonRpcErrorFromPlain(id: string | number | null, code: number, message: string, data?: unknown): JsonRpcError {
   return {
-    jsonrpc: "2.0",
+    jsonrpc: '2.0',
     id,
     error: {
       code,
@@ -46,10 +41,7 @@ export function encodeJsonRpcInvalidRequest(id: string | number | null = null): 
   return encodeJsonRpcError(id, RpcError.invalidRequest());
 }
 
-export function encodeJsonRpcMethodNotFound(
-  id: string | number | null,
-  method: string
-): JsonRpcError {
+export function encodeJsonRpcMethodNotFound(id: string | number | null, method: string): JsonRpcError {
   return encodeJsonRpcError(id, RpcError.methodNotFound(method));
 }
 

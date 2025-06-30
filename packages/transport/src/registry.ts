@@ -1,4 +1,4 @@
-import type { ServerTransport } from "./types";
+import type { ServerTransport } from './types';
 
 /**
  * Internal transport registry for managing multiple ServerTransport instances.
@@ -50,7 +50,7 @@ export class TransportRegistry {
    */
   registerTransport(transport: ServerTransport): void {
     if (!transport) {
-      throw new Error("Transport cannot be null or undefined");
+      throw new Error('Transport cannot be null or undefined');
     }
 
     this._transports.add(transport);

@@ -16,49 +16,49 @@ import {
   type JsonRpcResponse,
   type JsonRpcSuccess,
   RpcError,
-} from "../src/index";
+} from '../src/index';
 
-describe("Integration Tests", () => {
-  describe("type guards", () => {
-    it("should correctly identify JSON-RPC requests", () => {
+describe('Integration Tests', () => {
+  describe('type guards', () => {
+    it('should correctly identify JSON-RPC requests', () => {
       const request: JsonRpcMessage = {
-        jsonrpc: "2.0",
+        jsonrpc: '2.0',
         id: 1,
-        method: "test",
+        method: 'test',
       };
 
       expect(isJsonRpcRequest(request)).toBe(true);
       expect(isJsonRpcNotification(request)).toBe(false);
     });
 
-    it("should correctly identify JSON-RPC notifications", () => {
+    it('should correctly identify JSON-RPC notifications', () => {
       const notification: JsonRpcMessage = {
-        jsonrpc: "2.0",
-        method: "notify",
+        jsonrpc: '2.0',
+        method: 'notify',
       };
 
       expect(isJsonRpcRequest(notification)).toBe(false);
       expect(isJsonRpcNotification(notification)).toBe(true);
     });
 
-    it("should correctly identify success responses", () => {
+    it('should correctly identify success responses', () => {
       const success: JsonRpcResponse = {
-        jsonrpc: "2.0",
+        jsonrpc: '2.0',
         id: 1,
-        result: "success",
+        result: 'success',
       };
 
       expect(isJsonRpcSuccess(success)).toBe(true);
       expect(isJsonRpcError(success)).toBe(false);
     });
 
-    it("should correctly identify error responses", () => {
+    it('should correctly identify error responses', () => {
       const error: JsonRpcResponse = {
-        jsonrpc: "2.0",
+        jsonrpc: '2.0',
         id: 1,
         error: {
           code: -32600,
-          message: "Invalid Request",
+          message: 'Invalid Request',
         },
       };
 
@@ -67,12 +67,12 @@ describe("Integration Tests", () => {
     });
   });
 
-  describe("end-to-end workflow", () => {
-    it("should handle complete request-response cycle", () => {
+  describe('end-to-end workflow', () => {
+    it('should handle complete request-response cycle', () => {
       const requestJson = '{"jsonrpc":"2.0","id":1,"method":"add","params":[1,2]}';
 
       const request = decodeJsonRpcRequest<number[]>(requestJson);
-      expect(request.method).toBe("add");
+      expect(request.method).toBe('add');
       expect(request.params).toEqual([1, 2]);
 
       const params = request.params as [number, number];
@@ -80,19 +80,19 @@ describe("Integration Tests", () => {
       const response = encodeJsonRpcSuccess(request.id, result);
 
       expect(response).toEqual({
-        jsonrpc: "2.0",
+        jsonrpc: '2.0',
         id: 1,
         result: 3,
       });
     });
 
-    it("should handle error workflow", () => {
+    it('should handle error workflow', () => {
       const invalidJson = '{"jsonrpc":"2.0","method":123}';
 
       try {
         decodeJsonRpcRequest(invalidJson);
         // biome-ignore lint/correctness/noUndeclaredVariables: Jest global
-        fail("Should have thrown an error");
+        fail('Should have thrown an error');
       } catch (error) {
         expect(error).toBeInstanceOf(RpcError);
         const rpcError = error as RpcError;
@@ -102,20 +102,19 @@ describe("Integration Tests", () => {
       }
     });
 
-    it("should handle notification workflow", () => {
-      const notificationJson =
-        '{"jsonrpc":"2.0","method":"log","params":{"level":"info","message":"test"}}';
+    it('should handle notification workflow', () => {
+      const notificationJson = '{"jsonrpc":"2.0","method":"log","params":{"level":"info","message":"test"}}';
 
       const notification = decodeJsonRpcNotification(notificationJson);
-      expect(notification.method).toBe("log");
+      expect(notification.method).toBe('log');
       expect(notification.params).toEqual({
-        level: "info",
-        message: "test",
+        level: 'info',
+        message: 'test',
       });
-      expect("id" in notification).toBe(false);
+      expect('id' in notification).toBe(false);
     });
 
-    it("should handle mixed message decoding", () => {
+    it('should handle mixed message decoding', () => {
       const requestJson = '{"jsonrpc":"2.0","id":"req-1","method":"getData"}';
       const notificationJson = '{"jsonrpc":"2.0","method":"notify"}';
 
@@ -126,17 +125,17 @@ describe("Integration Tests", () => {
       expect(isJsonRpcNotification(notification)).toBe(true);
 
       if (isJsonRpcRequest(request)) {
-        expect(request.id).toBe("req-1");
+        expect(request.id).toBe('req-1');
       }
 
       if (isJsonRpcNotification(notification)) {
-        expect(notification.method).toBe("notify");
+        expect(notification.method).toBe('notify');
       }
     });
   });
 
-  describe("type safety", () => {
-    it("should maintain type safety with generics", () => {
+  describe('type safety', () => {
+    it('should maintain type safety with generics', () => {
       interface AddParams {
         a: number;
         b: number;
@@ -147,9 +146,9 @@ describe("Integration Tests", () => {
       }
 
       const request: JsonRpcRequest<AddParams> = {
-        jsonrpc: "2.0",
+        jsonrpc: '2.0',
         id: 1,
-        method: "add",
+        method: 'add',
         params: { a: 5, b: 3 },
       };
 
@@ -163,14 +162,14 @@ describe("Integration Tests", () => {
       expect(response.result.sum).toBe(8);
     });
 
-    it("should work with explicit JsonRpcError type", () => {
+    it('should work with explicit JsonRpcError type', () => {
       const errorResponse: JsonRpcError = {
-        jsonrpc: "2.0",
-        id: "test-id",
+        jsonrpc: '2.0',
+        id: 'test-id',
         error: {
           code: -32601,
-          message: "Method not found",
-          data: { method: "unknownMethod" },
+          message: 'Method not found',
+          data: { method: 'unknownMethod' },
         },
       };
 
@@ -179,7 +178,7 @@ describe("Integration Tests", () => {
       expect(errorResponse.error.code).toBe(-32601);
     });
 
-    it("should work with explicit JsonRpcNotification type", () => {
+    it('should work with explicit JsonRpcNotification type', () => {
       interface LogParams {
         level: string;
         message: string;
@@ -187,34 +186,34 @@ describe("Integration Tests", () => {
       }
 
       const notification: JsonRpcNotification<LogParams> = {
-        jsonrpc: "2.0",
-        method: "log",
+        jsonrpc: '2.0',
+        method: 'log',
         params: {
-          level: "info",
-          message: "System started",
+          level: 'info',
+          message: 'System started',
           timestamp: Date.now(),
         },
       };
 
       expect(isJsonRpcNotification(notification)).toBe(true);
       expect(isJsonRpcRequest(notification)).toBe(false);
-      expect(notification.method).toBe("log");
-      expect(notification.params?.level).toBe("info");
+      expect(notification.method).toBe('log');
+      expect(notification.params?.level).toBe('info');
     });
 
-    it("should handle JsonRpcResponse union type correctly", () => {
+    it('should handle JsonRpcResponse union type correctly', () => {
       const successResponse: JsonRpcResponse<string> = {
-        jsonrpc: "2.0",
+        jsonrpc: '2.0',
         id: 1,
-        result: "success",
+        result: 'success',
       };
 
       const errorResponse: JsonRpcResponse = {
-        jsonrpc: "2.0",
+        jsonrpc: '2.0',
         id: 1,
         error: {
           code: -32000,
-          message: "Server error",
+          message: 'Server error',
         },
       };
 
@@ -222,7 +221,7 @@ describe("Integration Tests", () => {
       expect(isJsonRpcError(errorResponse)).toBe(true);
 
       if (isJsonRpcSuccess(successResponse)) {
-        expect(successResponse.result).toBe("success");
+        expect(successResponse.result).toBe('success');
       }
 
       if (isJsonRpcError(errorResponse)) {
@@ -230,27 +229,27 @@ describe("Integration Tests", () => {
       }
     });
 
-    it("should handle JsonRpcMessage union type correctly", () => {
+    it('should handle JsonRpcMessage union type correctly', () => {
       const request: JsonRpcMessage = {
-        jsonrpc: "2.0",
-        id: "req-1",
-        method: "getData",
+        jsonrpc: '2.0',
+        id: 'req-1',
+        method: 'getData',
       };
 
       const notification: JsonRpcMessage = {
-        jsonrpc: "2.0",
-        method: "notify",
+        jsonrpc: '2.0',
+        method: 'notify',
       };
 
       expect(isJsonRpcRequest(request)).toBe(true);
       expect(isJsonRpcNotification(notification)).toBe(true);
 
       if (isJsonRpcRequest(request)) {
-        expect(request.id).toBe("req-1");
+        expect(request.id).toBe('req-1');
       }
 
       if (isJsonRpcNotification(notification)) {
-        expect(notification.method).toBe("notify");
+        expect(notification.method).toBe('notify');
       }
     });
   });

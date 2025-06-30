@@ -1,24 +1,24 @@
-import { MockTransport } from "../src/mock-transport";
-import { TransportRegistry } from "../src/registry";
-import type { ServerTransport, TransportDispatch } from "../src/types";
+import { MockTransport } from '../src/mock-transport';
+import { TransportRegistry } from '../src/registry';
+import type { ServerTransport, TransportDispatch } from '../src/types';
 
-describe("TransportRegistry", () => {
+describe('TransportRegistry', () => {
   let registry: TransportRegistry;
 
   beforeEach(() => {
     registry = new TransportRegistry();
   });
 
-  describe("constructor", () => {
-    it("should create an empty registry", () => {
+  describe('constructor', () => {
+    it('should create an empty registry', () => {
       expect(registry.size).toBe(0);
       expect(registry.getTransports()).toHaveLength(0);
     });
   });
 
-  describe("registerTransport", () => {
-    it("should register a transport successfully", () => {
-      const transport = new MockTransport({ name: "test-transport" });
+  describe('registerTransport', () => {
+    it('should register a transport successfully', () => {
+      const transport = new MockTransport({ name: 'test-transport' });
 
       registry.registerTransport(transport);
 
@@ -27,8 +27,8 @@ describe("TransportRegistry", () => {
       expect(registry.getTransports()).toContain(transport);
     });
 
-    it("should prevent duplicate transport registration", () => {
-      const transport = new MockTransport({ name: "test-transport" });
+    it('should prevent duplicate transport registration', () => {
+      const transport = new MockTransport({ name: 'test-transport' });
 
       registry.registerTransport(transport);
       registry.registerTransport(transport);
@@ -37,10 +37,10 @@ describe("TransportRegistry", () => {
       expect(registry.getTransports()).toHaveLength(1);
     });
 
-    it("should register multiple different transports", () => {
-      const transport1 = new MockTransport({ name: "transport-1" });
-      const transport2 = new MockTransport({ name: "transport-2" });
-      const transport3 = new MockTransport({ name: "transport-3" });
+    it('should register multiple different transports', () => {
+      const transport1 = new MockTransport({ name: 'transport-1' });
+      const transport2 = new MockTransport({ name: 'transport-2' });
+      const transport3 = new MockTransport({ name: 'transport-3' });
 
       registry.registerTransport(transport1);
       registry.registerTransport(transport2);
@@ -52,30 +52,26 @@ describe("TransportRegistry", () => {
       expect(registry.hasTransport(transport3)).toBe(true);
     });
 
-    it("should throw error for null transport", () => {
-      expect(() => registry.registerTransport(null as any)).toThrow(
-        "Transport cannot be null or undefined"
-      );
+    it('should throw error for null transport', () => {
+      expect(() => registry.registerTransport(null as any)).toThrow('Transport cannot be null or undefined');
     });
 
-    it("should throw error for undefined transport", () => {
-      expect(() => registry.registerTransport(undefined as any)).toThrow(
-        "Transport cannot be null or undefined"
-      );
+    it('should throw error for undefined transport', () => {
+      expect(() => registry.registerTransport(undefined as any)).toThrow('Transport cannot be null or undefined');
     });
   });
 
-  describe("getTransports", () => {
-    it("should return empty array for empty registry", () => {
+  describe('getTransports', () => {
+    it('should return empty array for empty registry', () => {
       const transports = registry.getTransports();
 
       expect(transports).toHaveLength(0);
       expect(Array.isArray(transports)).toBe(true);
     });
 
-    it("should return all registered transports", () => {
-      const transport1 = new MockTransport({ name: "transport-1" });
-      const transport2 = new MockTransport({ name: "transport-2" });
+    it('should return all registered transports', () => {
+      const transport1 = new MockTransport({ name: 'transport-1' });
+      const transport2 = new MockTransport({ name: 'transport-2' });
 
       registry.registerTransport(transport1);
       registry.registerTransport(transport2);
@@ -87,8 +83,8 @@ describe("TransportRegistry", () => {
       expect(transports).toContain(transport2);
     });
 
-    it("should return a new array each time", () => {
-      const transport = new MockTransport({ name: "test-transport" });
+    it('should return a new array each time', () => {
+      const transport = new MockTransport({ name: 'test-transport' });
       registry.registerTransport(transport);
 
       const transports1 = registry.getTransports();
@@ -98,36 +94,36 @@ describe("TransportRegistry", () => {
       expect(transports1).toEqual(transports2);
     });
 
-    it("should return readonly array that cannot modify registry", () => {
-      const transport = new MockTransport({ name: "test-transport" });
+    it('should return readonly array that cannot modify registry', () => {
+      const transport = new MockTransport({ name: 'test-transport' });
       registry.registerTransport(transport);
 
       const transports = registry.getTransports();
       // @ts-expect-error: Testing readonly array
-      transports.push(new MockTransport({ name: "should-not-affect-registry" }));
+      transports.push(new MockTransport({ name: 'should-not-affect-registry' }));
 
       expect(registry.size).toBe(1);
       expect(registry.getTransports()).toHaveLength(1);
     });
   });
 
-  describe("hasTransport", () => {
-    it("should return false for unregistered transport", () => {
-      const transport = new MockTransport({ name: "test-transport" });
+  describe('hasTransport', () => {
+    it('should return false for unregistered transport', () => {
+      const transport = new MockTransport({ name: 'test-transport' });
 
       expect(registry.hasTransport(transport)).toBe(false);
     });
 
-    it("should return true for registered transport", () => {
-      const transport = new MockTransport({ name: "test-transport" });
+    it('should return true for registered transport', () => {
+      const transport = new MockTransport({ name: 'test-transport' });
 
       registry.registerTransport(transport);
 
       expect(registry.hasTransport(transport)).toBe(true);
     });
 
-    it("should return false after transport is unregistered", () => {
-      const transport = new MockTransport({ name: "test-transport" });
+    it('should return false after transport is unregistered', () => {
+      const transport = new MockTransport({ name: 'test-transport' });
 
       registry.registerTransport(transport);
       registry.unregisterTransport(transport);
@@ -136,9 +132,9 @@ describe("TransportRegistry", () => {
     });
   });
 
-  describe("unregisterTransport", () => {
-    it("should return false for unregistered transport", () => {
-      const transport = new MockTransport({ name: "test-transport" });
+  describe('unregisterTransport', () => {
+    it('should return false for unregistered transport', () => {
+      const transport = new MockTransport({ name: 'test-transport' });
 
       const result = registry.unregisterTransport(transport);
 
@@ -146,8 +142,8 @@ describe("TransportRegistry", () => {
       expect(registry.size).toBe(0);
     });
 
-    it("should return true and remove registered transport", () => {
-      const transport = new MockTransport({ name: "test-transport" });
+    it('should return true and remove registered transport', () => {
+      const transport = new MockTransport({ name: 'test-transport' });
 
       registry.registerTransport(transport);
       const result = registry.unregisterTransport(transport);
@@ -157,9 +153,9 @@ describe("TransportRegistry", () => {
       expect(registry.hasTransport(transport)).toBe(false);
     });
 
-    it("should only remove specified transport", () => {
-      const transport1 = new MockTransport({ name: "transport-1" });
-      const transport2 = new MockTransport({ name: "transport-2" });
+    it('should only remove specified transport', () => {
+      const transport1 = new MockTransport({ name: 'transport-1' });
+      const transport2 = new MockTransport({ name: 'transport-2' });
 
       registry.registerTransport(transport1);
       registry.registerTransport(transport2);
@@ -173,14 +169,14 @@ describe("TransportRegistry", () => {
     });
   });
 
-  describe("size", () => {
-    it("should return 0 for empty registry", () => {
+  describe('size', () => {
+    it('should return 0 for empty registry', () => {
       expect(registry.size).toBe(0);
     });
 
-    it("should return correct count after registrations", () => {
-      const transport1 = new MockTransport({ name: "transport-1" });
-      const transport2 = new MockTransport({ name: "transport-2" });
+    it('should return correct count after registrations', () => {
+      const transport1 = new MockTransport({ name: 'transport-1' });
+      const transport2 = new MockTransport({ name: 'transport-2' });
 
       expect(registry.size).toBe(0);
 
@@ -191,9 +187,9 @@ describe("TransportRegistry", () => {
       expect(registry.size).toBe(2);
     });
 
-    it("should return correct count after unregistrations", () => {
-      const transport1 = new MockTransport({ name: "transport-1" });
-      const transport2 = new MockTransport({ name: "transport-2" });
+    it('should return correct count after unregistrations', () => {
+      const transport1 = new MockTransport({ name: 'transport-1' });
+      const transport2 = new MockTransport({ name: 'transport-2' });
 
       registry.registerTransport(transport1);
       registry.registerTransport(transport2);
@@ -207,17 +203,17 @@ describe("TransportRegistry", () => {
     });
   });
 
-  describe("clear", () => {
-    it("should clear empty registry without error", () => {
+  describe('clear', () => {
+    it('should clear empty registry without error', () => {
       registry.clear();
 
       expect(registry.size).toBe(0);
     });
 
-    it("should remove all registered transports", () => {
-      const transport1 = new MockTransport({ name: "transport-1" });
-      const transport2 = new MockTransport({ name: "transport-2" });
-      const transport3 = new MockTransport({ name: "transport-3" });
+    it('should remove all registered transports', () => {
+      const transport1 = new MockTransport({ name: 'transport-1' });
+      const transport2 = new MockTransport({ name: 'transport-2' });
+      const transport3 = new MockTransport({ name: 'transport-3' });
 
       registry.registerTransport(transport1);
       registry.registerTransport(transport2);
@@ -235,17 +231,17 @@ describe("TransportRegistry", () => {
     });
   });
 
-  describe("iterator", () => {
-    it("should iterate over empty registry", () => {
+  describe('iterator', () => {
+    it('should iterate over empty registry', () => {
       const transports = Array.from(registry);
 
       expect(transports).toHaveLength(0);
     });
 
-    it("should iterate over all registered transports", () => {
-      const transport1 = new MockTransport({ name: "transport-1" });
-      const transport2 = new MockTransport({ name: "transport-2" });
-      const transport3 = new MockTransport({ name: "transport-3" });
+    it('should iterate over all registered transports', () => {
+      const transport1 = new MockTransport({ name: 'transport-1' });
+      const transport2 = new MockTransport({ name: 'transport-2' });
+      const transport3 = new MockTransport({ name: 'transport-3' });
 
       registry.registerTransport(transport1);
       registry.registerTransport(transport2);
@@ -259,9 +255,9 @@ describe("TransportRegistry", () => {
       expect(transports).toContain(transport3);
     });
 
-    it("should support for-of iteration", () => {
-      const transport1 = new MockTransport({ name: "transport-1" });
-      const transport2 = new MockTransport({ name: "transport-2" });
+    it('should support for-of iteration', () => {
+      const transport1 = new MockTransport({ name: 'transport-1' });
+      const transport2 = new MockTransport({ name: 'transport-2' });
 
       registry.registerTransport(transport1);
       registry.registerTransport(transport2);
@@ -272,14 +268,14 @@ describe("TransportRegistry", () => {
       }
 
       expect(names).toHaveLength(2);
-      expect(names).toContain("transport-1");
-      expect(names).toContain("transport-2");
+      expect(names).toContain('transport-1');
+      expect(names).toContain('transport-2');
     });
 
-    it("should support functional programming patterns", () => {
-      const transport1 = new MockTransport({ name: "transport-1" });
-      const transport2 = new MockTransport({ name: "transport-2" });
-      const transport3 = new MockTransport({ name: "transport-3" });
+    it('should support functional programming patterns', () => {
+      const transport1 = new MockTransport({ name: 'transport-1' });
+      const transport2 = new MockTransport({ name: 'transport-2' });
+      const transport3 = new MockTransport({ name: 'transport-3' });
 
       registry.registerTransport(transport1);
       registry.registerTransport(transport2);
@@ -289,16 +285,13 @@ describe("TransportRegistry", () => {
         .map((t) => t.name)
         .sort();
 
-      expect(names).toEqual(["transport-1", "transport-2", "transport-3"]);
+      expect(names).toEqual(['transport-1', 'transport-2', 'transport-3']);
     });
   });
 
-  describe("integration scenarios", () => {
-    it("should handle complex registration and unregistration patterns", () => {
-      const transports = Array.from(
-        { length: 5 },
-        (_, i) => new MockTransport({ name: `transport-${i}` })
-      );
+  describe('integration scenarios', () => {
+    it('should handle complex registration and unregistration patterns', () => {
+      const transports = Array.from({ length: 5 }, (_, i) => new MockTransport({ name: `transport-${i}` }));
 
       transports.forEach((t) => registry.registerTransport(t));
       expect(registry.size).toBe(5);
@@ -313,16 +306,16 @@ describe("TransportRegistry", () => {
       }
       expect(registry.size).toBe(3);
 
-      registry.registerTransport(new MockTransport({ name: "new-transport" }));
+      registry.registerTransport(new MockTransport({ name: 'new-transport' }));
       expect(registry.size).toBe(4);
 
       registry.clear();
       expect(registry.size).toBe(0);
     });
 
-    it("should maintain Set semantics with custom transport implementations", () => {
+    it('should maintain Set semantics with custom transport implementations', () => {
       class CustomTransport implements ServerTransport {
-        readonly name = "custom";
+        readonly name = 'custom';
         async start(_dispatch: TransportDispatch): Promise<void> {
           // No-op for testing
         }

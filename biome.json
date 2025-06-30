@@ -22,7 +22,7 @@
     "enabled": true,
     "indentStyle": "space",
     "indentWidth": 2,
-    "lineWidth": 100,
+    "lineWidth": 140,
     "lineEnding": "lf"
   },
   "linter": {
@@ -169,7 +169,7 @@
   },
   "javascript": {
     "formatter": {
-      "quoteStyle": "double",
+      "quoteStyle": "single",
       "jsxQuoteStyle": "double",
       "quoteProperties": "asNeeded",
       "trailingCommas": "es5",
@@ -178,17 +178,7 @@
       "bracketSpacing": true,
       "bracketSameLine": false
     },
-    "globals": [
-      "jest",
-      "describe",
-      "test",
-      "it",
-      "expect",
-      "beforeEach",
-      "afterEach",
-      "beforeAll",
-      "afterAll"
-    ]
+    "globals": ["jest", "describe", "test", "it", "expect", "beforeEach", "afterEach", "beforeAll", "afterAll"]
   },
   "json": {
     "formatter": {

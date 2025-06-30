@@ -13,7 +13,7 @@ export enum JSON_RPC_ERROR_CODES {
 }
 
 function isDebugMode(): boolean {
-  return process.env.MCPKIT_DEBUG === "1";
+  return process.env.MCPKIT_DEBUG === '1';
 }
 
 export class RpcError extends Error {
@@ -25,7 +25,7 @@ export class RpcError extends Error {
     public readonly data?: unknown
   ) {
     super(message);
-    this.name = "RpcError";
+    this.name = 'RpcError';
 
     if (Error.captureStackTrace) {
       Error.captureStackTrace(this, RpcError);
@@ -43,11 +43,11 @@ export class RpcError extends Error {
   }
 
   static parseError(data?: unknown): RpcError {
-    return new RpcError(JSON_RPC_ERROR_CODES.PARSE_ERROR, "Parse error", data);
+    return new RpcError(JSON_RPC_ERROR_CODES.PARSE_ERROR, 'Parse error', data);
   }
 
   static invalidRequest(data?: unknown): RpcError {
-    return new RpcError(JSON_RPC_ERROR_CODES.INVALID_REQUEST, "Invalid Request", data);
+    return new RpcError(JSON_RPC_ERROR_CODES.INVALID_REQUEST, 'Invalid Request', data);
   }
 
   static methodNotFound(method: string, data?: unknown): RpcError {
@@ -55,11 +55,11 @@ export class RpcError extends Error {
   }
 
   static invalidParams(data?: unknown): RpcError {
-    return new RpcError(JSON_RPC_ERROR_CODES.INVALID_PARAMS, "Invalid params", data);
+    return new RpcError(JSON_RPC_ERROR_CODES.INVALID_PARAMS, 'Invalid params', data);
   }
 
   static internalError(data?: unknown): RpcError {
-    return new RpcError(JSON_RPC_ERROR_CODES.INTERNAL_ERROR, "Internal error", data);
+    return new RpcError(JSON_RPC_ERROR_CODES.INTERNAL_ERROR, 'Internal error', data);
   }
 
   static custom(code: number, message: string, data?: unknown): RpcError {

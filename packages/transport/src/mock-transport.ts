@@ -1,5 +1,5 @@
-import type { ServerTransport, TransportDispatch, TransportMetadata } from "./types";
-import { TransportState } from "./types";
+import type { ServerTransport, TransportDispatch, TransportMetadata } from './types';
+import { TransportState } from './types';
 
 export interface MockTransportMessage {
   message: unknown;
@@ -31,7 +31,7 @@ export class MockTransport implements ServerTransport {
 
   constructor(options: MockTransportOptions = {}) {
     this._options = {
-      name: "mock",
+      name: 'mock',
       startDelay: 0,
       stopDelay: 0,
       simulateStartError: false,
@@ -62,7 +62,7 @@ export class MockTransport implements ServerTransport {
 
     if (this._options.simulateStartError) {
       this._state = TransportState.ERROR;
-      throw new Error("Simulated start error");
+      throw new Error('Simulated start error');
     }
 
     if (this._options.startDelay > 0) {
@@ -88,7 +88,7 @@ export class MockTransport implements ServerTransport {
 
     if (this._options.simulateStopError) {
       this._state = TransportState.ERROR;
-      throw new Error("Simulated stop error");
+      throw new Error('Simulated stop error');
     }
 
     if (this._options.stopDelay > 0) {

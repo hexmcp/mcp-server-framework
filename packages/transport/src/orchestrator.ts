@@ -1,5 +1,5 @@
-import type { TransportRegistry } from "./registry";
-import type { TransportDispatch } from "./types";
+import type { TransportRegistry } from './registry';
+import type { TransportDispatch } from './types';
 
 /**
  * Transport orchestration error that aggregates individual transport failures.
@@ -13,7 +13,7 @@ export class TransportOrchestrationError extends Error {
     public readonly failures: Array<{ transport: string; error: Error }>
   ) {
     super(message);
-    this.name = "TransportOrchestrationError";
+    this.name = 'TransportOrchestrationError';
   }
 }
 
@@ -71,16 +71,13 @@ export class TransportOrchestrationError extends Error {
  * // server.start() -> startAllTransports(server.registry, server.dispatch)
  * ```
  */
-export async function startAllTransports(
-  registry: TransportRegistry,
-  dispatch: TransportDispatch
-): Promise<void> {
+export async function startAllTransports(registry: TransportRegistry, dispatch: TransportDispatch): Promise<void> {
   if (!registry) {
-    throw new Error("Registry cannot be null or undefined");
+    throw new Error('Registry cannot be null or undefined');
   }
 
-  if (typeof dispatch !== "function") {
-    throw new Error("Dispatch must be a function");
+  if (typeof dispatch !== 'function') {
+    throw new Error('Dispatch must be a function');
   }
 
   const transports = registry.getTransports();
@@ -155,7 +152,7 @@ export async function startAllTransports(
  */
 export async function stopAllTransports(registry: TransportRegistry): Promise<void> {
   if (!registry) {
-    throw new Error("Registry cannot be null or undefined");
+    throw new Error('Registry cannot be null or undefined');
   }
 
   const transports = registry.getTransports();

@@ -8,11 +8,7 @@ export interface TransportMetadata {
   [key: string]: unknown;
 }
 
-export type TransportDispatch = (
-  message: unknown,
-  respond: (response: unknown) => Promise<void>,
-  metadata?: TransportMetadata
-) => void;
+export type TransportDispatch = (message: unknown, respond: (response: unknown) => Promise<void>, metadata?: TransportMetadata) => void;
 
 export interface ServerTransport {
   readonly name: string;
@@ -22,13 +18,13 @@ export interface ServerTransport {
 
 export enum TransportState {
   // biome-ignore lint/style/useNamingConvention: SCREAMING_SNAKE_CASE preferred for enums
-  STOPPED = "stopped",
+  STOPPED = 'stopped',
   // biome-ignore lint/style/useNamingConvention: SCREAMING_SNAKE_CASE preferred for enums
-  STARTING = "starting",
+  STARTING = 'starting',
   // biome-ignore lint/style/useNamingConvention: SCREAMING_SNAKE_CASE preferred for enums
-  RUNNING = "running",
+  RUNNING = 'running',
   // biome-ignore lint/style/useNamingConvention: SCREAMING_SNAKE_CASE preferred for enums
-  STOPPING = "stopping",
+  STOPPING = 'stopping',
   // biome-ignore lint/style/useNamingConvention: SCREAMING_SNAKE_CASE preferred for enums
-  ERROR = "error",
+  ERROR = 'error',
 }
