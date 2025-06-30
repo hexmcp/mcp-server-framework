@@ -193,6 +193,45 @@ describe('McpCapabilityRegistry', () => {
       });
     });
   });
+
+  describe('experimental capabilities', () => {
+    it('should enable experimental capabilities', () => {
+      capabilityRegistry.enableExperimental({ customFeature: { enabled: true } });
+
+      const capabilities = capabilityRegistry.getServerCapabilities();
+      expect(capabilities.experimental).toEqual({
+        customFeature: { enabled: true },
+      });
+    });
+
+    it('should add specific experimental capability', () => {
+      capabilityRegistry.addExperimentalCapability('newFeature', { version: '1.0' });
+
+      const capabilities = capabilityRegistry.getServerCapabilities();
+      expect(capabilities.experimental).toEqual({
+        newFeature: { version: '1.0' },
+      });
+    });
+
+    it('should remove experimental capability', () => {
+      capabilityRegistry.addExperimentalCapability('tempFeature', { temp: true });
+      capabilityRegistry.removeExperimentalCapability('tempFeature');
+
+      const capabilities = capabilityRegistry.getServerCapabilities();
+      expect(capabilities.experimental).toEqual({});
+    });
+
+    it('should merge experimental capabilities', () => {
+      capabilityRegistry.addExperimentalCapability('feature1', { config: 'a' });
+      capabilityRegistry.addExperimentalCapability('feature2', { config: 'b' });
+
+      const capabilities = capabilityRegistry.getServerCapabilities();
+      expect(capabilities.experimental).toEqual({
+        feature1: { config: 'a' },
+        feature2: { config: 'b' },
+      });
+    });
+  });
 });
 
 describe('MockPrimitiveRegistry', () => {

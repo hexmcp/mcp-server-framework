@@ -101,7 +101,7 @@ describe('MCP Lifecycle Integration', () => {
 
         const error = requestGate.getValidationError(request.method);
         expect(error).toMatchObject({
-          code: -32600,
+          code: -32002,
           message: expect.stringContaining('Server not initialized'),
         });
       }

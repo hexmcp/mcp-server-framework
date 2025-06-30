@@ -127,6 +127,42 @@ export class McpCapabilityRegistry implements CapabilityRegistry {
   }
 
   /**
+   * Enable experimental capabilities
+   */
+  enableExperimental(experimentalCapabilities: Record<string, unknown> = {}): void {
+    this.updateCapabilities({
+      experimental: {
+        ...this._capabilities.experimental,
+        ...experimentalCapabilities,
+      },
+    });
+  }
+
+  /**
+   * Add a specific experimental capability
+   */
+  addExperimentalCapability(name: string, config: unknown = {}): void {
+    const currentExperimental = this._capabilities.experimental || {};
+    this.updateCapabilities({
+      experimental: {
+        ...currentExperimental,
+        [name]: config,
+      },
+    });
+  }
+
+  /**
+   * Remove an experimental capability
+   */
+  removeExperimentalCapability(name: string): void {
+    const currentExperimental = { ...this._capabilities.experimental };
+    delete currentExperimental[name];
+    this.updateCapabilities({
+      experimental: currentExperimental,
+    });
+  }
+
+  /**
    * Disable a capability
    */
   disableCapability(capability: keyof ServerCapabilities): void {

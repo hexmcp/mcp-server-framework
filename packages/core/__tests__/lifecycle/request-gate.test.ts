@@ -138,7 +138,7 @@ describe('McpRequestGate', () => {
       const error = requestGate.getValidationError('prompts/list');
 
       expect(error).toMatchObject({
-        code: -32600,
+        code: -32002,
         message: "Server not initialized. Cannot process 'prompts/list' request before initialization.",
       });
     });

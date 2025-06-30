@@ -1,4 +1,3 @@
-import type { ErrorCode } from '@modelcontextprotocol/sdk/types.js';
 import type { LifecycleManager, RequestGate } from './types';
 import { AlreadyInitializedError, LifecycleViolationError, NotInitializedError } from './types';
 
@@ -98,7 +97,7 @@ export class McpRequestGate implements RequestGate {
    * Get error response for invalid requests
    */
   getValidationError(method: string): {
-    code: ErrorCode;
+    code: number;
     message: string;
     data?: unknown;
   } | null {

@@ -23,11 +23,12 @@ This release introduces a complete Model Context Protocol (MCP) lifecycle manage
 **Protocol Support:**
 - Multiple MCP protocol versions (2025-06-18, 2025-03-26, 2024-11-05)
 - Proper capability negotiation during handshake
-- State-aware request validation with appropriate error responses
+- State-aware request validation with appropriate MCP error codes (-32002, -32003, -32600)
 - Graceful error recovery and state transitions
+- Experimental capabilities support with dynamic configuration
 
 **Quality Assurance:**
-- 86 comprehensive tests covering edge cases and protocol scenarios
+- 90 comprehensive tests covering edge cases and protocol scenarios
 - Full TypeScript support with strict type checking
 - Biome linting compliance
 - Integration-ready design for transport and dispatcher layers

@@ -105,7 +105,7 @@ export class LifecycleViolationError extends Error {
  * MCP protocol error for requests before initialization
  */
 export class NotInitializedError extends Error {
-  public readonly code = ErrorCode.InvalidRequest;
+  public readonly code = -32002;
 
   constructor(method: string) {
     super(`Server not initialized. Cannot process '${method}' request before initialization.`);
@@ -122,6 +122,18 @@ export class AlreadyInitializedError extends Error {
   constructor() {
     super('Server already initialized. Cannot initialize again.');
     this.name = 'AlreadyInitializedError';
+  }
+}
+
+/**
+ * MCP protocol error for requests after shutdown
+ */
+export class PostShutdownError extends Error {
+  public readonly code = -32003;
+
+  constructor(method: string) {
+    super(`Server has been shut down. Cannot process '${method}' request after shutdown.`);
+    this.name = 'PostShutdownError';
   }
 }
 
