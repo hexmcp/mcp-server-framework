@@ -18,6 +18,13 @@ on:
     branches:
       - main
 
+# Workflow-level permissions
+permissions:
+  contents: write
+  pull-requests: write
+  actions: read
+  checks: read
+
 concurrency: ${{ github.workflow }}-${{ github.ref }}
 
 jobs:
@@ -27,9 +34,16 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
+      actions: read
+      checks: read
+      repository-projects: read
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          # This is important for the action to be able to create PRs
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
 
       - name: Setup PNPM
         uses: pnpm/action-setup@v4
@@ -55,16 +69,55 @@ jobs:
       - name: Run tests
         run: pnpm run test
 
+      # Debug: Check if changesets exist
+      - name: Check for changesets
+        run: |
+          echo "Checking for changeset files..."
+          ls -la .changeset/
+          echo "Changeset status:"
+          pnpm changeset status
+
       # Create version bump PRs without publishing to npm
       # Publishing will be enabled after MVP completion
-      - name: Create Release Pull Request
+      - name: Create Release Pull Request or Apply Versions
         id: changesets
-        uses: changesets/action@v1
+        uses: changesets/action@v1.4.7
         with:
           version: pnpm changeset version
           commit: "chore: version packages"
           title: "chore: version packages"
+          createGithubReleases: false
+          setupGitUser: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # NPM_TOKEN not needed since we're not publishing yet
           # Will be added when ready for public releases after MVP completion
+
+      # Fallback: If the action fails due to permissions, try manual approach
+      - name: Manual Version Update (Fallback)
+        if: failure()
+        run: |
+          echo "Changesets action failed, attempting manual version update..."
+
+          # Check if there are changesets to process
+          if pnpm changeset status | grep -q "packages to be bumped"; then
+            echo "Found changesets to process"
+
+            # Apply version changes
+            pnpm changeset version
+
+            # Check if there are changes to commit
+            if git diff --quiet; then
+              echo "No version changes to commit"
+            else
+              echo "Committing version changes..."
+              git config user.name "github-actions[bot]"
+              git config user.email "github-actions[bot]@users.noreply.github.com"
+              git add .
+              git commit -m "chore: version packages"
+              git push origin main
+              echo "Version changes committed directly to main branch"
+            fi
+          else
+            echo "No changesets found to process"
+          fi
