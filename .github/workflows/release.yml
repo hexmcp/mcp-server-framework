@@ -6,7 +6,8 @@ name: Release
 # Current behavior:
 # 1. Runs quality checks (linting, type checking, tests)
 # 2. Creates "Version Packages" pull requests with changelog updates
-# 3. When version PR is merged, packages are versioned but NOT published
+# 3. Auto-merge is handled by the dedicated auto-merge-version-pr.yml workflow
+# 4. When version PR is merged, packages are versioned but NOT published
 #
 # To enable publishing after MVP completion:
 # 1. Add NPM_TOKEN to repository secrets
@@ -69,19 +70,20 @@ jobs:
       - name: Run tests
         run: pnpm run test
 
-      # Debug: Check if changesets exist
+      # Check changeset status before processing
       - name: Check for changesets
         run: |
           echo "Checking for changeset files..."
-          ls -la .changeset/
+          ls -la .changeset/ | grep -E '\.(md|json)$' || echo "No changeset files found"
           echo "Changeset status:"
           pnpm changeset status
 
       # Create version bump PRs without publishing to npm
       # Publishing will be enabled after MVP completion
+      # Auto-merge is handled by the dedicated auto-merge workflow
       - name: Create Release Pull Request or Apply Versions
         id: changesets
-        uses: changesets/action@v1.4.7
+        uses: changesets/action@v1.5.3
         with:
           version: pnpm changeset version
           commit: "chore: version packages"
@@ -93,48 +95,15 @@ jobs:
           # NPM_TOKEN not needed since we're not publishing yet
           # Will be added when ready for public releases after MVP completion
 
-      # Auto-merge the Version Packages PR if one was created
-      - name: Auto-merge Version Packages PR
-        if: steps.changesets.outputs.hasChangesets == 'true' && steps.changesets.outputs.pullRequestNumber != ''
+      # Log information about the changesets action results
+      - name: Log Changesets Results
         run: |
-          echo "Version Packages PR created: #${{ steps.changesets.outputs.pullRequestNumber }}"
-          echo "Auto-merging Version Packages PR..."
-
-          # Enable auto-merge on the PR
-          gh pr merge ${{ steps.changesets.outputs.pullRequestNumber }} \
-            --auto \
-            --squash \
-            --delete-branch
-
-          echo "Auto-merge enabled for PR #${{ steps.changesets.outputs.pullRequestNumber }}"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      # Fallback: If the action fails due to permissions, try manual approach
-      - name: Manual Version Update (Fallback)
-        if: failure()
-        run: |
-          echo "Changesets action failed, attempting manual version update..."
-
-          # Check if there are changesets to process
-          if pnpm changeset status | grep -q "packages to be bumped"; then
-            echo "Found changesets to process"
-
-            # Apply version changes
-            pnpm changeset version
-
-            # Check if there are changes to commit
-            if git diff --quiet; then
-              echo "No version changes to commit"
-            else
-              echo "Committing version changes..."
-              git config user.name "github-actions[bot]"
-              git config user.email "github-actions[bot]@users.noreply.github.com"
-              git add .
-              git commit -m "chore: version packages"
-              git push origin main
-              echo "Version changes committed directly to main branch"
-            fi
+          echo "Changesets action completed"
+          echo "Has changesets: ${{ steps.changesets.outputs.hasChangesets }}"
+          echo "Published: ${{ steps.changesets.outputs.published }}"
+          if [ "${{ steps.changesets.outputs.pullRequestNumber }}" != "" ]; then
+            echo "Version Packages PR created: #${{ steps.changesets.outputs.pullRequestNumber }}"
+            echo "The dedicated auto-merge workflow will handle merging this PR automatically"
           else
-            echo "No changesets found to process"
+            echo "No Version Packages PR was created (no pending changesets or already applied)"
           fi
