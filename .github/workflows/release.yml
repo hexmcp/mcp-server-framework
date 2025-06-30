@@ -93,6 +93,23 @@ jobs:
           # NPM_TOKEN not needed since we're not publishing yet
           # Will be added when ready for public releases after MVP completion
 
+      # Auto-merge the Version Packages PR if one was created
+      - name: Auto-merge Version Packages PR
+        if: steps.changesets.outputs.hasChangesets == 'true' && steps.changesets.outputs.pullRequestNumber != ''
+        run: |
+          echo "Version Packages PR created: #${{ steps.changesets.outputs.pullRequestNumber }}"
+          echo "Auto-merging Version Packages PR..."
+
+          # Enable auto-merge on the PR
+          gh pr merge ${{ steps.changesets.outputs.pullRequestNumber }} \
+            --auto \
+            --squash \
+            --delete-branch
+
+          echo "Auto-merge enabled for PR #${{ steps.changesets.outputs.pullRequestNumber }}"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       # Fallback: If the action fails due to permissions, try manual approach
       - name: Manual Version Update (Fallback)
         if: failure()

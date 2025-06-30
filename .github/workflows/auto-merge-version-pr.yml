@@ -1,0 +1,62 @@
+name: Auto-merge Version Packages PR
+
+# This workflow automatically merges "Version Packages" pull requests created by Changesets
+# It only merges PRs that:
+# 1. Are created by github-actions[bot]
+# 2. Have the title "chore: version packages"
+# 3. Pass all required checks
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [main]
+
+permissions:
+  contents: write
+  pull-requests: write
+  checks: read
+
+jobs:
+  auto-merge-version-pr:
+    name: Auto-merge Version Packages PR
+    runs-on: ubuntu-latest
+    # Only run for PRs created by github-actions[bot] with version packages title
+    if: |
+      github.actor == 'github-actions[bot]' && 
+      startsWith(github.event.pull_request.title, 'chore: version packages')
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Wait for checks to complete
+        uses: lewagon/wait-on-check-action@v1.3.4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          check-name: 'CI'
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          wait-interval: 30
+          allowed-conclusions: success,skipped
+
+      - name: Auto-merge Version Packages PR
+        run: |
+          echo "Auto-merging Version Packages PR #${{ github.event.pull_request.number }}"
+          echo "PR Title: ${{ github.event.pull_request.title }}"
+          echo "PR Author: ${{ github.actor }}"
+          
+          # Enable auto-merge with squash
+          gh pr merge ${{ github.event.pull_request.number }} \
+            --auto \
+            --squash \
+            --delete-branch
+          
+          echo "✅ Auto-merge enabled for Version Packages PR"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Add comment to PR
+        run: |
+          gh pr comment ${{ github.event.pull_request.number }} \
+            --body "🤖 **Auto-merge enabled** for this Version Packages PR. It will be automatically merged once all checks pass."
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
