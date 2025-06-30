@@ -1,5 +1,5 @@
 {
-  "name": "@mcp-server-framework/core",
+  "name": "@hexmcp/core",
   "version": "0.0.0",
   "description": "Core functionality for MCP Server Framework",
   "main": "index.js",
