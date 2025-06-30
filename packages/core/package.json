@@ -1,6 +1,6 @@
 {
   "name": "@hexmcp/core",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Core functionality for MCP Server Framework with lifecycle state machine and handshake system",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
