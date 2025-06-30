@@ -113,6 +113,12 @@
                   "kind": "enumMember"
                 },
                 "formats": ["CONSTANT_CASE", "PascalCase"]
+              },
+              {
+                "selector": {
+                  "kind": "objectLiteralProperty"
+                },
+                "formats": ["camelCase", "PascalCase", "CONSTANT_CASE"]
               }
             ]
           }
@@ -169,7 +175,7 @@
       "bracketSpacing": true,
       "bracketSameLine": false
     },
-    "globals": ["jest", "describe", "test", "it", "expect", "beforeEach", "afterEach", "beforeAll", "afterAll"]
+    "globals": ["jest", "describe", "test", "it", "expect", "beforeEach", "afterEach", "beforeAll", "afterAll", "fail"]
   },
   "json": {
     "formatter": {

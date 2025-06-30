@@ -38,6 +38,8 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
+    "@hexmcp/codec-jsonrpc": "workspace:*",
+    "@hexmcp/transport": "workspace:*",
     "@modelcontextprotocol/sdk": "^1.13.2"
   },
   "peerDependencies": {

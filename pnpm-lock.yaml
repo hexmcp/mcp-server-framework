@@ -66,6 +66,12 @@ importers:
 
   packages/core:
     dependencies:
+      '@hexmcp/codec-jsonrpc':
+        specifier: workspace:*
+        version: link:../codec-jsonrpc
+      '@hexmcp/transport':
+        specifier: workspace:*
+        version: link:../transport
       '@modelcontextprotocol/sdk':
         specifier: ^1.13.2
         version: 1.13.2

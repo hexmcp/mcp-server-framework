@@ -14,7 +14,7 @@ import {
   type ShutdownEvent,
   type StateChangeEvent,
   VALID_TRANSITIONS,
-} from './types.js';
+} from './types';
 
 /**
  * Core lifecycle state machine implementation for MCP servers

@@ -133,18 +133,19 @@ export const SHUTDOWN_REQUEST_NO_REASON = {
  * Operational request fixtures for testing lifecycle gating
  */
 export const OPERATIONAL_REQUESTS = [
-  { method: 'prompts/list', id: 'test-prompts-1' },
-  { method: 'prompts/get', id: 'test-prompts-2', params: { name: 'test' } },
-  { method: 'tools/list', id: 'test-tools-1' },
-  { method: 'tools/call', id: 'test-tools-2', params: { name: 'test', arguments: {} } },
-  { method: 'resources/list', id: 'test-resources-1' },
-  { method: 'resources/read', id: 'test-resources-2', params: { uri: 'test://resource' } },
+  { jsonrpc: '2.0' as const, method: 'prompts/list', id: 'test-prompts-1' },
+  { jsonrpc: '2.0' as const, method: 'prompts/get', id: 'test-prompts-2', params: { name: 'test' } },
+  { jsonrpc: '2.0' as const, method: 'tools/list', id: 'test-tools-1' },
+  { jsonrpc: '2.0' as const, method: 'tools/call', id: 'test-tools-2', params: { name: 'test', arguments: {} } },
+  { jsonrpc: '2.0' as const, method: 'resources/list', id: 'test-resources-1' },
+  { jsonrpc: '2.0' as const, method: 'resources/read', id: 'test-resources-2', params: { uri: 'test://resource' } },
   {
+    jsonrpc: '2.0' as const,
     method: 'completion/complete',
     id: 'test-completion-1',
     params: { ref: { type: 'ref/prompt', name: 'test' }, argument: { name: 'test', value: 'test' } },
   },
-];
+] as const;
 
 export const ALWAYS_ALLOWED_REQUESTS = [
   { method: 'ping', id: 'test-ping-1' },

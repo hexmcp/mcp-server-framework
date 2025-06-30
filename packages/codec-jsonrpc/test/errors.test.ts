@@ -186,7 +186,6 @@ describe('RpcError', () => {
         expect(json.stack).toBeDefined();
         expect(json.stack).toContain('RpcError');
       } else {
-        // biome-ignore lint/correctness/noUndeclaredVariables: Jest global
         fail('Expected stack property to be present in debug mode');
       }
     });
