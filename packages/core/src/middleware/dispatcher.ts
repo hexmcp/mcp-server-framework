@@ -1,8 +1,8 @@
 import { encodeJsonRpcError, type JsonRpcRequest, type JsonRpcResponse, RpcError } from '@hexmcp/codec-jsonrpc';
 import type { TransportDispatch, TransportMetadata } from '@hexmcp/transport';
 
-import type { RequestGate } from '../lifecycle/types.js';
-import type { MiddlewareEngine, MiddlewareRegistry, RequestContext } from './types.js';
+import type { RequestGate } from '../lifecycle/types';
+import type { MiddlewareEngine, MiddlewareRegistry, RequestContext } from './types';
 
 export interface MiddlewareDispatcherOptions {
   requestGate: RequestGate;

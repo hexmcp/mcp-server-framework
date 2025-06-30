@@ -1,5 +1,5 @@
 import type { JsonRpcRequest } from '@hexmcp/codec-jsonrpc';
-import type { Middleware, MiddlewareRegistry } from './types.js';
+import type { Middleware, MiddlewareRegistry } from './types';
 
 export interface MiddlewareBuilder {
   use(middleware: Middleware): this;

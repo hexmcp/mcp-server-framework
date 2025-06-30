@@ -11,10 +11,10 @@ export {
   type ServerBuilderWithMiddleware,
   type TimeoutMiddlewareOptions,
   type TracingMiddlewareOptions,
-} from './builder.js';
-export { MiddlewareDispatcher, type MiddlewareDispatcherOptions } from './dispatcher.js';
-export { McpMiddlewareEngine } from './engine.js';
-export { McpMiddlewareRegistry } from './registry.js';
+} from './builder';
+export { MiddlewareDispatcher, type MiddlewareDispatcherOptions } from './dispatcher';
+export { McpMiddlewareEngine } from './engine';
+export { McpMiddlewareRegistry } from './registry';
 export type {
   Middleware,
   MiddlewareEngine,
@@ -24,10 +24,10 @@ export type {
   MiddlewareMetrics,
   MiddlewareRegistry,
   RequestContext,
-} from './types.js';
+} from './types';
 export {
   MiddlewareError,
   MiddlewareExecutionState,
   MiddlewareTimeoutError,
   ReentrantCallError,
-} from './types.js';
+} from './types';

@@ -1,10 +1,10 @@
-import { McpMiddlewareRegistry } from '../../src/middleware/registry.js';
+import { McpMiddlewareRegistry } from '../../src/middleware/registry';
 import {
   createAuthMiddleware,
   createLoggingMiddleware,
   createStateMutationMiddleware,
   createTracingMiddleware,
-} from '../fixtures/middleware-fixtures.js';
+} from '../fixtures/middleware-fixtures';
 
 describe('McpMiddlewareRegistry', () => {
   let registry: McpMiddlewareRegistry;

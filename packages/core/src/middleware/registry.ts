@@ -1,4 +1,4 @@
-import type { Middleware, MiddlewareRegistry } from './types.js';
+import type { Middleware, MiddlewareRegistry } from './types';
 
 export class McpMiddlewareRegistry implements MiddlewareRegistry {
   private readonly _middleware: Middleware[] = [];

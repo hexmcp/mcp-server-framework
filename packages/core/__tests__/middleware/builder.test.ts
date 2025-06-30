@@ -1,11 +1,11 @@
-import { addMiddlewareSupport, createMiddlewareBuilder, McpMiddlewareBuilder } from '../../src/middleware/builder.js';
-import { McpMiddlewareRegistry } from '../../src/middleware/registry.js';
+import { addMiddlewareSupport, createMiddlewareBuilder, McpMiddlewareBuilder } from '../../src/middleware/builder';
+import { McpMiddlewareRegistry } from '../../src/middleware/registry';
 import {
   createAuthMiddleware,
   createLoggingMiddleware,
   createRateLimitMiddleware,
   createTracingMiddleware,
-} from '../fixtures/middleware-fixtures.js';
+} from '../fixtures/middleware-fixtures';
 
 describe('MiddlewareBuilder', () => {
   let registry: McpMiddlewareRegistry;

@@ -1,8 +1,8 @@
 import { encodeJsonRpcError, encodeJsonRpcSuccess, RpcError } from '@hexmcp/codec-jsonrpc';
 
-import { McpCapabilityRegistry, McpLifecycleManager, McpRequestGate, MockPrimitiveRegistry } from '../../src/lifecycle/index.js';
-import { McpMiddlewareEngine, McpMiddlewareRegistry } from '../../src/middleware/index.js';
-import { OPERATIONAL_REQUESTS, VALID_INITIALIZE_REQUEST_WITH_ID } from '../fixtures/handshake-fixtures.js';
+import { McpCapabilityRegistry, McpLifecycleManager, McpRequestGate, MockPrimitiveRegistry } from '../../src/lifecycle/index';
+import { McpMiddlewareEngine, McpMiddlewareRegistry } from '../../src/middleware/index';
+import { OPERATIONAL_REQUESTS, VALID_INITIALIZE_REQUEST_WITH_ID } from '../fixtures/handshake-fixtures';
 import {
   createAuthMiddleware,
   createLoggingMiddleware,
@@ -11,7 +11,7 @@ import {
   createStateMutationMiddleware,
   createTracingMiddleware,
   SAMPLE_SUCCESS_RESPONSE,
-} from '../fixtures/middleware-fixtures.js';
+} from '../fixtures/middleware-fixtures';
 
 describe('Middleware Integration', () => {
   let lifecycleManager: McpLifecycleManager;

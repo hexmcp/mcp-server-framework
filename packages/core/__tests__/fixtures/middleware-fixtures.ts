@@ -1,5 +1,5 @@
 import { encodeJsonRpcError, encodeJsonRpcSuccess, type JsonRpcRequest, type JsonRpcResponse, RpcError } from '@hexmcp/codec-jsonrpc';
-import type { Middleware, RequestContext } from '../../src/middleware/types.js';
+import type { Middleware, RequestContext } from '../../src/middleware/types';
 
 export const SAMPLE_JSON_RPC_REQUEST: JsonRpcRequest = {
   jsonrpc: '2.0',

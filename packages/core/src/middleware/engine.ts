@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
-import type { Middleware, MiddlewareEngine, MiddlewareExecutionContext, MiddlewareExecutionOptions, RequestContext } from './types.js';
-import { MiddlewareError, MiddlewareTimeoutError, ReentrantCallError } from './types.js';
+import type { Middleware, MiddlewareEngine, MiddlewareExecutionContext, MiddlewareExecutionOptions, RequestContext } from './types';
+import { MiddlewareError, MiddlewareTimeoutError, ReentrantCallError } from './types';
 
 export class McpMiddlewareEngine implements MiddlewareEngine {
   private readonly _activeExecutions = new Map<string, MiddlewareExecutionContext>();
@@ -110,4 +110,4 @@ export class McpMiddlewareEngine implements MiddlewareEngine {
   }
 }
 
-export { MiddlewareError, ReentrantCallError } from './types.js';
+export { MiddlewareError, ReentrantCallError } from './types';

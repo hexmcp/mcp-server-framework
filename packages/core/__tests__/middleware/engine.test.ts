@@ -1,4 +1,4 @@
-import { McpMiddlewareEngine, MiddlewareError, ReentrantCallError } from '../../src/middleware/engine.js';
+import { McpMiddlewareEngine, MiddlewareError, ReentrantCallError } from '../../src/middleware/engine';
 import {
   createAuthMiddleware,
   createDelayMiddleware,
@@ -10,7 +10,7 @@ import {
   createStateMutationMiddleware,
   createTracingMiddleware,
   SAMPLE_SUCCESS_RESPONSE,
-} from '../fixtures/middleware-fixtures.js';
+} from '../fixtures/middleware-fixtures';
 
 describe('McpMiddlewareEngine', () => {
   let engine: McpMiddlewareEngine;
