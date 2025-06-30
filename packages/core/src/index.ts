@@ -11,3 +11,6 @@ export * from './lifecycle/index';
 
 // Re-export all middleware functionality
 export * from './middleware/index';
+
+// Re-export all registry functionality
+export * from './registries/index';
