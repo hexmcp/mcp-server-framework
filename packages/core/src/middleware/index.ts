@@ -18,7 +18,10 @@ export {
 } from './builder';
 export { MiddlewareDispatcher, type MiddlewareDispatcherOptions } from './dispatcher';
 export { McpMiddlewareEngine } from './engine';
-export { createErrorMapperMiddleware, createErrorMapperMiddlewareWithDefaults } from './error-mapper';
+export {
+  createErrorMapperMiddleware,
+  createErrorMapperMiddlewareWithDefaults,
+} from './error-mapper';
 export { McpMiddlewareRegistry } from './registry';
 export type {
   ErrorContext,
