@@ -9,6 +9,7 @@
   "scripts": {
     "prepare": "husky",
     "test": "jest --passWithNoTests",
+    "test-fixtures": "pnpm --filter @hexmcp/testing run test-fixtures",
     "typecheck": "tsc --noEmit",
     "typecheck:test": "tsc --project tsconfig.test.json --noEmit",
     "lint": "biome check .",

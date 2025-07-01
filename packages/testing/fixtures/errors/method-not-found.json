@@ -1,0 +1,29 @@
+{
+  "name": "error-method-not-found",
+  "description": "Request for non-existent method should return method not found error",
+  "category": "errors",
+  "input": {
+    "jsonrpc": "2.0",
+    "id": "test-method-not-found",
+    "method": "nonexistent/method",
+    "params": {}
+  },
+  "expected": {
+    "type": "error",
+    "error": {
+      "jsonrpc": "2.0",
+      "id": "test-method-not-found",
+      "error": {
+        "code": -32601,
+        "message": "Method not found",
+        "data": {
+          "method": "nonexistent/method"
+        }
+      }
+    }
+  },
+  "metadata": {
+    "timeout": 1000,
+    "tags": ["error-handling", "validation"]
+  }
+}

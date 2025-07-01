@@ -1,0 +1,25 @@
+{
+  "name": "basic-ping",
+  "description": "Basic ping request that should return pong",
+  "category": "basic",
+  "input": {
+    "jsonrpc": "2.0",
+    "id": "test-ping",
+    "method": "ping",
+    "params": {}
+  },
+  "expected": {
+    "type": "success",
+    "response": {
+      "jsonrpc": "2.0",
+      "id": "test-ping",
+      "result": {
+        "pong": true
+      }
+    }
+  },
+  "metadata": {
+    "timeout": 1000,
+    "tags": ["basic", "connectivity"]
+  }
+}
