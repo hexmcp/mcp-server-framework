@@ -405,23 +405,65 @@ function logError(error: unknown, ctx: RequestContext, mappedError: ErrorMapping
   logger.log(logLevel, logEntry.message, logEntry);
 }
 
+function validateErrorMapperOptions(options: ErrorMapperOptions): void {
+  if (options.logLevel && !['error', 'warn', 'info', 'debug'].includes(options.logLevel)) {
+    throw new Error(`Invalid log level: ${options.logLevel}. Must be one of: error, warn, info, debug`);
+  }
+
+  if (options.logFormat && !['json', 'text'].includes(options.logFormat)) {
+    throw new Error(`Invalid log format: ${options.logFormat}. Must be one of: json, text`);
+  }
+
+  if (options.customErrorMapper && typeof options.customErrorMapper !== 'function') {
+    throw new Error('customErrorMapper must be a function');
+  }
+
+  if (options.onError && typeof options.onError !== 'function') {
+    throw new Error('onError must be a function');
+  }
+
+  if (options.logger && typeof options.logger.log !== 'function') {
+    throw new Error('logger must implement the Logger interface');
+  }
+}
+
+function createDefaultOptions(): Required<
+  Pick<ErrorMapperOptions, 'enableLogging' | 'logLevel' | 'logFormat' | 'includeStackTrace' | 'includeRequestContext'>
+> {
+  return {
+    enableLogging: true,
+    logLevel: 'error',
+    logFormat: 'json',
+    includeStackTrace: false,
+    includeRequestContext: true,
+  };
+}
+
 export function createErrorMapperMiddleware(options: ErrorMapperOptions = {}): Middleware {
+  validateErrorMapperOptions(options);
+
+  const defaultOptions = createDefaultOptions();
+  const mergedOptions: ErrorMapperOptions = {
+    ...defaultOptions,
+    ...options,
+  };
+
   const middleware: Middleware = async (ctx: RequestContext, next: () => Promise<void>) => {
     try {
       await next();
     } catch (error) {
-      const mappedError = mapErrorToRpcError(error, ctx, options);
+      const mappedError = mapErrorToRpcError(error, ctx, mergedOptions);
 
       const rpcError = new RpcError(mappedError.code, mappedError.message, mappedError.data);
       ctx.response = encodeJsonRpcError(ctx.request.id, rpcError);
 
-      if (options.enableLogging) {
-        logError(error, ctx, mappedError, options);
+      if (mergedOptions.enableLogging) {
+        logError(error, ctx, mappedError, mergedOptions);
       }
 
-      if (options.onError) {
+      if (mergedOptions.onError) {
         try {
-          options.onError(error, ctx, mappedError);
+          mergedOptions.onError(error, ctx, mappedError);
         } catch (hookError) {
           // biome-ignore lint/suspicious/noConsole: Error hook failure logging
           console.warn('Error in onError hook:', hookError);
@@ -432,4 +474,14 @@ export function createErrorMapperMiddleware(options: ErrorMapperOptions = {}): M
 
   Object.defineProperty(middleware, 'name', { value: 'ErrorMapperMiddleware' });
   return middleware;
+}
+
+export function createErrorMapperMiddlewareWithDefaults(): Middleware {
+  return createErrorMapperMiddleware({
+    enableLogging: true,
+    logLevel: 'error',
+    includeRequestContext: true,
+    includeStackTrace: false,
+    debugMode: isDebugMode(),
+  });
 }

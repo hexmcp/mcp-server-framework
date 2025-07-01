@@ -1,4 +1,5 @@
 import type { JsonRpcRequest } from '@hexmcp/codec-jsonrpc';
+import { createErrorMapperMiddleware } from './error-mapper';
 import type { LogLevel, Middleware, MiddlewareRegistry } from './types';
 
 export interface MiddlewareBuilder {
@@ -143,9 +144,51 @@ export interface ErrorMapperMiddlewareOptions {
   ) => { code: number; message: string; data?: unknown };
   includeStackTrace?: boolean;
   includeRequestContext?: boolean;
+  logFormat?: 'json' | 'text';
   onError?: (
     error: unknown,
     ctx: { request: JsonRpcRequest; transport: { name: string; peer?: unknown }; state: Record<string, unknown> },
     mappedError: { code: number; message: string; data?: unknown }
   ) => void;
+}
+
+export function createBuiltInErrorMapperMiddleware(options?: ErrorMapperMiddlewareOptions): Middleware {
+  return createErrorMapperMiddleware(options);
+}
+
+export function createBuiltInMiddleware(): BuiltInMiddleware {
+  return {
+    errorMapper: (options?: ErrorMapperMiddlewareOptions) => createBuiltInErrorMapperMiddleware(options),
+    logging: (_options?: LoggingMiddlewareOptions) => {
+      throw new Error('Logging middleware not yet implemented');
+    },
+    auth: (_options: AuthMiddlewareOptions) => {
+      throw new Error('Auth middleware not yet implemented');
+    },
+    rateLimit: (_options: RateLimitMiddlewareOptions) => {
+      throw new Error('Rate limit middleware not yet implemented');
+    },
+    tracing: (_options?: TracingMiddlewareOptions) => {
+      throw new Error('Tracing middleware not yet implemented');
+    },
+    cors: (_options?: CorsMiddlewareOptions) => {
+      throw new Error('CORS middleware not yet implemented');
+    },
+    timeout: (_options: TimeoutMiddlewareOptions) => {
+      throw new Error('Timeout middleware not yet implemented');
+    },
+  };
+}
+
+export function addBuiltInMiddlewareSupport<T extends object>(
+  builder: T,
+  middlewareRegistry: MiddlewareRegistry
+): T & ServerBuilderWithMiddleware & { builtIn: BuiltInMiddleware } {
+  const middlewareBuilder = new McpMiddlewareBuilder(middlewareRegistry);
+  const builtInMiddleware = createBuiltInMiddleware();
+
+  return Object.assign(builder, {
+    use: middlewareBuilder.use.bind(middlewareBuilder),
+    builtIn: builtInMiddleware,
+  });
 }
