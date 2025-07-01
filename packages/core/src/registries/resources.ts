@@ -1,5 +1,6 @@
 import type { ServerCapabilities } from '@modelcontextprotocol/sdk/types.js';
-import type { Registry } from './base';
+import type { Registry, RegistryMetadata, RegistryStats } from './base';
+import { REGISTRY_KINDS } from './base';
 import type { HandlerContext, ResourceDefinition, ResourceProvider } from './types';
 
 /**
@@ -83,9 +84,14 @@ export class InMemoryResourceProvider implements ResourceProvider {
  * Registry for managing resource providers
  */
 export class ResourceRegistry implements Registry {
-  public readonly kind = 'resources';
+  public readonly kind = REGISTRY_KINDS.RESOURCES;
   private readonly _resources = new Map<string, ResourceDefinition>();
   private readonly _providers = new Map<string, ResourceProvider>();
+  private readonly _stats: RegistryStats = {
+    totalRegistered: 0,
+    successfulOperations: 0,
+    failedOperations: 0,
+  };
 
   /**
    * Register a resource definition
@@ -96,6 +102,8 @@ export class ResourceRegistry implements Registry {
     }
     this._resources.set(definition.uriPattern, definition);
     this._providers.set(definition.uriPattern, definition.provider);
+    this._stats.totalRegistered = this._resources.size;
+    this._stats.lastOperation = new Date();
   }
 
   /**
@@ -116,7 +124,16 @@ export class ResourceRegistry implements Registry {
       },
     };
 
-    return provider.get(uri, enhancedContext);
+    try {
+      const result = await provider.get(uri, enhancedContext);
+      this._stats.successfulOperations++;
+      this._stats.lastOperation = new Date();
+      return result;
+    } catch (error) {
+      this._stats.failedOperations++;
+      this._stats.lastOperation = new Date();
+      throw error;
+    }
   }
 
   /**
@@ -189,11 +206,55 @@ export class ResourceRegistry implements Registry {
   }
 
   /**
+   * Check if the registry is empty
+   */
+  isEmpty(): boolean {
+    return this._resources.size === 0;
+  }
+
+  /**
    * Clear all registered resources
    */
   clear(): void {
     this._resources.clear();
     this._providers.clear();
+    this._stats.totalRegistered = 0;
+    this._stats.lastOperation = new Date();
+  }
+
+  /**
+   * Get registry metadata
+   */
+  getMetadata(): RegistryMetadata {
+    const debug: RegistryMetadata['debug'] = {
+      registeredCount: this._resources.size,
+      uriPatterns: Array.from(this._resources.keys()),
+    };
+
+    if (this._stats.lastOperation) {
+      debug.lastModified = this._stats.lastOperation;
+    }
+
+    return {
+      name: 'Resource Registry',
+      description: 'Registry for managing resource providers with flexible backends and pagination support',
+      debug,
+    };
+  }
+
+  /**
+   * Get registry statistics
+   */
+  getStats(): RegistryStats {
+    return {
+      ...this._stats,
+      totalRegistered: this._resources.size,
+      customMetrics: {
+        resourcesWithName: Array.from(this._resources.values()).filter((r) => r.name).length,
+        resourcesWithDescription: Array.from(this._resources.values()).filter((r) => r.description).length,
+        resourcesWithMimeType: Array.from(this._resources.values()).filter((r) => r.mimeType).length,
+      },
+    };
   }
 
   /**

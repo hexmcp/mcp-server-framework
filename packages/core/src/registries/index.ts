@@ -5,8 +5,16 @@
  * with type safety, capability negotiation, and middleware integration.
  */
 
-// Base registry interface
-export type { Registry } from './base';
+// Base registry interfaces and types
+export type {
+  LifecycleAwareRegistry,
+  Registry,
+  RegistryCollection,
+  RegistryKind,
+  RegistryMetadata,
+  RegistryStats,
+} from './base';
+export { DefaultRegistryCollection, REGISTRY_KINDS } from './base';
 // Registry implementations
 export { PromptRegistry } from './prompts';
 export { InMemoryResourceProvider, ResourceRegistry } from './resources';

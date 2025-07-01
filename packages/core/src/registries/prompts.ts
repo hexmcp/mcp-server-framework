@@ -1,13 +1,19 @@
 import type { ServerCapabilities } from '@modelcontextprotocol/sdk/types.js';
-import type { Registry } from './base';
+import type { Registry, RegistryMetadata, RegistryStats } from './base';
+import { REGISTRY_KINDS } from './base';
 import type { HandlerContext, PromptDefinition } from './types';
 
 /**
  * Registry for managing prompt handlers
  */
 export class PromptRegistry implements Registry {
-  public readonly kind = 'prompts';
+  public readonly kind = REGISTRY_KINDS.PROMPTS;
   private readonly _prompts = new Map<string, PromptDefinition>();
+  private readonly _stats: RegistryStats = {
+    totalRegistered: 0,
+    successfulOperations: 0,
+    failedOperations: 0,
+  };
 
   /**
    * Register a prompt handler
@@ -17,6 +23,8 @@ export class PromptRegistry implements Registry {
       throw new Error(`Prompt '${definition.name}' is already registered`);
     }
     this._prompts.set(definition.name, definition);
+    this._stats.totalRegistered = this._prompts.size;
+    this._stats.lastOperation = new Date();
   }
 
   /**
@@ -43,7 +51,16 @@ export class PromptRegistry implements Registry {
       },
     };
 
-    return definition.handler(args, enhancedContext);
+    try {
+      const result = await definition.handler(args, enhancedContext);
+      this._stats.successfulOperations++;
+      this._stats.lastOperation = new Date();
+      return result;
+    } catch (error) {
+      this._stats.failedOperations++;
+      this._stats.lastOperation = new Date();
+      throw error;
+    }
   }
 
   /**
@@ -74,10 +91,53 @@ export class PromptRegistry implements Registry {
   }
 
   /**
+   * Check if the registry is empty
+   */
+  isEmpty(): boolean {
+    return this._prompts.size === 0;
+  }
+
+  /**
    * Clear all registered prompts
    */
   clear(): void {
     this._prompts.clear();
+    this._stats.totalRegistered = 0;
+    this._stats.lastOperation = new Date();
+  }
+
+  /**
+   * Get registry metadata
+   */
+  getMetadata(): RegistryMetadata {
+    const debug: RegistryMetadata['debug'] = {
+      registeredCount: this._prompts.size,
+      promptNames: Array.from(this._prompts.keys()),
+    };
+
+    if (this._stats.lastOperation) {
+      debug.lastModified = this._stats.lastOperation;
+    }
+
+    return {
+      name: 'Prompt Registry',
+      description: 'Registry for managing prompt handlers with Zod validation and streaming support',
+      debug,
+    };
+  }
+
+  /**
+   * Get registry statistics
+   */
+  getStats(): RegistryStats {
+    return {
+      ...this._stats,
+      totalRegistered: this._prompts.size,
+      customMetrics: {
+        promptsWithSchema: Array.from(this._prompts.values()).filter((p) => p.inputSchema).length,
+        promptsWithDescription: Array.from(this._prompts.values()).filter((p) => p.description).length,
+      },
+    };
   }
 
   /**

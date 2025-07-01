@@ -1,13 +1,19 @@
 import type { ServerCapabilities } from '@modelcontextprotocol/sdk/types.js';
-import type { Registry } from './base';
+import type { Registry, RegistryMetadata, RegistryStats } from './base';
+import { REGISTRY_KINDS } from './base';
 import type { HandlerContext, ToolDefinition } from './types';
 
 /**
  * Registry for managing tool handlers
  */
 export class ToolRegistry implements Registry {
-  public readonly kind = 'tools';
+  public readonly kind = REGISTRY_KINDS.TOOLS;
   private readonly _tools = new Map<string, ToolDefinition>();
+  private readonly _stats: RegistryStats = {
+    totalRegistered: 0,
+    successfulOperations: 0,
+    failedOperations: 0,
+  };
 
   /**
    * Register a tool handler
@@ -17,6 +23,8 @@ export class ToolRegistry implements Registry {
       throw new Error(`Tool '${definition.name}' is already registered`);
     }
     this._tools.set(definition.name, definition);
+    this._stats.totalRegistered = this._tools.size;
+    this._stats.lastOperation = new Date();
   }
 
   /**
@@ -51,7 +59,16 @@ export class ToolRegistry implements Registry {
       },
     };
 
-    return definition.handler(args, enhancedContext);
+    try {
+      const result = await definition.handler(args, enhancedContext);
+      this._stats.successfulOperations++;
+      this._stats.lastOperation = new Date();
+      return result;
+    } catch (error) {
+      this._stats.failedOperations++;
+      this._stats.lastOperation = new Date();
+      throw error;
+    }
   }
 
   /**
@@ -98,10 +115,54 @@ export class ToolRegistry implements Registry {
   }
 
   /**
+   * Check if the registry is empty
+   */
+  isEmpty(): boolean {
+    return this._tools.size === 0;
+  }
+
+  /**
    * Clear all registered tools
    */
   clear(): void {
     this._tools.clear();
+    this._stats.totalRegistered = 0;
+    this._stats.lastOperation = new Date();
+  }
+
+  /**
+   * Get registry metadata
+   */
+  getMetadata(): RegistryMetadata {
+    const debug: RegistryMetadata['debug'] = {
+      registeredCount: this._tools.size,
+      toolNames: Array.from(this._tools.keys()),
+    };
+
+    if (this._stats.lastOperation) {
+      debug.lastModified = this._stats.lastOperation;
+    }
+
+    return {
+      name: 'Tool Registry',
+      description: 'Registry for managing tool handlers with scope authorization and throttle metadata',
+      debug,
+    };
+  }
+
+  /**
+   * Get registry statistics
+   */
+  getStats(): RegistryStats {
+    return {
+      ...this._stats,
+      totalRegistered: this._tools.size,
+      customMetrics: {
+        toolsWithScope: Array.from(this._tools.values()).filter((t) => t.scope).length,
+        toolsWithThrottle: Array.from(this._tools.values()).filter((t) => t.throttle).length,
+        toolsWithSchema: Array.from(this._tools.values()).filter((t) => t.inputSchema).length,
+      },
+    };
   }
 
   /**

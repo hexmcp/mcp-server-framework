@@ -3,6 +3,7 @@ import {
   InMemoryResourceProvider,
   type PromptDefinition,
   PromptRegistry,
+  REGISTRY_KINDS,
   type Registry,
   type ResourceDefinition,
   type ResourceProvider,
@@ -19,8 +20,15 @@ describe('Registries Module Exports', () => {
     expect(InMemoryResourceProvider).toBeDefined();
 
     const mockRegistry: Registry = {
-      kind: 'test',
+      kind: REGISTRY_KINDS.PROMPTS,
       getCapabilities: () => ({}),
+      getMetadata: () => ({ name: 'Test' }),
+      getStats: () => ({ totalRegistered: 0, successfulOperations: 0, failedOperations: 0 }),
+      isEmpty: () => true,
+      size: () => 0,
+      clear: () => {
+        // empty
+      },
     };
 
     const mockContext: HandlerContext = {

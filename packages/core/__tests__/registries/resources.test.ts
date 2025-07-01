@@ -206,11 +206,9 @@ describe('ResourceRegistry', () => {
       registry.register({ uriPattern: 'test://', provider: generalProvider });
       registry.register({ uriPattern: 'test://specific/', provider: specificProvider });
 
-      // Should use specific provider for specific pattern
       const specificResult = await registry.get('test://specific/resource', mockContext);
       expect(specificResult).toEqual({ type: 'specific' });
 
-      // Should use general provider for general pattern
       const generalResult = await registry.get('test://general/resource', mockContext);
       expect(generalResult).toEqual({ type: 'general' });
     });
@@ -247,7 +245,6 @@ describe('ResourceRegistry', () => {
       registry.register({ uriPattern: 'working://', provider: workingProvider });
       registry.register({ uriPattern: 'failing://', provider: failingProvider });
 
-      // Should still return resources from working provider
       const result = await registry.list();
       expect(result.resources).toHaveLength(1);
       expect(result.resources[0]?.uri).toBe('working://resource');
