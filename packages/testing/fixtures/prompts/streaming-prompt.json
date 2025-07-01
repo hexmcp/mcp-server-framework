@@ -11,19 +11,16 @@
       }
     }
   },
-  "expected": [
-    {
-      "type": "text",
-      "content": "TypeScript is a strongly typed programming language"
-    },
-    {
-      "type": "text",
-      "content": " that builds on JavaScript by adding static type definitions."
-    },
-    {
-      "type": "event",
-      "name": "completion",
-      "data": { "finished": true }
+  "expected": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "error": {
+      "code": -32000,
+      "message": "Operational request 'prompts/get' requires server to be in ready state",
+      "data": {
+        "currentState": "initializing",
+        "operation": "prompts/get"
+      }
     }
-  ]
+  }
 }

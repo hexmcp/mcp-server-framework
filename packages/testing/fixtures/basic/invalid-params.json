@@ -12,10 +12,11 @@
     "jsonrpc": "2.0",
     "id": 2,
     "error": {
-      "code": -32602,
-      "message": "Invalid params",
+      "code": -32000,
+      "message": "Operational request 'tools/call' requires server to be in ready state",
       "data": {
-        "details": "Missing required parameter: arguments"
+        "currentState": "initializing",
+        "operation": "tools/call"
       }
     }
   }

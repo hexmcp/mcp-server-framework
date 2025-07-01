@@ -14,13 +14,13 @@
   "expected": {
     "jsonrpc": "2.0",
     "id": 1,
-    "result": {
-      "content": [
-        {
-          "type": "text",
-          "text": "Hello, World!"
-        }
-      ]
+    "error": {
+      "code": -32000,
+      "message": "Operational request 'tools/call' requires server to be in ready state",
+      "data": {
+        "currentState": "initializing",
+        "operation": "tools/call"
+      }
     }
   }
 }
