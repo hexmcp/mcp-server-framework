@@ -99,7 +99,69 @@ export interface ErrorMapperOptions {
   customErrorMapper?: (error: unknown, ctx: RequestContext) => ErrorMappingResult;
   includeStackTrace?: boolean;
   includeRequestContext?: boolean;
+  logger?: Logger;
+  logFormat?: 'json' | 'text';
+  logFields?: LogFieldConfig;
   onError?: (error: unknown, ctx: RequestContext, mappedError: ErrorMappingResult) => void;
+}
+
+export interface Logger {
+  error(message: string, meta?: LogEntry): void;
+  warn(message: string, meta?: LogEntry): void;
+  info(message: string, meta?: LogEntry): void;
+  debug(message: string, meta?: LogEntry): void;
+  log(level: LogLevel, message: string, meta?: LogEntry): void;
+}
+
+export interface LogEntry {
+  timestamp: number;
+  level: LogLevel;
+  message: string;
+  error?: ErrorLogData;
+  context?: RequestLogContext | undefined;
+  metadata?: LogMetadata;
+  stack?: string;
+}
+
+export interface ErrorLogData {
+  classification: ErrorClassification;
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  type: string;
+  code: number;
+  message: string;
+  originalMessage: string;
+  data?: unknown;
+}
+
+export interface RequestLogContext {
+  requestId: string | number | null;
+  method: string;
+  transport: string;
+  timestamp: number;
+  middlewareIndex?: number;
+  executionId?: string;
+  peer?: unknown;
+}
+
+export interface LogMetadata {
+  source: 'error-mapper';
+  version: string;
+  environment: string;
+  correlationId?: string;
+  traceId?: string;
+  spanId?: string;
+}
+
+export interface LogFieldConfig {
+  includeTimestamp?: boolean;
+  includeLevel?: boolean;
+  includeSource?: boolean;
+  includeCorrelationId?: boolean;
+  includeTraceId?: boolean;
+  traceId?: string;
+  spanId?: string;
+  correlationId?: string;
+  customFields?: Record<string, unknown>;
 }
 
 export interface ErrorContext {

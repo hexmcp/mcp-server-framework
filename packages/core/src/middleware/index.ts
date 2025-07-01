@@ -19,10 +19,16 @@ export { createErrorMapperMiddleware } from './error-mapper';
 export { McpMiddlewareRegistry } from './registry';
 export type {
   ErrorContext,
+  ErrorLogData,
   ErrorMapper,
   ErrorMapperOptions,
   ErrorMappingResult,
   ErrorMetadata,
+  LogEntry,
+  LogFieldConfig,
+  Logger,
+  LogLevel,
+  LogMetadata,
   Middleware,
   MiddlewareEngine,
   MiddlewareExecutionContext,
@@ -31,6 +37,7 @@ export type {
   MiddlewareMetrics,
   MiddlewareRegistry,
   RequestContext,
+  RequestLogContext,
 } from './types';
 export {
   ErrorClassification,

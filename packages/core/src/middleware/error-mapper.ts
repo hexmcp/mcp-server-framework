@@ -1,5 +1,18 @@
 import { encodeJsonRpcError, JSON_RPC_ERROR_CODES, RpcError } from '@hexmcp/codec-jsonrpc';
-import type { ErrorClassificationResult, ErrorMapperOptions, ErrorMappingResult, ErrorMetadata, Middleware, RequestContext } from './types';
+import type {
+  ErrorClassificationResult,
+  ErrorLogData,
+  ErrorMapperOptions,
+  ErrorMappingResult,
+  ErrorMetadata,
+  LogEntry,
+  Logger,
+  LogLevel,
+  LogMetadata,
+  Middleware,
+  RequestContext,
+  RequestLogContext,
+} from './types';
 import { ErrorClassification, MiddlewareError, MiddlewareTimeoutError, ReentrantCallError } from './types';
 
 function isDebugMode(options?: ErrorMapperOptions): boolean {
@@ -7,6 +20,91 @@ function isDebugMode(options?: ErrorMapperOptions): boolean {
     return options.debugMode;
   }
   return process.env.MCPKIT_DEBUG === '1';
+}
+
+class DefaultLogger implements Logger {
+  error(message: string, meta?: LogEntry): void {
+    this.log('error', message, meta);
+  }
+
+  warn(message: string, meta?: LogEntry): void {
+    this.log('warn', message, meta);
+  }
+
+  info(message: string, meta?: LogEntry): void {
+    this.log('info', message, meta);
+  }
+
+  debug(message: string, meta?: LogEntry): void {
+    this.log('debug', message, meta);
+  }
+
+  log(level: LogLevel, message: string, meta?: LogEntry): void {
+    const timestamp = new Date().toISOString();
+    const logData = {
+      timestamp,
+      level,
+      message,
+      ...meta,
+    };
+
+    // biome-ignore lint/suspicious/noConsole: Structured logging output
+    console.log(JSON.stringify(logData, null, 2));
+  }
+}
+
+function createLogMetadata(): LogMetadata {
+  return {
+    source: 'error-mapper',
+    version: '1.0.0',
+    environment: process.env.NODE_ENV || 'development',
+    correlationId: generateCorrelationId(),
+  };
+}
+
+function generateCorrelationId(): string {
+  return `err-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
+}
+
+function createErrorLogData(error: unknown, classification: ErrorClassificationResult, mappedError: ErrorMappingResult): ErrorLogData {
+  return {
+    classification: classification.classification,
+    severity: classification.severity,
+    type: getErrorType(error),
+    code: mappedError.code,
+    message: mappedError.message,
+    originalMessage: error instanceof Error ? error.message : String(error),
+    data: mappedError.data,
+  };
+}
+
+function createRequestLogContext(
+  ctx: RequestContext,
+  metadata: ErrorMetadata,
+  includeRequestContext: boolean
+): RequestLogContext | undefined {
+  if (!includeRequestContext) {
+    return undefined;
+  }
+
+  return {
+    requestId: ctx.request.id,
+    method: ctx.request.method,
+    transport: ctx.transport.name,
+    timestamp: metadata.timestamp,
+    ...(metadata.middlewareIndex !== undefined && { middlewareIndex: metadata.middlewareIndex }),
+    ...(metadata.executionId !== undefined && { executionId: metadata.executionId }),
+    peer: ctx.transport.peer,
+  };
+}
+
+function formatLogMessage(error: unknown, classification: ErrorClassificationResult, format: 'json' | 'text' = 'json'): string {
+  if (format === 'text') {
+    const errorType = getErrorType(error);
+    const severity = classification.severity.toUpperCase();
+    return `[${severity}] ${classification.classification}: ${errorType} - ${classification.message}`;
+  }
+  return 'Middleware error caught by error mapper';
 }
 
 function classifyError(error: unknown): ErrorClassificationResult {
@@ -271,37 +369,40 @@ function logError(error: unknown, ctx: RequestContext, mappedError: ErrorMapping
 
   const logLevel = options.logLevel || 'error';
   const debugMode = isDebugMode(options);
-
   const classification = classifyError(error);
   const metadata = createErrorMetadata(error, classification, debugMode);
 
-  const logEntry = {
+  const logger = options.logger || new DefaultLogger();
+  const logFormat = options.logFormat || 'json';
+
+  const errorLogData = createErrorLogData(error, classification, mappedError);
+  const requestContext = createRequestLogContext(ctx, metadata, options.includeRequestContext || false);
+  const logMetadata = createLogMetadata();
+
+  if (options.logFields?.traceId) {
+    logMetadata.traceId = options.logFields.traceId as string;
+  }
+  if (options.logFields?.spanId) {
+    logMetadata.spanId = options.logFields.spanId as string;
+  }
+  if (options.logFields?.correlationId) {
+    logMetadata.correlationId = options.logFields.correlationId as string;
+  }
+
+  const logEntry: LogEntry = {
+    timestamp: metadata.timestamp,
     level: logLevel,
-    message: 'Middleware error caught by error mapper',
-    error: {
-      classification: classification.classification,
-      severity: classification.severity,
-      type: metadata.originalType,
-      code: mappedError.code,
-      message: mappedError.message,
-      originalMessage: error instanceof Error ? error.message : String(error),
-      data: mappedError.data,
+    message: formatLogMessage(error, classification, logFormat),
+    error: errorLogData,
+    context: requestContext,
+    metadata: {
+      ...logMetadata,
+      ...options.logFields?.customFields,
     },
-    context: options.includeRequestContext
-      ? {
-          requestId: ctx.request.id,
-          method: ctx.request.method,
-          transport: ctx.transport.name,
-          timestamp: metadata.timestamp,
-          ...(metadata.middlewareIndex !== undefined && { middlewareIndex: metadata.middlewareIndex }),
-          ...(metadata.executionId !== undefined && { executionId: metadata.executionId }),
-        }
-      : undefined,
-    stack: debugMode && metadata.stackTrace ? metadata.stackTrace : undefined,
+    ...(debugMode && metadata.stackTrace && options.includeStackTrace && { stack: metadata.stackTrace }),
   };
 
-  // biome-ignore lint/suspicious/noConsole: Structured logging output for error mapper
-  console.log(JSON.stringify(logEntry, null, 2));
+  logger.log(logLevel, logEntry.message, logEntry);
 }
 
 export function createErrorMapperMiddleware(options: ErrorMapperOptions = {}): Middleware {
