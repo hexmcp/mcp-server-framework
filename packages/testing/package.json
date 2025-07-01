@@ -24,7 +24,9 @@
     "test:coverage": "jest --coverage",
     "test-fixtures": "jest --testNamePattern='Fixture'",
     "typecheck": "tsc --noEmit",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "update-snapshots": "tsx scripts/update-snapshots.ts",
+    "update-snapshots:force": "UPDATE_SNAPSHOTS=true tsx scripts/update-snapshots.ts"
   },
   "keywords": [
     "mcp",

@@ -36,7 +36,6 @@ packages/testing/
 - **Error Handling**: Comprehensive error scenario testing with proper status codes
 - **Fixture Factories**: Reusable functions for generating spec-compliant test data
 - **Golden Snapshot Testing**: Uses Node.js built-in `util.isDeepStrictEqual` for reliable comparisons
-- **Golden Snapshot Testing**: Uses Node.js built-in `util.isDeepStrictEqual` for reliable comparisons
 - **Jest Integration**: Seamless integration with Jest testing framework
 - **In-process Testing**: Uses codec/dispatcher stacks without external mock servers
 - **CI Integration**: Supports `pnpm test-fixtures` command for CI pipelines
@@ -241,6 +240,46 @@ const eventHandler = createEventStreamHandler([
 ]);
 ```
 
+### Golden Fixture Testing
+
+```typescript
+import {
+  runFixtureWithSnapshotUpdate,
+  expectMatchesOrUpdateSnapshot,
+  updateAllFixtureSnapshots
+} from '@hexmcp/testing';
+
+// Enable golden fixture mode with environment variable
+// UPDATE_SNAPSHOTS=true pnpm test
+
+// Run a single fixture with snapshot update capability
+await runFixtureWithSnapshotUpdate('./fixtures/echo-tool.json');
+
+// Compare or update individual snapshots
+const actualResponse = {
+  jsonrpc: '2.0',
+  id: 1,
+  result: { content: [{ type: 'text', text: 'Hello!' }] }
+};
+await expectMatchesOrUpdateSnapshot('echo-response', actualResponse);
+
+// Batch update all fixtures (use with caution!)
+await updateAllFixtureSnapshots('./fixtures');
+
+// Conditional updating based on environment
+if (process.env.UPDATE_SNAPSHOTS === 'true' && process.env.NODE_ENV === 'development') {
+  await runFixtureWithSnapshotUpdate('./fixtures/new-feature.json');
+}
+```
+
+#### Golden Fixture Workflow
+
+1. **Write New Tests**: Set `UPDATE_SNAPSHOTS=true` to capture actual output
+2. **Review Changes**: Use `git diff __snapshots__/` to review updates
+3. **Validate Output**: Ensure captured responses are correct and expected
+4. **Commit Snapshots**: Add snapshot files to version control
+5. **Normal Testing**: Run tests without the flag to validate against snapshots
+
 ## Scripts
 
 - `pnpm build` - Build the package
@@ -288,11 +327,10 @@ The package includes comprehensive fixture factories for creating spec-compliant
 - `expectMatchesSnapshot(name, actual, baseDir?)` - Jest-aware snapshot comparison
 - `configureSnapshots(config)` - Global snapshot configuration
 
-### Snapshot Utilities
-- `saveSnapshot(name, data, baseDir?)` - Save JSON snapshots to disk
-- `loadSnapshot(name, baseDir?)` - Load previously saved snapshots
-- `expectMatchesSnapshot(name, actual, baseDir?)` - Jest-aware snapshot comparison
-- `configureSnapshots(config)` - Global snapshot configuration
+### Golden Fixture Testing
+- `runFixtureWithSnapshotUpdate(fixturePath, snapshotName?)` - Run fixture with snapshot update
+- `expectMatchesOrUpdateSnapshot(name, actual)` - Compare or update snapshots based on flag
+- `updateAllFixtureSnapshots(fixtureDir, snapshotDir?)` - Batch update all fixture snapshots
 
 ### Error Codes
 - `ErrorCodes` - Standard JSON-RPC and MCP-specific error codes
@@ -304,7 +342,8 @@ The package includes comprehensive fixture factories for creating spec-compliant
 - Full MCP protocol execution stack
 - Comprehensive fixture factories
 - Golden snapshot testing utilities
+- Golden fixture flag support (`UPDATE_SNAPSHOTS=true`)
 - Advanced streaming handler testing
 - Transport-agnostic AsyncIterable testing
 - Jest integration and CI/CD support
-- 38/38 tests passing with comprehensive coverage
+- 87/87 tests passing with comprehensive coverage

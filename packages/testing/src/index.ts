@@ -1,5 +1,6 @@
 export * from './factories';
 export {
+  expectMatchesOrUpdateSnapshot,
   FixtureRunner,
   listFixturePaths,
   loadFixture,
@@ -7,6 +8,8 @@ export {
   runFixture,
   runFixtures,
   runFixtureTest,
+  runFixtureWithSnapshotUpdate,
+  updateAllFixtureSnapshots,
 } from './run-fixtures';
 export * from './snapshot';
 export * from './streaming';
