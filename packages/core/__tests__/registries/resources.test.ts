@@ -67,7 +67,6 @@ describe('InMemoryResourceProvider', () => {
   });
 
   it('should support pagination', async () => {
-    // Add many resources to test pagination
     for (let i = 0; i < 100; i++) {
       provider.addResource(`test://resource${i}`, { data: `content${i}` });
     }
@@ -248,6 +247,345 @@ describe('ResourceRegistry', () => {
       const result = await registry.list();
       expect(result.resources).toHaveLength(1);
       expect(result.resources[0]?.uri).toBe('working://resource');
+    });
+  });
+
+  describe('enhanced features', () => {
+    const mockContext: HandlerContext = {
+      request: { method: 'resources/read', id: 'test' } as any,
+      send: async () => {
+        // No-op for testing
+      },
+      transport: { name: 'test' },
+      state: {},
+    };
+
+    it('should execute lifecycle hooks', async () => {
+      const beforeHook = jest.fn();
+      const afterHook = jest.fn();
+      const errorHook = jest.fn();
+
+      const mockProvider: ResourceProvider = {
+        get: jest.fn().mockResolvedValue({ content: 'test data' }),
+        list: jest.fn().mockResolvedValue({ resources: [] }),
+      };
+
+      const definition: ResourceDefinition = {
+        uriPattern: 'test://hooks',
+        provider: mockProvider,
+        hooks: {
+          beforeGet: beforeHook,
+          afterGet: afterHook,
+          onError: errorHook,
+        },
+      };
+
+      registry.register(definition);
+      const result = await registry.get('test://hooks/resource', mockContext);
+
+      expect(beforeHook).toHaveBeenCalledWith('test://hooks/resource', expect.any(Object));
+      expect(afterHook).toHaveBeenCalledWith({ content: 'test data' }, expect.any(Object));
+      expect(errorHook).not.toHaveBeenCalled();
+      expect(result).toEqual({ content: 'test data' });
+    });
+
+    it('should execute error hook on failure', async () => {
+      const beforeHook = jest.fn();
+      const afterHook = jest.fn();
+      const errorHook = jest.fn();
+      const error = new Error('Provider failed');
+
+      const mockProvider: ResourceProvider = {
+        get: jest.fn().mockRejectedValue(error),
+        list: jest.fn().mockResolvedValue({ resources: [] }),
+      };
+
+      const definition: ResourceDefinition = {
+        uriPattern: 'test://error',
+        provider: mockProvider,
+        hooks: {
+          beforeGet: beforeHook,
+          afterGet: afterHook,
+          onError: errorHook,
+        },
+      };
+
+      registry.register(definition);
+      await expect(registry.get('test://error/resource', mockContext)).rejects.toThrow('Provider failed');
+
+      expect(beforeHook).toHaveBeenCalled();
+      expect(afterHook).not.toHaveBeenCalled();
+      expect(errorHook).toHaveBeenCalledWith(error, expect.any(Object));
+    });
+
+    it('should include enhanced metadata in context', async () => {
+      const mockProvider: ResourceProvider = {
+        get: jest.fn().mockResolvedValue({ content: 'test data' }),
+        list: jest.fn().mockResolvedValue({ resources: [] }),
+      };
+
+      const definition: ResourceDefinition = {
+        uriPattern: 'test://metadata',
+        name: 'Metadata Resource',
+        description: 'A resource with metadata',
+        version: '2.0.0',
+        tags: ['test', 'demo'],
+        mimeType: 'application/json',
+        watchable: true,
+        cache: { enabled: true, ttl: 300 },
+        rateLimit: { maxCalls: 100, windowMs: 60000 },
+        provider: mockProvider,
+      };
+
+      registry.register(definition);
+      await registry.get('test://metadata/resource', mockContext);
+
+      expect(mockProvider.get).toHaveBeenCalledWith(
+        'test://metadata/resource',
+        expect.objectContaining({
+          registry: expect.objectContaining({
+            kind: 'resources',
+            metadata: expect.objectContaining({
+              resourceUri: 'test://metadata/resource',
+              uriPattern: 'test://metadata',
+              name: 'Metadata Resource',
+              description: 'A resource with metadata',
+              version: '2.0.0',
+              tags: ['test', 'demo'],
+              mimeType: 'application/json',
+              cache: { enabled: true, ttl: 300 },
+              rateLimit: { maxCalls: 100, windowMs: 60000 },
+            }),
+          }),
+          execution: expect.objectContaining({
+            executionId: expect.stringMatching(/^resource-test:\/\/metadata\/resource-\d+-[a-z0-9]+$/),
+            startTime: expect.any(Date),
+            metadata: {
+              resourceUri: 'test://metadata/resource',
+              uriPattern: 'test://metadata',
+            },
+          }),
+        })
+      );
+    });
+  });
+
+  describe('enhanced registry methods', () => {
+    beforeEach(() => {
+      registry.clear();
+    });
+
+    it('should get resources by tags', () => {
+      const mockProvider: ResourceProvider = {
+        get: jest.fn(),
+        list: jest.fn().mockResolvedValue({ resources: [] }),
+      };
+
+      const resource1: ResourceDefinition = {
+        uriPattern: 'test://resource1',
+        tags: ['tag1', 'tag2'],
+        provider: mockProvider,
+      };
+
+      const resource2: ResourceDefinition = {
+        uriPattern: 'test://resource2',
+        tags: ['tag2', 'tag3'],
+        provider: mockProvider,
+      };
+
+      registry.register(resource1);
+      registry.register(resource2);
+
+      const results = registry.getByTags(['tag2']);
+      expect(results).toHaveLength(2);
+      expect(results).toContain('test://resource1');
+      expect(results).toContain('test://resource2');
+
+      const specificResults = registry.getByTags(['tag1']);
+      expect(specificResults).toHaveLength(1);
+      expect(specificResults).toContain('test://resource1');
+    });
+
+    it('should get resources by MIME type', () => {
+      const mockProvider: ResourceProvider = {
+        get: jest.fn(),
+        list: jest.fn().mockResolvedValue({ resources: [] }),
+      };
+
+      const jsonResource: ResourceDefinition = {
+        uriPattern: 'test://json',
+        mimeType: 'application/json',
+        provider: mockProvider,
+      };
+
+      const textResource: ResourceDefinition = {
+        uriPattern: 'test://text',
+        mimeType: 'text/plain',
+        provider: mockProvider,
+      };
+
+      registry.register(jsonResource);
+      registry.register(textResource);
+
+      const jsonResults = registry.getByMimeType('application/json');
+      expect(jsonResults).toHaveLength(1);
+      expect(jsonResults).toContain('test://json');
+
+      const textResults = registry.getByMimeType('text/plain');
+      expect(textResults).toHaveLength(1);
+      expect(textResults).toContain('test://text');
+    });
+
+    it('should get watchable and searchable resources', () => {
+      const mockProvider: ResourceProvider = {
+        get: jest.fn(),
+        list: jest.fn().mockResolvedValue({ resources: [] }),
+      };
+
+      const watchableResource: ResourceDefinition = {
+        uriPattern: 'test://watchable',
+        watchable: true,
+        provider: mockProvider,
+      };
+
+      const searchableResource: ResourceDefinition = {
+        uriPattern: 'test://searchable',
+        searchable: true,
+        provider: mockProvider,
+      };
+
+      registry.register(watchableResource);
+      registry.register(searchableResource);
+
+      const watchableResults = registry.getWatchableResources();
+      expect(watchableResults).toHaveLength(1);
+      expect(watchableResults).toContain('test://watchable');
+
+      const searchableResults = registry.getSearchableResources();
+      expect(searchableResults).toHaveLength(1);
+      expect(searchableResults).toContain('test://searchable');
+    });
+
+    it('should validate resource definitions', () => {
+      const mockProvider: ResourceProvider = {
+        get: jest.fn(),
+        list: jest.fn().mockResolvedValue({ resources: [] }),
+      };
+
+      const validDefinition: ResourceDefinition = {
+        uriPattern: 'test://valid',
+        name: 'Valid Resource',
+        version: '1.0.0',
+        mimeType: 'application/json',
+        provider: mockProvider,
+      };
+
+      const validResult = registry.validateDefinition(validDefinition);
+      expect(validResult.valid).toBe(true);
+      expect(validResult.errors).toHaveLength(0);
+
+      const invalidDefinition = {
+        provider: mockProvider,
+      } as unknown as ResourceDefinition;
+
+      const invalidResult = registry.validateDefinition(invalidDefinition);
+      expect(invalidResult.valid).toBe(false);
+      expect(invalidResult.errors).toContain('Resource URI pattern is required and must be a string');
+
+      const badMimeDefinition: ResourceDefinition = {
+        uriPattern: 'test://bad-mime',
+        mimeType: 'invalid-mime-type',
+        provider: mockProvider,
+      };
+
+      const badMimeResult = registry.validateDefinition(badMimeDefinition);
+      expect(badMimeResult.valid).toBe(false);
+      expect(badMimeResult.errors).toContain('MIME type must be in valid format (e.g., text/plain, application/json)');
+    });
+
+    it('should get detailed capabilities', () => {
+      const mockProvider: ResourceProvider = {
+        get: jest.fn(),
+        list: jest.fn().mockResolvedValue({ resources: [] }),
+      };
+
+      const watchableResource: ResourceDefinition = {
+        uriPattern: 'test://watchable',
+        watchable: true,
+        provider: mockProvider,
+      };
+
+      const validatedResource: ResourceDefinition = {
+        uriPattern: 'test://validated',
+        validateUri: () => ({ success: true }),
+        searchable: true,
+        hooks: {
+          beforeGet: async () => {
+            // No-op for testing
+          },
+        },
+        provider: mockProvider,
+      };
+
+      registry.register(watchableResource);
+      registry.register(validatedResource);
+
+      const capabilities = registry.getDetailedCapabilities();
+      expect(capabilities.totalResources).toBe(2);
+      expect(capabilities.watchableResources).toBe(1);
+      expect(capabilities.searchableResources).toBe(1);
+      expect(capabilities.resourcesWithValidation).toBe(1);
+      expect(capabilities.resourcesWithHooks).toBe(1);
+      expect(capabilities.capabilities.resources?.subscribe).toBe(true);
+    });
+
+    it('should provide enhanced statistics', () => {
+      const mockProvider: ResourceProvider = {
+        get: jest.fn(),
+        list: jest.fn().mockResolvedValue({ resources: [] }),
+      };
+
+      const complexResource: ResourceDefinition = {
+        uriPattern: 'test://complex',
+        name: 'Complex Resource',
+        description: 'A complex resource',
+        version: '2.0.0',
+        tags: ['complex', 'test'],
+        mimeType: 'application/json',
+        watchable: true,
+        searchable: true,
+        validateUri: () => ({ success: true }),
+        cache: { enabled: true, ttl: 300 },
+        rateLimit: { maxCalls: 100, windowMs: 60000 },
+        hooks: {
+          beforeGet: async () => {
+            // No-op for testing
+          },
+          afterGet: async () => {
+            // No-op for testing
+          },
+        },
+        provider: mockProvider,
+      };
+
+      registry.register(complexResource);
+
+      const stats = registry.getStats();
+      expect(stats.totalRegistered).toBe(1);
+      expect(stats.customMetrics?.resourcesWithName).toBe(1);
+      expect(stats.customMetrics?.resourcesWithDescription).toBe(1);
+      expect(stats.customMetrics?.resourcesWithMimeType).toBe(1);
+      expect(stats.customMetrics?.resourcesWithTags).toBe(1);
+      expect(stats.customMetrics?.resourcesWithVersion).toBe(1);
+      expect(stats.customMetrics?.watchableResources).toBe(1);
+      expect(stats.customMetrics?.searchableResources).toBe(1);
+      expect(stats.customMetrics?.resourcesWithValidation).toBe(1);
+      expect(stats.customMetrics?.resourcesWithHooks).toBe(1);
+      expect(stats.customMetrics?.resourcesWithCaching).toBe(1);
+      expect(stats.customMetrics?.resourcesWithRateLimit).toBe(1);
+      expect(stats.customMetrics?.uniqueTags).toBe(2);
+      expect(stats.customMetrics?.uniqueMimeTypes).toBe(1);
+      expect(stats.customMetrics?.averageTagsPerResource).toBe(2);
     });
   });
 });

@@ -24,7 +24,6 @@ export class ToolRegistry implements Registry {
       throw new Error(`Invalid tool definition: ${validation.errors.join(', ')}`);
     }
 
-    // Check for duplicate names
     if (this._tools.has(definition.name)) {
       throw new Error(`Tool '${definition.name}' is already registered`);
     }
@@ -57,7 +56,7 @@ export class ToolRegistry implements Registry {
           tags: definition.tags,
           dangerous: definition.dangerous,
           scopes: definition.scopes,
-          scope: definition.scope, // Legacy support
+          scope: definition.scope,
           throttle: definition.throttle,
           rateLimit: definition.rateLimit,
         },
@@ -99,7 +98,6 @@ export class ToolRegistry implements Registry {
    * Check authorization for tool execution
    */
   private async _checkAuthorization(definition: ToolDefinition, context: HandlerContext, scope?: string): Promise<void> {
-    // Check new scopes array (preferred)
     if (definition.scopes && definition.scopes.length > 0) {
       const userScopes = context.user?.permissions || [];
       const hasRequiredScope = definition.scopes.some((requiredScope) => userScopes.includes(requiredScope));
@@ -174,7 +172,7 @@ export class ToolRegistry implements Registry {
     version?: string;
     dangerous?: boolean;
     scopes?: string[];
-    scope?: string; // Legacy support
+    scope?: string;
     throttle?: { maxCalls?: number; windowMs?: number };
     rateLimit?: { maxCalls: number; windowMs: number };
     hasSchema: boolean;

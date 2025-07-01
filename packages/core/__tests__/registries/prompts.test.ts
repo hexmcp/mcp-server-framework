@@ -183,15 +183,12 @@ describe('PromptRegistry', () => {
 
       registry.register(definition);
 
-      // Valid input should work
       await expect(registry.dispatch('test-prompt', { name: 'John', age: 30 }, mockContext)).resolves.toBe('test response');
 
-      // Missing required argument should fail
       await expect(registry.dispatch('test-prompt', { age: 30 }, mockContext)).rejects.toThrow(
         "Missing required argument 'name' for prompt 'test-prompt'"
       );
 
-      // Invalid type should fail
       await expect(registry.dispatch('test-prompt', { name: 'John', age: 'thirty' }, mockContext)).rejects.toThrow(
         "Invalid value for argument 'age' in prompt 'test-prompt'"
       );
@@ -340,18 +337,15 @@ describe('PromptRegistry', () => {
       registry.register(streamingPrompt);
       registry.register(validatedPrompt);
 
-      // Test filtering by streaming
       const streamingResults = registry.list({ streaming: true });
       expect(streamingResults).toHaveLength(1);
       expect(streamingResults[0]?.name).toBe('streaming-prompt');
       expect(streamingResults[0]?.streaming).toBe(true);
 
-      // Test filtering by tags
       const tagResults = registry.list({ tags: ['validation'] });
       expect(tagResults).toHaveLength(1);
       expect(tagResults[0]?.name).toBe('validated-prompt');
 
-      // Test filtering by schema
       const schemaResults = registry.list({ withSchema: true });
       expect(schemaResults).toHaveLength(1);
       expect(schemaResults[0]?.hasSchema).toBe(true);
@@ -421,7 +415,6 @@ describe('PromptRegistry', () => {
     });
 
     it('should validate prompt definitions', () => {
-      // Valid definition
       const validDefinition: PromptDefinition = {
         name: 'valid-prompt',
         description: 'A valid prompt',
@@ -433,7 +426,6 @@ describe('PromptRegistry', () => {
       expect(validResult.valid).toBe(true);
       expect(validResult.errors).toHaveLength(0);
 
-      // Invalid definition - missing name
       const invalidDefinition = {
         handler: async () => 'response',
       } as unknown as PromptDefinition;
@@ -442,7 +434,6 @@ describe('PromptRegistry', () => {
       expect(invalidResult.valid).toBe(false);
       expect(invalidResult.errors).toContain('Prompt name is required and must be a string');
 
-      // Invalid definition - bad version format
       const badVersionDefinition: PromptDefinition = {
         name: 'bad-version',
         version: 'invalid',
