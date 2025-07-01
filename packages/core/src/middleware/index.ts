@@ -4,6 +4,7 @@ export {
   type BuiltInMiddleware,
   type CorsMiddlewareOptions,
   createMiddlewareBuilder,
+  type ErrorMapperMiddlewareOptions,
   type LoggingMiddlewareOptions,
   McpMiddlewareBuilder,
   type MiddlewareBuilder,
@@ -14,8 +15,13 @@ export {
 } from './builder';
 export { MiddlewareDispatcher, type MiddlewareDispatcherOptions } from './dispatcher';
 export { McpMiddlewareEngine } from './engine';
+export { createErrorMapperMiddleware } from './error-mapper';
 export { McpMiddlewareRegistry } from './registry';
 export type {
+  ErrorContext,
+  ErrorMapper,
+  ErrorMapperOptions,
+  ErrorMappingResult,
   Middleware,
   MiddlewareEngine,
   MiddlewareExecutionContext,
