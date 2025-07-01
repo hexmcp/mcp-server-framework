@@ -1,14 +1,10 @@
-# @hexmcp/core
 
-## 1.0.0
 
-### Major Changes
+### Minor Changes
 
 - b043279: # Comprehensive Middleware Execution Engine with Infinite Loop Prevention
 
-  Implement a production-ready middleware execution engine for the MCP Server Framework with enterprise-grade safety features and comprehensive infinite loop prevention mechanisms.
-
-  ## 🚀 Major Features
+  Implement a production-ready middleware execution engine for the MCP Server Framework with enterprise-grade safety features and comprehensive infinite loo
 
   ### Middleware Execution Engine
 
@@ -121,10 +117,6 @@
   - **Execution state cleanup** on both success and error paths
   - **Error context preservation** with middleware index and cause information
   - **Transport integration** with proper JSON-RPC error handling
-
-  ## 🔄 Breaking Changes
-
-  This is a new major feature addition with no breaking changes to existing APIs. All existing functionality remains fully compatible.
 
   ## 📚 Documentation
 
