@@ -1,4 +1,7 @@
 import type { ServerCapabilities } from '@modelcontextprotocol/sdk/types.js';
+import type { PromptRegistry } from '../registries/prompts';
+import type { ResourceRegistry } from '../registries/resources';
+import type { ToolRegistry } from '../registries/tools';
 import type { CapabilityRegistry, PrimitiveRegistry } from './types';
 
 /**
@@ -35,26 +38,59 @@ export class McpCapabilityRegistry implements CapabilityRegistry {
    * Get current server capabilities, dynamically updated based on registered primitives
    */
   getServerCapabilities(): ServerCapabilities {
-    const capabilities = { ...this._capabilities };
+    let capabilities = { ...this._capabilities };
 
     if (this._primitiveRegistry) {
-      if (this._primitiveRegistry.hasPrompts()) {
-        capabilities.prompts = capabilities.prompts || {};
-      }
+      if (this._primitiveRegistry instanceof RegistryPrimitiveRegistry) {
+        const dynamicCapabilities = this._primitiveRegistry.getRegistryCapabilities();
+        capabilities = this._mergeCapabilities(capabilities, dynamicCapabilities);
+      } else {
+        if (this._primitiveRegistry.hasPrompts()) {
+          capabilities.prompts = capabilities.prompts || {};
+        }
 
-      if (this._primitiveRegistry.hasTools()) {
-        capabilities.tools = capabilities.tools || {};
-      }
+        if (this._primitiveRegistry.hasTools()) {
+          capabilities.tools = capabilities.tools || {};
+        }
 
-      if (this._primitiveRegistry.hasResources()) {
-        capabilities.resources = capabilities.resources || {
-          subscribe: false,
-          listChanged: false,
-        };
+        if (this._primitiveRegistry.hasResources()) {
+          capabilities.resources = capabilities.resources || {
+            subscribe: false,
+            listChanged: false,
+          };
+        }
       }
     }
 
     return capabilities;
+  }
+
+  /**
+   * Merge capabilities with proper deep merging for complex objects
+   */
+  private _mergeCapabilities(base: ServerCapabilities, dynamic: Partial<ServerCapabilities>): ServerCapabilities {
+    const merged = { ...base };
+
+    for (const [key, value] of Object.entries(dynamic)) {
+      if (value !== undefined) {
+        const typedKey = key as keyof ServerCapabilities;
+        if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+          const existingValue = merged[typedKey];
+          if (typeof existingValue === 'object' && existingValue !== null && !Array.isArray(existingValue)) {
+            merged[typedKey] = {
+              ...existingValue,
+              ...value,
+            } as ServerCapabilities[typeof typedKey];
+          } else {
+            merged[typedKey] = value as ServerCapabilities[typeof typedKey];
+          }
+        } else {
+          merged[typedKey] = value as ServerCapabilities[typeof typedKey];
+        }
+      }
+    }
+
+    return merged;
   }
 
   /**
@@ -196,6 +232,102 @@ export class McpCapabilityRegistry implements CapabilityRegistry {
       dynamic: dynamicCapabilities,
       total: staticCapabilities.length + dynamicCapabilities.length,
     };
+  }
+}
+
+/**
+ * Registry-based primitive registry that integrates with actual registries
+ */
+export class RegistryPrimitiveRegistry implements PrimitiveRegistry {
+  private _promptRegistry?: PromptRegistry;
+  private _toolRegistry?: ToolRegistry;
+  private _resourceRegistry?: ResourceRegistry;
+
+  constructor(promptRegistry?: PromptRegistry, toolRegistry?: ToolRegistry, resourceRegistry?: ResourceRegistry) {
+    if (promptRegistry) {
+      this._promptRegistry = promptRegistry;
+    }
+    if (toolRegistry) {
+      this._toolRegistry = toolRegistry;
+    }
+    if (resourceRegistry) {
+      this._resourceRegistry = resourceRegistry;
+    }
+  }
+
+  /**
+   * Set the prompt registry
+   */
+  setPromptRegistry(registry: PromptRegistry): void {
+    this._promptRegistry = registry;
+  }
+
+  /**
+   * Set the tool registry
+   */
+  setToolRegistry(registry: ToolRegistry): void {
+    this._toolRegistry = registry;
+  }
+
+  /**
+   * Set the resource registry
+   */
+  setResourceRegistry(registry: ResourceRegistry): void {
+    this._resourceRegistry = registry;
+  }
+
+  /**
+   * Get combined capabilities from all registries
+   */
+  getRegistryCapabilities(): Partial<ServerCapabilities> {
+    const capabilities: Partial<ServerCapabilities> = {};
+
+    if (this._promptRegistry) {
+      const promptCapabilities = this._promptRegistry.getCapabilities();
+      if (Object.keys(promptCapabilities).length > 0) {
+        Object.assign(capabilities, promptCapabilities);
+      }
+    }
+
+    if (this._toolRegistry) {
+      const toolCapabilities = this._toolRegistry.getCapabilities();
+      if (Object.keys(toolCapabilities).length > 0) {
+        Object.assign(capabilities, toolCapabilities);
+      }
+    }
+
+    if (this._resourceRegistry) {
+      const resourceCapabilities = this._resourceRegistry.getCapabilities();
+      if (Object.keys(resourceCapabilities).length > 0) {
+        Object.assign(capabilities, resourceCapabilities);
+      }
+    }
+
+    return capabilities;
+  }
+
+  getPromptCount(): number {
+    return this._promptRegistry?.getStats().totalRegistered || 0;
+  }
+
+  getToolCount(): number {
+    return this._toolRegistry?.getStats().totalRegistered || 0;
+  }
+
+  getResourceCount(): number {
+    return this._resourceRegistry?.getStats().totalRegistered || 0;
+  }
+
+  hasPrompts(): boolean {
+    return this.getPromptCount() > 0;
+  }
+
+  hasTools(): boolean {
+    return this.getToolCount() > 0;
+  }
+
+  hasResources(): boolean {
+    return this.getResourceCount() > 0;
   }
 }
 

@@ -1,6 +1,7 @@
 export {
   McpCapabilityRegistry,
   MockPrimitiveRegistry,
+  RegistryPrimitiveRegistry,
 } from './capability-registry';
 export { McpHandshakeHandlers } from './handshake-handlers';
 export {
