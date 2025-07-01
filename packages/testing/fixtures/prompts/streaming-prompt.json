@@ -1,0 +1,29 @@
+{
+  "name": "streaming-prompt",
+  "input": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "prompts/get",
+    "params": {
+      "name": "streaming-example",
+      "arguments": {
+        "topic": "TypeScript"
+      }
+    }
+  },
+  "expected": [
+    {
+      "type": "text",
+      "content": "TypeScript is a strongly typed programming language"
+    },
+    {
+      "type": "text",
+      "content": " that builds on JavaScript by adding static type definitions."
+    },
+    {
+      "type": "event",
+      "name": "completion",
+      "data": { "finished": true }
+    }
+  ]
+}

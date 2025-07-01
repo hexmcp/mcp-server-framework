@@ -1,0 +1,22 @@
+{
+  "name": "invalid-params",
+  "input": {
+    "jsonrpc": "2.0",
+    "id": 2,
+    "method": "tools/call",
+    "params": {
+      "name": "echo"
+    }
+  },
+  "expected": {
+    "jsonrpc": "2.0",
+    "id": 2,
+    "error": {
+      "code": -32602,
+      "message": "Invalid params",
+      "data": {
+        "details": "Missing required parameter: arguments"
+      }
+    }
+  }
+}
