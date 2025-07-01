@@ -1,4 +1,4 @@
-import type { Fixture, JsonRpcChunk, JsonRpcRequest, JsonRpcResponse } from './types.js';
+import type { Fixture, JsonRpcChunk, JsonRpcRequest, JsonRpcResponse } from './types';
 
 /**
  * Builds a valid JSON-RPC 2.0 request for calling a tool handler.

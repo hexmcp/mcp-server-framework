@@ -1,4 +1,4 @@
-export * from './factories.js';
+export * from './factories';
 export {
   FixtureRunner,
   listFixturePaths,
@@ -7,6 +7,7 @@ export {
   runFixture,
   runFixtures,
   runFixtureTest,
-} from './run-fixtures.js';
-export * from './snapshot.js';
-export * from './types.js';
+} from './run-fixtures';
+export * from './snapshot';
+export * from './streaming';
+export * from './types';

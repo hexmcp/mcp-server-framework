@@ -36,6 +36,7 @@ packages/testing/
 - **Error Handling**: Comprehensive error scenario testing with proper status codes
 - **Fixture Factories**: Reusable functions for generating spec-compliant test data
 - **Golden Snapshot Testing**: Uses Node.js built-in `util.isDeepStrictEqual` for reliable comparisons
+- **Golden Snapshot Testing**: Uses Node.js built-in `util.isDeepStrictEqual` for reliable comparisons
 - **Jest Integration**: Seamless integration with Jest testing framework
 - **In-process Testing**: Uses codec/dispatcher stacks without external mock servers
 - **CI Integration**: Supports `pnpm test-fixtures` command for CI pipelines
@@ -183,6 +184,63 @@ const streamingChunks = [
 await expectMatchesSnapshot('streaming-response', streamingChunks);
 ```
 
+### Advanced Streaming Handler Testing
+
+```typescript
+import {
+  collectStream,
+  collectStreamWithMetadata,
+  expectStreamShape,
+  testStreamedFixture,
+  createMockStream,
+  createTextStreamHandler,
+  createEventStreamHandler,
+  type HandlerContext,
+  type StreamShape
+} from '@hexmcp/testing';
+
+// Test streaming handlers that return AsyncIterable<T>
+const streamingHandler = async function* (input: { topic: string }, ctx: HandlerContext) {
+  yield { type: 'text', content: `Analyzing ${input.topic}...` };
+  yield { type: 'text', content: ' Results: Complete.' };
+  yield { type: 'event', name: 'completion', data: { wordCount: 3 } };
+};
+
+// Collect all chunks from a stream
+const chunks = await collectStream(streamingHandler({ topic: 'AI' }, mockContext));
+expect(chunks).toHaveLength(3);
+
+// Validate stream shape without snapshots
+await expectStreamShape(streamingHandler({ topic: 'AI' }, mockContext), {
+  count: 3,
+  predicate: (chunk, index) => {
+    if (index === 2) return chunk.type === 'event';
+    return chunk.type === 'text';
+  }
+});
+
+// Test with snapshot comparison
+await testStreamedFixture(
+  'ai-analysis',
+  streamingHandler,
+  { topic: 'AI' },
+  mockContext
+);
+
+// Get detailed execution metadata
+const result = await collectStreamWithMetadata(streamingHandler({ topic: 'AI' }, mockContext));
+console.log(`Execution time: ${result.executionTime}ms`);
+console.log(`Completed: ${result.completed}`);
+
+// Create mock streams for testing
+const mockStream = createMockStream(['chunk1', 'chunk2'], 10); // 10ms delay
+const textHandler = createTextStreamHandler(['Hello', 'World'], 5);
+const eventHandler = createEventStreamHandler([
+  { name: 'start' },
+  { name: 'complete', data: { success: true } }
+]);
+```
+
 ## Scripts
 
 - `pnpm build` - Build the package
@@ -212,8 +270,23 @@ The package includes comprehensive fixture factories for creating spec-compliant
 - `createEventChunk(name, data?)` - Event-type chunks
 - `createImageChunk(url, alt?)` - Image-type chunks
 
+### Streaming Handler Testing
+- `collectStream(iterable, timeout?)` - Collect all chunks from AsyncIterable
+- `collectStreamWithMetadata(iterable, timeout?)` - Collect with execution metadata
+- `expectStreamShape(iterable, shape, timeout?)` - Validate stream structure
+- `testStreamedFixture(name, handler, input, ctx, timeout?)` - Snapshot-based stream testing
+- `createMockStream(items, delay?, shouldError?)` - Create mock async iterables
+- `createTextStreamHandler(texts, delay?)` - Create text streaming handlers
+- `createEventStreamHandler(events, delay?)` - Create event streaming handlers
+
 ### Fixture Factory
 - `createFixture(name, input, expected)` - Complete fixture objects
+
+### Snapshot Utilities
+- `saveSnapshot(name, data, baseDir?)` - Save JSON snapshots to disk
+- `loadSnapshot(name, baseDir?)` - Load previously saved snapshots
+- `expectMatchesSnapshot(name, actual, baseDir?)` - Jest-aware snapshot comparison
+- `configureSnapshots(config)` - Global snapshot configuration
 
 ### Snapshot Utilities
 - `saveSnapshot(name, data, baseDir?)` - Save JSON snapshots to disk
@@ -231,5 +304,7 @@ The package includes comprehensive fixture factories for creating spec-compliant
 - Full MCP protocol execution stack
 - Comprehensive fixture factories
 - Golden snapshot testing utilities
+- Advanced streaming handler testing
+- Transport-agnostic AsyncIterable testing
 - Jest integration and CI/CD support
-- 52/52 tests passing with comprehensive coverage
+- 38/38 tests passing with comprehensive coverage
