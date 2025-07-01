@@ -33,9 +33,10 @@ describe('Error Mapper Integration Tests', () => {
     middlewareRegistry = new McpMiddlewareRegistry();
     middlewareEngine = new McpMiddlewareEngine();
 
-    const capabilityRegistry = new McpCapabilityRegistry();
     const primitiveRegistry = new MockPrimitiveRegistry();
-    lifecycleManager = new McpLifecycleManager(capabilityRegistry, primitiveRegistry);
+    const capabilityRegistry = new McpCapabilityRegistry();
+    capabilityRegistry.setPrimitiveRegistry(primitiveRegistry);
+    lifecycleManager = new McpLifecycleManager(capabilityRegistry);
     requestGate = new McpRequestGate(lifecycleManager);
 
     mockCoreDispatcher = jest.fn().mockImplementation(async (ctx: RequestContext) => {
@@ -75,7 +76,10 @@ describe('Error Mapper Integration Tests', () => {
       const mockRespond = jest.fn();
       const request = OPERATIONAL_REQUESTS[0] ?? { jsonrpc: '2.0', method: 'prompts/list', id: 'test-1' };
 
-      await transportDispatch(request, mockRespond);
+      transportDispatch(request, mockRespond);
+
+      // Wait for async operations to complete
+      await new Promise((resolve) => setTimeout(resolve, 0));
 
       expect(logs).toEqual(['outer:before', 'outer:after']);
       expect(mockCoreDispatcher).toHaveBeenCalledTimes(1);
@@ -100,7 +104,10 @@ describe('Error Mapper Integration Tests', () => {
       const mockRespond = jest.fn();
       const request = OPERATIONAL_REQUESTS[0] ?? { jsonrpc: '2.0', method: 'prompts/list', id: 'test-1' };
 
-      await transportDispatch(request, mockRespond);
+      transportDispatch(request, mockRespond);
+
+      // Wait for async operations to complete
+      await new Promise((resolve) => setTimeout(resolve, 0));
 
       expect(logs).toEqual(['outer:before']); // 'after' not called due to error
       expect(mockCoreDispatcher).not.toHaveBeenCalled();
@@ -129,7 +136,10 @@ describe('Error Mapper Integration Tests', () => {
       const mockRespond = jest.fn();
       const request = OPERATIONAL_REQUESTS[0] ?? { jsonrpc: '2.0', method: 'prompts/list', id: 'test-1' };
 
-      await transportDispatch(request, mockRespond);
+      transportDispatch(request, mockRespond);
+
+      // Wait for async operations to complete
+      await new Promise((resolve) => setTimeout(resolve, 0));
 
       const response = mockRespond.mock.calls[0][0] as any;
       expect(response.error.code).toBe(JSON_RPC_ERROR_CODES.INTERNAL_ERROR);
@@ -153,7 +163,10 @@ describe('Error Mapper Integration Tests', () => {
       const mockRespond = jest.fn();
       const request = OPERATIONAL_REQUESTS[0] ?? { jsonrpc: '2.0', method: 'prompts/list', id: 'test-1' };
 
-      await transportDispatch(request, mockRespond);
+      transportDispatch(request, mockRespond);
+
+      // Wait for async operations to complete
+      await new Promise((resolve) => setTimeout(resolve, 0));
 
       const response = mockRespond.mock.calls[0][0] as any;
       expect(response.error.code).toBe(-32000); // Auth error code from fixture
@@ -174,7 +187,10 @@ describe('Error Mapper Integration Tests', () => {
       const mockRespond = jest.fn();
       const request = OPERATIONAL_REQUESTS[0] ?? { jsonrpc: '2.0', method: 'prompts/list', id: 'test-1' };
 
-      await transportDispatch(request, mockRespond);
+      transportDispatch(request, mockRespond);
+
+      // Wait for async operations to complete
+      await new Promise((resolve) => setTimeout(resolve, 0));
 
       const response = mockRespond.mock.calls[0][0] as any;
       expect(response.error.code).toBe(-32000); // Rate limit error code from fixture
@@ -199,7 +215,10 @@ describe('Error Mapper Integration Tests', () => {
       const mockRespond = jest.fn();
       const request = OPERATIONAL_REQUESTS[0] ?? { jsonrpc: '2.0', method: 'prompts/list', id: 'test-1' };
 
-      await transportDispatch(request, mockRespond);
+      transportDispatch(request, mockRespond);
+
+      // Wait for async operations to complete
+      await new Promise((resolve) => setTimeout(resolve, 0));
 
       expect(logs).toEqual(['outer:before', 'outer:after']);
       expect(mockCoreDispatcher).not.toHaveBeenCalled();
@@ -229,7 +248,10 @@ describe('Error Mapper Integration Tests', () => {
       const mockRespond = jest.fn();
       const request = OPERATIONAL_REQUESTS[0] ?? { jsonrpc: '2.0', method: 'prompts/list', id: 'test-1' };
 
-      await transportDispatch(request, mockRespond);
+      transportDispatch(request, mockRespond);
+
+      // Wait for async operations to complete
+      await new Promise((resolve) => setTimeout(resolve, 0));
 
       expect(logs).toEqual(['logging:before', 'logging:after']);
       expect(mockCoreDispatcher).toHaveBeenCalledTimes(1);
@@ -263,7 +285,10 @@ describe('Error Mapper Integration Tests', () => {
       const mockRespond = jest.fn();
       const request = OPERATIONAL_REQUESTS[0] ?? { jsonrpc: '2.0', method: 'prompts/list', id: 'test-1' };
 
-      await transportDispatch(request, mockRespond);
+      transportDispatch(request, mockRespond);
+
+      // Wait for async operations to complete
+      await new Promise((resolve) => setTimeout(resolve, 0));
 
       expect(logs).toEqual(['outer:before']); // No 'after' due to error
       expect(mockCoreDispatcher).not.toHaveBeenCalled();
@@ -295,7 +320,10 @@ describe('Error Mapper Integration Tests', () => {
       const mockRespond = jest.fn();
       const request = { jsonrpc: '2.0', method: 'test/method', id: 'debug-test-1', params: { test: true } };
 
-      await transportDispatch(request, mockRespond);
+      transportDispatch(request, mockRespond);
+
+      // Wait for async operations to complete
+      await new Promise((resolve) => setTimeout(resolve, 0));
 
       // Verify structured logging output
       expect(consoleLogSpy).toHaveBeenCalled();

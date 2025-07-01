@@ -140,7 +140,7 @@ export function createRateLimitMiddleware(name: string, maxRequests: number): Mi
 
 export function createTracingMiddleware(name: string): Middleware {
   const middleware: Middleware = async (ctx, next) => {
-    const traceId = `trace-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const traceId = `trace-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
     ctx.state.traceId = traceId;
     ctx.state.startTime = Date.now();
 
@@ -183,23 +183,23 @@ export class MockLogger implements Logger {
   public logs: Array<{ level: string; message: string; meta?: LogEntry }> = [];
 
   error(message: string, meta?: LogEntry): void {
-    this.logs.push({ level: 'error', message, meta });
+    this.logs.push({ level: 'error', message, ...(meta && { meta }) });
   }
 
   warn(message: string, meta?: LogEntry): void {
-    this.logs.push({ level: 'warn', message, meta });
+    this.logs.push({ level: 'warn', message, ...(meta && { meta }) });
   }
 
   info(message: string, meta?: LogEntry): void {
-    this.logs.push({ level: 'info', message, meta });
+    this.logs.push({ level: 'info', message, ...(meta && { meta }) });
   }
 
   debug(message: string, meta?: LogEntry): void {
-    this.logs.push({ level: 'debug', message, meta });
+    this.logs.push({ level: 'debug', message, ...(meta && { meta }) });
   }
 
   log(level: string, message: string, meta?: LogEntry): void {
-    this.logs.push({ level, message, meta });
+    this.logs.push({ level, message, ...(meta && { meta }) });
   }
 
   clear(): void {
