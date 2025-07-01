@@ -22,6 +22,7 @@ export type {
   ErrorMapper,
   ErrorMapperOptions,
   ErrorMappingResult,
+  ErrorMetadata,
   Middleware,
   MiddlewareEngine,
   MiddlewareExecutionContext,
@@ -32,6 +33,8 @@ export type {
   RequestContext,
 } from './types';
 export {
+  ErrorClassification,
+  type ErrorClassificationResult,
   MiddlewareError,
   MiddlewareExecutionState,
   MiddlewareTimeoutError,
