@@ -1,3 +1,4 @@
+export * from './factories.js';
 export {
   FixtureRunner,
   listFixturePaths,
