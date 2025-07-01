@@ -8,4 +8,5 @@ export {
   runFixtures,
   runFixtureTest,
 } from './run-fixtures.js';
+export * from './snapshot.js';
 export * from './types.js';

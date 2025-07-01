@@ -35,6 +35,7 @@ packages/testing/
 - **Streaming Support**: Tests chunked responses for streaming prompts and large outputs
 - **Error Handling**: Comprehensive error scenario testing with proper status codes
 - **Fixture Factories**: Reusable functions for generating spec-compliant test data
+- **Golden Snapshot Testing**: Uses Node.js built-in `util.isDeepStrictEqual` for reliable comparisons
 - **Jest Integration**: Seamless integration with Jest testing framework
 - **In-process Testing**: Uses codec/dispatcher stacks without external mock servers
 - **CI Integration**: Supports `pnpm test-fixtures` command for CI pipelines
@@ -141,6 +142,47 @@ const lifecycleFixture = createFixture(
 );
 ```
 
+### Snapshot Testing
+
+```typescript
+import {
+  saveSnapshot,
+  loadSnapshot,
+  expectMatchesSnapshot,
+  configureSnapshots
+} from '@hexmcp/testing';
+
+// Configure snapshot behavior
+configureSnapshots({
+  snapshotsDir: '__snapshots__',
+  updateSnapshots: process.env.UPDATE_SNAPSHOTS === 'true',
+  logger: (message) => console.warn(message) // Optional logging
+});
+
+// Save a snapshot for later comparison
+const responseData = {
+  jsonrpc: '2.0',
+  id: 1,
+  result: { content: [{ type: 'text', text: 'Hello!' }] }
+};
+await saveSnapshot('tool-response', responseData);
+
+// Load and manually compare
+const expected = await loadSnapshot('tool-response');
+expect(actualResponse).toEqual(expected);
+
+// Or use the Jest-aware utility
+await expectMatchesSnapshot('tool-response', actualResponse);
+
+// Streaming response snapshots
+const streamingChunks = [
+  { type: 'text', content: 'First chunk' },
+  { type: 'text', content: 'Second chunk' },
+  { type: 'event', name: 'completion', data: { finished: true } }
+];
+await expectMatchesSnapshot('streaming-response', streamingChunks);
+```
+
 ## Scripts
 
 - `pnpm build` - Build the package
@@ -173,6 +215,12 @@ The package includes comprehensive fixture factories for creating spec-compliant
 ### Fixture Factory
 - `createFixture(name, input, expected)` - Complete fixture objects
 
+### Snapshot Utilities
+- `saveSnapshot(name, data, baseDir?)` - Save JSON snapshots to disk
+- `loadSnapshot(name, baseDir?)` - Load previously saved snapshots
+- `expectMatchesSnapshot(name, actual, baseDir?)` - Jest-aware snapshot comparison
+- `configureSnapshots(config)` - Global snapshot configuration
+
 ### Error Codes
 - `ErrorCodes` - Standard JSON-RPC and MCP-specific error codes
 
@@ -182,5 +230,6 @@ The package includes comprehensive fixture factories for creating spec-compliant
 - Dynamic fixture discovery and loading
 - Full MCP protocol execution stack
 - Comprehensive fixture factories
+- Golden snapshot testing utilities
 - Jest integration and CI/CD support
-- 38/38 tests passing with comprehensive coverage
+- 52/52 tests passing with comprehensive coverage
