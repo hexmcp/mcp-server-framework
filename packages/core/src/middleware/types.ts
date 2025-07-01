@@ -86,3 +86,34 @@ export interface MiddlewareExecutionResult {
   shortCircuited: boolean;
   responseSet: boolean;
 }
+
+export type LogLevel = 'error' | 'warn' | 'info' | 'debug';
+
+export interface ErrorMapperOptions {
+  debugMode?: boolean;
+  enableLogging?: boolean;
+  logLevel?: LogLevel;
+  customErrorMapper?: (error: unknown, ctx: RequestContext) => ErrorMappingResult;
+  includeStackTrace?: boolean;
+  includeRequestContext?: boolean;
+  onError?: (error: unknown, ctx: RequestContext, mappedError: ErrorMappingResult) => void;
+}
+
+export interface ErrorContext {
+  originalError: unknown;
+  errorType: string;
+  timestamp: number;
+  requestId: string | number | null;
+  method: string;
+  transportName: string;
+  executionId?: string;
+  middlewareStack?: string[];
+}
+
+export interface ErrorMappingResult {
+  code: number;
+  message: string;
+  data?: unknown;
+}
+
+export type ErrorMapper = (error: unknown, ctx: RequestContext) => ErrorMappingResult;

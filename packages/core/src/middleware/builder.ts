@@ -1,5 +1,5 @@
 import type { JsonRpcRequest } from '@hexmcp/codec-jsonrpc';
-import type { Middleware, MiddlewareRegistry } from './types';
+import type { LogLevel, Middleware, MiddlewareRegistry } from './types';
 
 export interface MiddlewareBuilder {
   use(middleware: Middleware): this;
@@ -74,6 +74,7 @@ export function addMiddlewareSupport<T extends object>(
 }
 
 export interface BuiltInMiddleware {
+  errorMapper(options?: ErrorMapperMiddlewareOptions): Middleware;
   logging(options?: LoggingMiddlewareOptions): Middleware;
   auth(options: AuthMiddlewareOptions): Middleware;
   rateLimit(options: RateLimitMiddlewareOptions): Middleware;
@@ -130,4 +131,21 @@ export interface CorsMiddlewareOptions {
 export interface TimeoutMiddlewareOptions {
   timeoutMs: number;
   onTimeout?: (ctx: { request: JsonRpcRequest; transport: { name: string; peer?: unknown }; state: Record<string, unknown> }) => unknown;
+}
+
+export interface ErrorMapperMiddlewareOptions {
+  debugMode?: boolean;
+  enableLogging?: boolean;
+  logLevel?: LogLevel;
+  customErrorMapper?: (
+    error: unknown,
+    ctx: { request: JsonRpcRequest; transport: { name: string; peer?: unknown }; state: Record<string, unknown> }
+  ) => { code: number; message: string; data?: unknown };
+  includeStackTrace?: boolean;
+  includeRequestContext?: boolean;
+  onError?: (
+    error: unknown,
+    ctx: { request: JsonRpcRequest; transport: { name: string; peer?: unknown }; state: Record<string, unknown> },
+    mappedError: { code: number; message: string; data?: unknown }
+  ) => void;
 }
