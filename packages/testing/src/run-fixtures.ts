@@ -14,5 +14,5 @@ export async function runFixtures(fixtureDir: string, options: FixtureRunnerOpti
   await runner.executeAll();
 }
 
-export { FixtureRunner } from './runner';
+export { FixtureRunner, runFixture } from './runner';
 export * from './types';
