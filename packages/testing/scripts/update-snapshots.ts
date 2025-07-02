@@ -19,7 +19,7 @@ import { configureSnapshots } from '../src/snapshot';
 
 interface CliOptions {
   fixturesDir: string;
-  snapshotsDir: string | undefined;
+  snapshotsDir?: string;
   force: boolean;
   dryRun: boolean;
   verbose: boolean;
@@ -29,11 +29,14 @@ function parseArgs(): CliOptions {
   const args = process.argv.slice(2);
   const options: CliOptions = {
     fixturesDir: args[0] || './fixtures',
-    snapshotsDir: args[1] || undefined,
     force: process.env.FORCE === 'true' || args.includes('--force'),
     dryRun: args.includes('--dry-run'),
     verbose: args.includes('--verbose') || process.env.VERBOSE === 'true',
   };
+
+  if (args[1]) {
+    options.snapshotsDir = args[1];
+  }
 
   return options;
 }
@@ -123,9 +126,9 @@ Examples:
     const fixturesDir = resolve(options.fixturesDir);
     const snapshotsDir = options.snapshotsDir ? resolve(options.snapshotsDir) : undefined;
 
-    logInfo(`Fixtures directory: ${fixturesDir}`, options.verbose);
+    logInfo(`Fixtures directory: ${fixturesDir}`, options.verbose || false);
     if (snapshotsDir) {
-      logInfo(`Snapshots directory: ${snapshotsDir}`, options.verbose);
+      logInfo(`Snapshots directory: ${snapshotsDir}`, options.verbose || false);
     }
 
     // Validate fixtures directory exists
@@ -138,7 +141,7 @@ Examples:
       return;
     }
 
-    logInfo(`Found ${fixtureCount} fixture file(s)`, options.verbose);
+    logInfo(`Found ${fixtureCount} fixture file(s)`, options.verbose || false);
 
     // Configure snapshots if custom directory specified
     if (snapshotsDir) {
@@ -179,7 +182,7 @@ Examples:
     logInfo('Commit changes with: git add __snapshots__/ && git commit -m "Update fixture snapshots"', true);
   } catch (error) {
     logError(`Failed to update snapshots: ${(error as Error).message}`);
-    if (options.verbose) {
+    if (options.verbose || false) {
       // biome-ignore lint/suspicious/noConsole: CLI script needs console output for debugging
       console.error(error);
     }
