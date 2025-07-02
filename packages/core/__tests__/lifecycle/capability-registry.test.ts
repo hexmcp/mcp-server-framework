@@ -1,3 +1,4 @@
+import type { ClientCapabilities } from '@modelcontextprotocol/sdk/types.js';
 import { McpCapabilityRegistry, MockPrimitiveRegistry } from '../../src/lifecycle/index';
 
 describe('McpCapabilityRegistry', () => {
@@ -230,6 +231,82 @@ describe('McpCapabilityRegistry', () => {
         feature1: { config: 'a' },
         feature2: { config: 'b' },
       });
+    });
+  });
+
+  describe('client capability processing', () => {
+    it('should store and retrieve client capabilities', () => {
+      const clientCapabilities: ClientCapabilities = {
+        experimental: { customFeature: true },
+        sampling: {},
+      };
+
+      capabilityRegistry.processClientCapabilities(clientCapabilities);
+
+      expect(capabilityRegistry.getClientCapabilities()).toEqual(clientCapabilities);
+    });
+
+    it('should return null when no client capabilities are set', () => {
+      expect(capabilityRegistry.getClientCapabilities()).toBeNull();
+    });
+
+    it('should check if client supports specific capabilities', () => {
+      const clientCapabilities: ClientCapabilities = {
+        experimental: { customFeature: true },
+        sampling: {},
+      };
+
+      capabilityRegistry.processClientCapabilities(clientCapabilities);
+
+      expect(capabilityRegistry.isClientCapabilitySupported('experimental')).toBe(true);
+      expect(capabilityRegistry.isClientCapabilitySupported('sampling')).toBe(true);
+    });
+
+    it('should return false for unsupported capabilities when no client capabilities are set', () => {
+      expect(capabilityRegistry.isClientCapabilitySupported('experimental')).toBe(false);
+      expect(capabilityRegistry.isClientCapabilitySupported('sampling')).toBe(false);
+    });
+
+    it('should detect client experimental capabilities', () => {
+      const clientCapabilities: ClientCapabilities = {
+        experimental: { customFeature: true, anotherFeature: { enabled: true } },
+        sampling: {},
+      };
+
+      capabilityRegistry.processClientCapabilities(clientCapabilities);
+
+      expect(capabilityRegistry.hasClientExperimentalCapabilities()).toBe(true);
+      expect(capabilityRegistry.getClientExperimentalCapabilities()).toEqual({
+        customFeature: true,
+        anotherFeature: { enabled: true },
+      });
+    });
+
+    it('should return false for experimental capabilities when none are set', () => {
+      const clientCapabilities: ClientCapabilities = {
+        experimental: {},
+        sampling: {},
+      };
+
+      capabilityRegistry.processClientCapabilities(clientCapabilities);
+
+      expect(capabilityRegistry.hasClientExperimentalCapabilities()).toBe(false);
+      expect(capabilityRegistry.getClientExperimentalCapabilities()).toEqual({});
+    });
+
+    it('should detect client sampling capabilities', () => {
+      const clientCapabilities: ClientCapabilities = {
+        experimental: {},
+        sampling: {},
+      };
+
+      capabilityRegistry.processClientCapabilities(clientCapabilities);
+
+      expect(capabilityRegistry.hasClientSamplingCapabilities()).toBe(true);
+    });
+
+    it('should return empty object for experimental capabilities when no client capabilities are set', () => {
+      expect(capabilityRegistry.getClientExperimentalCapabilities()).toEqual({});
     });
   });
 });

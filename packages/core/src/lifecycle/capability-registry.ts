@@ -1,4 +1,4 @@
-import type { ServerCapabilities } from '@modelcontextprotocol/sdk/types.js';
+import type { ClientCapabilities, ServerCapabilities } from '@modelcontextprotocol/sdk/types.js';
 import type { PromptRegistry } from '../registries/prompts';
 import type { ResourceRegistry } from '../registries/resources';
 import type { ToolRegistry } from '../registries/tools';
@@ -19,6 +19,7 @@ const DEFAULT_CAPABILITIES: ServerCapabilities = {
 export class McpCapabilityRegistry implements CapabilityRegistry {
   private _capabilities: ServerCapabilities;
   private _primitiveRegistry: PrimitiveRegistry | null = null;
+  private _clientCapabilities: ClientCapabilities | null = null;
 
   constructor(initialCapabilities: Partial<ServerCapabilities> = {}) {
     this._capabilities = {
@@ -32,6 +33,55 @@ export class McpCapabilityRegistry implements CapabilityRegistry {
    */
   setPrimitiveRegistry(registry: PrimitiveRegistry): void {
     this._primitiveRegistry = registry;
+  }
+
+  /**
+   * Process and store client capabilities from initialize request
+   */
+  processClientCapabilities(clientCapabilities: ClientCapabilities): void {
+    this._clientCapabilities = clientCapabilities;
+  }
+
+  /**
+   * Get the stored client capabilities
+   */
+  getClientCapabilities(): ClientCapabilities | null {
+    return this._clientCapabilities;
+  }
+
+  /**
+   * Check if the client supports a specific capability
+   */
+  isClientCapabilitySupported(capability: keyof ClientCapabilities): boolean {
+    if (!this._clientCapabilities) {
+      return false;
+    }
+    return capability in this._clientCapabilities && this._clientCapabilities[capability] !== undefined;
+  }
+
+  /**
+   * Check if the client supports experimental capabilities
+   */
+  hasClientExperimentalCapabilities(): boolean {
+    return (
+      this.isClientCapabilitySupported('experimental') &&
+      this._clientCapabilities?.experimental !== undefined &&
+      Object.keys(this._clientCapabilities.experimental).length > 0
+    );
+  }
+
+  /**
+   * Check if the client supports sampling
+   */
+  hasClientSamplingCapabilities(): boolean {
+    return this.isClientCapabilitySupported('sampling');
+  }
+
+  /**
+   * Get client experimental capabilities
+   */
+  getClientExperimentalCapabilities(): Record<string, unknown> {
+    return this._clientCapabilities?.experimental || {};
   }
 
   /**

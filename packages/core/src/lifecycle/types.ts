@@ -1,4 +1,4 @@
-import type { InitializeRequest, InitializeResult, ServerCapabilities } from '@modelcontextprotocol/sdk/types.js';
+import type { ClientCapabilities, InitializeRequest, InitializeResult, ServerCapabilities } from '@modelcontextprotocol/sdk/types.js';
 import { ErrorCode } from '@modelcontextprotocol/sdk/types.js';
 
 /**
@@ -144,6 +144,9 @@ export interface CapabilityRegistry {
   getServerCapabilities(): ServerCapabilities;
   updateCapabilities(capabilities: Partial<ServerCapabilities>): void;
   hasCapability(capability: keyof ServerCapabilities): boolean;
+  processClientCapabilities(clientCapabilities: ClientCapabilities): void;
+  getClientCapabilities(): ClientCapabilities | null;
+  isClientCapabilitySupported(capability: keyof ClientCapabilities): boolean;
 }
 
 /**

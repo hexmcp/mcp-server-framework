@@ -215,16 +215,17 @@ export class McpLifecycleManager extends EventEmitter implements LifecycleManage
    * Perform the actual initialization logic
    */
   private async _performInitialization(request: InitializeRequest): Promise<InitializeResult> {
-    // Validate protocol version
     const supportedVersions = ['2025-06-18', '2025-03-26', '2024-11-05'];
     if (!supportedVersions.includes(request.params.protocolVersion)) {
       throw new Error(`Unsupported protocol version: ${request.params.protocolVersion}`);
     }
 
-    // Get server capabilities from registry
+    if (request.params.capabilities) {
+      this._capabilityRegistry.processClientCapabilities(request.params.capabilities);
+    }
+
     const serverCapabilities = this._capabilityRegistry.getServerCapabilities();
 
-    // Create initialization result
     const result: InitializeResult = {
       protocolVersion: request.params.protocolVersion,
       capabilities: serverCapabilities,
