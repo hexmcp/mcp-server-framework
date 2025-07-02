@@ -187,60 +187,59 @@ describe('McpServerBuilder', () => {
 
       builder.transport(mockTransport1).transport(mockTransport2);
 
-      await expect(builder.listen()).rejects.toThrow('Not implemented yet');
+      await builder.listen();
 
-      expect(mockTransport1.start).not.toHaveBeenCalled();
-      expect(mockTransport2.start).not.toHaveBeenCalled();
+      expect(mockTransport1.start).toHaveBeenCalled();
+      expect(mockTransport2.start).toHaveBeenCalled();
+      expect(startedTransports).toEqual(['mock-transport-1', 'mock-transport-2']);
+      expect(dispatchFunctions).toHaveLength(2);
     });
 
     it('should handle empty transport list', async () => {
-      await expect(builder.listen()).rejects.toThrow('Not implemented yet');
+      await expect(builder.listen()).resolves.toBeUndefined();
+
+      expect(builder).toBeDefined();
+      expect(typeof builder.use).toBe('function');
+      expect(typeof builder.prompt).toBe('function');
+      expect(typeof builder.tool).toBe('function');
+      expect(typeof builder.resource).toBe('function');
+      expect(typeof builder.transport).toBe('function');
     });
 
-    it('should handle middleware registration before listen', async () => {
-      const middleware = async (_ctx: any, next: () => Promise<void>) => {
-        await next();
-      };
+    it.each([
+      {
+        name: 'middleware',
+        method: 'use' as const,
+        args: [
+          async (_ctx: any, next: () => Promise<void>) => {
+            await next();
+          },
+        ],
+      },
+      {
+        name: 'prompt',
+        method: 'prompt' as const,
+        args: ['test-prompt', { description: 'Test prompt', handler: async () => 'test response' }],
+      },
+      {
+        name: 'tool',
+        method: 'tool' as const,
+        args: ['test-tool', { description: 'Test tool', handler: async () => ({ content: 'test result' }) }],
+      },
+      {
+        name: 'resource',
+        method: 'resource' as const,
+        args: [
+          'test://',
+          { name: 'Test Resource', provider: { get: async () => ({ data: 'test' }), list: async () => ({ resources: [] }) } },
+        ],
+      },
+    ])('should handle $name registration before listen', async ({ method, args }) => {
+      const result = (builder[method] as any)(...args);
 
-      builder.use(middleware);
-
-      await expect(builder.listen()).rejects.toThrow('Not implemented yet');
-    });
-
-    it('should handle prompt registration before listen', async () => {
-      const promptDef = {
-        description: 'Test prompt',
-        handler: async () => 'test response',
-      };
-
-      builder.prompt('test-prompt', promptDef);
-
-      await expect(builder.listen()).rejects.toThrow('Not implemented yet');
-    });
-
-    it('should handle tool registration before listen', async () => {
-      const toolDef = {
-        description: 'Test tool',
-        handler: async () => ({ content: 'test result' }),
-      };
-
-      builder.tool('test-tool', toolDef);
-
-      await expect(builder.listen()).rejects.toThrow('Not implemented yet');
-    });
-
-    it('should handle resource registration before listen', async () => {
-      const resourceDef = {
-        name: 'Test Resource',
-        provider: {
-          get: async () => ({ data: 'test' }),
-          list: async () => ({ resources: [] }),
-        },
-      };
-
-      builder.resource('test://', resourceDef);
-
-      await expect(builder.listen()).rejects.toThrow('Not implemented yet');
+      expect(result).toBe(builder);
+      await expect(builder.listen()).resolves.toBeUndefined();
+      expect(typeof builder[method]).toBe('function');
     });
 
     it('should handle complex registration before listen', async () => {
@@ -276,14 +275,26 @@ describe('McpServerBuilder', () => {
         }),
       };
 
-      builder
+      const result = builder
         .use(middleware)
         .prompt('test-prompt', promptDef)
         .tool('test-tool', toolDef)
         .resource('test://', resourceDef)
         .transport(transport);
 
-      await expect(builder.listen()).rejects.toThrow('Not implemented yet');
+      expect(result).toBe(builder);
+
+      await expect(builder.listen()).resolves.toBeUndefined();
+
+      expect(transport.start).toHaveBeenCalledTimes(1);
+      expect(transport.start).toHaveBeenCalledWith(expect.any(Function));
+
+      expect(typeof builder.use).toBe('function');
+      expect(typeof builder.prompt).toBe('function');
+      expect(typeof builder.tool).toBe('function');
+      expect(typeof builder.resource).toBe('function');
+      expect(typeof builder.transport).toBe('function');
+      expect(typeof builder.listen).toBe('function');
     });
   });
 });

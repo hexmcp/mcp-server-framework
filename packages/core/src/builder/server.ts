@@ -1,5 +1,7 @@
 import { encodeJsonRpcError, encodeJsonRpcSuccess, type JsonRpcRequest, RpcError } from '@hexmcp/codec-jsonrpc';
 import type { ServerTransport } from '@hexmcp/transport';
+import type { InitializedNotification, InitializeRequest } from '@modelcontextprotocol/sdk/types.js';
+import { McpCapabilityRegistry, McpHandshakeHandlers, McpLifecycleManager, McpRequestGate, RegistryPrimitiveRegistry } from '../lifecycle';
 import { McpMiddlewareEngine } from '../middleware/engine';
 import type { Middleware, RequestContext } from '../middleware/types';
 import { PromptRegistry, ResourceRegistry, ToolRegistry } from '../registries';
@@ -93,6 +95,14 @@ class McpServerBuilderImpl implements McpServerBuilder {
       resourceRegistry.register(definition);
     }
 
+    const primitiveRegistry = new RegistryPrimitiveRegistry(promptRegistry, toolRegistry, resourceRegistry);
+    const capabilityRegistry = new McpCapabilityRegistry();
+    capabilityRegistry.setPrimitiveRegistry(primitiveRegistry);
+
+    const lifecycleManager = new McpLifecycleManager(capabilityRegistry);
+    const requestGate = new McpRequestGate(lifecycleManager);
+    const handshakeHandlers = new McpHandshakeHandlers(lifecycleManager);
+
     const middlewareEngine = new McpMiddlewareEngine();
     const composedMiddleware = middlewareEngine.applyMiddleware(this.state.middleware);
 
@@ -120,7 +130,38 @@ class McpServerBuilderImpl implements McpServerBuilder {
           let result: unknown;
 
           switch (jsonRpcRequest.method) {
+            case 'initialize': {
+              if (!requestGate.canProcessRequest('initialize')) {
+                requestContext.response = encodeJsonRpcError(
+                  jsonRpcRequest.id,
+                  new RpcError(-32002, 'Server not ready for initialization')
+                );
+                break;
+              }
+              const initRequest = jsonRpcRequest as InitializeRequest & { id: string | number };
+              const handshakeResult = await handshakeHandlers.handleInitialize(initRequest);
+              requestContext.response = handshakeResult;
+              break;
+            }
+            case 'notifications/initialized': {
+              const notification = jsonRpcRequest as InitializedNotification;
+              await handshakeHandlers.handleInitialized(notification);
+              break;
+            }
+            case 'shutdown': {
+              const shutdownRequest = jsonRpcRequest as { id: string | number; params?: { reason?: string } };
+              const shutdownResult = await handshakeHandlers.handleShutdown(shutdownRequest);
+              requestContext.response = shutdownResult;
+              break;
+            }
             case 'prompts/get': {
+              if (!requestGate.canProcessRequest('prompts/get')) {
+                requestContext.response = encodeJsonRpcError(
+                  jsonRpcRequest.id,
+                  new RpcError(-32002, 'Server not ready for operational requests')
+                );
+                break;
+              }
               const params = jsonRpcRequest.params as { name: string; arguments?: Record<string, unknown> };
               result = await promptRegistry.dispatch(params.name, params.arguments || {}, handlerContext);
               requestContext.response = encodeJsonRpcSuccess(jsonRpcRequest.id, {
@@ -129,6 +170,13 @@ class McpServerBuilderImpl implements McpServerBuilder {
               break;
             }
             case 'tools/call': {
+              if (!requestGate.canProcessRequest('tools/call')) {
+                requestContext.response = encodeJsonRpcError(
+                  jsonRpcRequest.id,
+                  new RpcError(-32002, 'Server not ready for operational requests')
+                );
+                break;
+              }
               const params = jsonRpcRequest.params as { name: string; arguments?: Record<string, unknown> };
               result = await toolRegistry.execute(params.name, params.arguments || {}, handlerContext);
               requestContext.response = encodeJsonRpcSuccess(jsonRpcRequest.id, {
@@ -137,6 +185,13 @@ class McpServerBuilderImpl implements McpServerBuilder {
               break;
             }
             case 'resources/read': {
+              if (!requestGate.canProcessRequest('resources/read')) {
+                requestContext.response = encodeJsonRpcError(
+                  jsonRpcRequest.id,
+                  new RpcError(-32002, 'Server not ready for operational requests')
+                );
+                break;
+              }
               const params = jsonRpcRequest.params as { uri: string };
               result = await resourceRegistry.get(params.uri, handlerContext);
               requestContext.response = encodeJsonRpcSuccess(jsonRpcRequest.id, {
