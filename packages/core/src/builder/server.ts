@@ -131,10 +131,11 @@ class McpServerBuilderImpl implements McpServerBuilder {
 
           switch (jsonRpcRequest.method) {
             case 'initialize': {
-              if (!requestGate.canProcessRequest('initialize')) {
+              const validationError = requestGate.getValidationError('initialize');
+              if (validationError) {
                 requestContext.response = encodeJsonRpcError(
                   jsonRpcRequest.id,
-                  new RpcError(-32002, 'Server not ready for initialization')
+                  new RpcError(validationError.code, validationError.message, validationError.data)
                 );
                 break;
               }
@@ -149,16 +150,25 @@ class McpServerBuilderImpl implements McpServerBuilder {
               break;
             }
             case 'shutdown': {
+              const validationError = requestGate.getValidationError('shutdown');
+              if (validationError) {
+                requestContext.response = encodeJsonRpcError(
+                  jsonRpcRequest.id,
+                  new RpcError(validationError.code, validationError.message, validationError.data)
+                );
+                break;
+              }
               const shutdownRequest = jsonRpcRequest as { id: string | number; params?: { reason?: string } };
               const shutdownResult = await handshakeHandlers.handleShutdown(shutdownRequest);
               requestContext.response = shutdownResult;
               break;
             }
             case 'prompts/get': {
-              if (!requestGate.canProcessRequest('prompts/get')) {
+              const validationError = requestGate.getValidationError('prompts/get');
+              if (validationError) {
                 requestContext.response = encodeJsonRpcError(
                   jsonRpcRequest.id,
-                  new RpcError(-32002, 'Server not ready for operational requests')
+                  new RpcError(validationError.code, validationError.message, validationError.data)
                 );
                 break;
               }
@@ -170,10 +180,11 @@ class McpServerBuilderImpl implements McpServerBuilder {
               break;
             }
             case 'tools/call': {
-              if (!requestGate.canProcessRequest('tools/call')) {
+              const validationError = requestGate.getValidationError('tools/call');
+              if (validationError) {
                 requestContext.response = encodeJsonRpcError(
                   jsonRpcRequest.id,
-                  new RpcError(-32002, 'Server not ready for operational requests')
+                  new RpcError(validationError.code, validationError.message, validationError.data)
                 );
                 break;
               }
@@ -185,10 +196,11 @@ class McpServerBuilderImpl implements McpServerBuilder {
               break;
             }
             case 'resources/read': {
-              if (!requestGate.canProcessRequest('resources/read')) {
+              const validationError = requestGate.getValidationError('resources/read');
+              if (validationError) {
                 requestContext.response = encodeJsonRpcError(
                   jsonRpcRequest.id,
-                  new RpcError(-32002, 'Server not ready for operational requests')
+                  new RpcError(validationError.code, validationError.message, validationError.data)
                 );
                 break;
               }

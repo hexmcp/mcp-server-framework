@@ -219,19 +219,25 @@ describe('McpServerBuilder', () => {
       {
         name: 'prompt',
         method: 'prompt' as const,
-        args: ['test-prompt', { description: 'Test prompt', handler: async () => 'test response' }],
+        args: ['test-prompt', { description: 'Test prompt', handler: async (): Promise<string> => 'test response' }],
       },
       {
         name: 'tool',
         method: 'tool' as const,
-        args: ['test-tool', { description: 'Test tool', handler: async () => ({ content: 'test result' }) }],
+        args: ['test-tool', { description: 'Test tool', handler: async (): Promise<{ content: string }> => ({ content: 'test result' }) }],
       },
       {
         name: 'resource',
         method: 'resource' as const,
         args: [
           'test://',
-          { name: 'Test Resource', provider: { get: async () => ({ data: 'test' }), list: async () => ({ resources: [] }) } },
+          {
+            name: 'Test Resource',
+            provider: {
+              get: async (): Promise<{ data: string }> => ({ data: 'test' }),
+              list: async (): Promise<{ resources: any[] }> => ({ resources: [] }),
+            },
+          },
         ],
       },
     ])('should handle $name registration before listen', async ({ method, args }) => {
@@ -249,19 +255,19 @@ describe('McpServerBuilder', () => {
 
       const promptDef = {
         description: 'Test prompt',
-        handler: async () => 'test response',
+        handler: async (): Promise<string> => 'test response',
       };
 
       const toolDef = {
         description: 'Test tool',
-        handler: async () => ({ content: 'test result' }),
+        handler: async (): Promise<{ content: string }> => ({ content: 'test result' }),
       };
 
       const resourceDef = {
         name: 'Test Resource',
         provider: {
-          get: async () => ({ data: 'test' }),
-          list: async () => ({ resources: [] }),
+          get: async (): Promise<{ data: string }> => ({ data: 'test' }),
+          list: async (): Promise<{ resources: any[] }> => ({ resources: [] }),
         },
       };
 

@@ -13,15 +13,15 @@ describe('Builder MCP Protocol Integration', () => {
       // Add some prompts and tools to test capability detection
       builder
         .prompt('test-prompt', {
-          handler: async () => 'test response',
+          handler: async (): Promise<string> => 'test response',
         })
         .tool('test-tool', {
-          handler: async () => ({ result: 'test' }),
+          handler: async (): Promise<{ result: string }> => ({ result: 'test' }),
         })
         .resource('test://*', {
           provider: {
-            get: async () => ({ content: 'test' }),
-            list: async () => ({ resources: [] }),
+            get: async (): Promise<{ content: string }> => ({ content: 'test' }),
+            list: async (): Promise<{ resources: any[] }> => ({ resources: [] }),
           },
         });
 
@@ -137,19 +137,22 @@ describe('Builder MCP Protocol Integration', () => {
       {
         method: 'prompts/get',
         params: { name: 'test-prompt' },
-        setup: (builder: any) => builder.prompt('test-prompt', { handler: async () => 'test response' }),
+        setup: (builder: any) => builder.prompt('test-prompt', { handler: async (): Promise<string> => 'test response' }),
       },
       {
         method: 'tools/call',
         params: { name: 'test-tool', arguments: {} },
-        setup: (builder: any) => builder.tool('test-tool', { handler: async () => ({ result: 'test' }) }),
+        setup: (builder: any) => builder.tool('test-tool', { handler: async (): Promise<{ result: string }> => ({ result: 'test' }) }),
       },
       {
         method: 'resources/read',
         params: { uri: 'test://resource' },
         setup: (builder: any) =>
           builder.resource('test://resource', {
-            provider: { get: async () => ({ content: 'test' }), list: async () => ({ resources: [] }) },
+            provider: {
+              get: async (): Promise<{ content: string }> => ({ content: 'test' }),
+              list: async (): Promise<{ resources: any[] }> => ({ resources: [] }),
+            },
           }),
       },
     ])('should reject $method requests before initialization', async ({ method, params, setup }) => {
@@ -191,7 +194,7 @@ describe('Builder MCP Protocol Integration', () => {
       expect(capturedResponse.result).toBeUndefined();
       expect(capturedResponse.error).toBeDefined();
       expect(capturedResponse.error.code).toBe(-32002);
-      expect(capturedResponse.error.message).toContain('not ready');
+      expect(capturedResponse.error.message).toContain('not initialized');
       expect(capturedResponse.error.data).toBeUndefined();
     });
 
@@ -199,7 +202,7 @@ describe('Builder MCP Protocol Integration', () => {
       {
         method: 'prompts/get',
         params: { name: 'test-prompt' },
-        setup: (builder: any) => builder.prompt('test-prompt', { handler: async () => 'test response' }),
+        setup: (builder: any) => builder.prompt('test-prompt', { handler: async (): Promise<string> => 'test response' }),
         validateResponse: (response: any) => {
           expect(response.result.messages).toBeDefined();
           expect(Array.isArray(response.result.messages)).toBe(true);
@@ -213,7 +216,8 @@ describe('Builder MCP Protocol Integration', () => {
       {
         method: 'tools/call',
         params: { name: 'test-tool', arguments: {} },
-        setup: (builder: any) => builder.tool('test-tool', { handler: async () => ({ content: 'test result' }) }),
+        setup: (builder: any) =>
+          builder.tool('test-tool', { handler: async (): Promise<{ content: string }> => ({ content: 'test result' }) }),
         validateResponse: (response: any) => {
           expect(response.result.content).toBeDefined();
           expect(Array.isArray(response.result.content)).toBe(true);
@@ -228,7 +232,12 @@ describe('Builder MCP Protocol Integration', () => {
         method: 'resources/read',
         params: { uri: 'test://resource' },
         setup: (builder: any) =>
-          builder.resource('test://resource', { provider: { get: async () => ({ data: 'test' }), list: async () => ({ resources: [] }) } }),
+          builder.resource('test://resource', {
+            provider: {
+              get: async (): Promise<{ data: string }> => ({ data: 'test' }),
+              list: async (): Promise<{ resources: any[] }> => ({ resources: [] }),
+            },
+          }),
         validateResponse: (response: any) => {
           expect(response.result.contents).toBeDefined();
           expect(Array.isArray(response.result.contents)).toBe(true);
