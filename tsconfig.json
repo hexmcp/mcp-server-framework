@@ -47,6 +47,8 @@
       "@hexmcp/transport/*": ["packages/transport/src/*"],
       "@hexmcp/transport-stdio": ["packages/transport-stdio/src"],
       "@hexmcp/transport-stdio/*": ["packages/transport-stdio/src/*"],
+      "@hexmcp/testing": ["packages/testing/src"],
+      "@hexmcp/testing/*": ["packages/testing/src/*"],
       "@mcp-server-framework/*": ["packages/*/src"]
     }
   },

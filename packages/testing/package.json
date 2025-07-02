@@ -1,0 +1,69 @@
+{
+  "name": "@hexmcp/testing",
+  "version": "0.0.0",
+  "description": "Test fixture coverage system for MCP Server Framework with JSON-based fixtures and Jest integration",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "src",
+    "fixtures",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "test-fixtures": "jest --testNamePattern='Fixture' --runInBand",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist",
+    "update-snapshots": "tsx scripts/update-snapshots.ts",
+    "update-snapshots:force": "UPDATE_SNAPSHOTS=true tsx scripts/update-snapshots.ts"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "testing",
+    "fixtures",
+    "jest",
+    "test-harness",
+    "framework",
+    "typescript"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@hexmcp/codec-jsonrpc": "workspace:*",
+    "@hexmcp/core": "workspace:*",
+    "@hexmcp/transport": "workspace:*",
+    "@modelcontextprotocol/sdk": "^1.13.2"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "devDependencies": {
+    "@types/jest": "^30.0.0",
+    "jest": "^30.0.3",
+    "typescript": "^5.8.3"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/your-org/mcp-server-framework.git",
+    "directory": "packages/testing"
+  },
+  "bugs": {
+    "url": "https://github.com/your-org/mcp-server-framework/issues"
+  },
+  "homepage": "https://github.com/your-org/mcp-server-framework/tree/main/packages/testing#readme"
+}

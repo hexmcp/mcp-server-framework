@@ -8,7 +8,9 @@
   ],
   "scripts": {
     "prepare": "husky",
+    "build": "pnpm -r build",
     "test": "jest --passWithNoTests",
+    "test-fixtures": "jest --testNamePattern='Fixture' --runInBand",
     "typecheck": "tsc --noEmit",
     "typecheck:test": "tsc --project tsconfig.test.json --noEmit",
     "lint": "biome check .",

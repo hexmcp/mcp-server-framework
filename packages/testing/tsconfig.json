@@ -1,0 +1,14 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "rootDir": "./src",
+    "outDir": "./dist",
+    "composite": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["dist", "test", "**/*.test.ts", "**/*.spec.ts"],
+  "references": [{ "path": "../codec-jsonrpc" }, { "path": "../core" }, { "path": "../transport" }]
+}

@@ -1,0 +1,23 @@
+{
+  "name": "invalid-params",
+  "input": {
+    "jsonrpc": "2.0",
+    "id": 2,
+    "method": "tools/call",
+    "params": {
+      "name": "echo"
+    }
+  },
+  "expected": {
+    "jsonrpc": "2.0",
+    "id": 2,
+    "error": {
+      "code": -32000,
+      "message": "Operational request 'tools/call' requires server to be in ready state",
+      "data": {
+        "currentState": "initializing",
+        "operation": "tools/call"
+      }
+    }
+  }
+}

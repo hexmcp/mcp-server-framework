@@ -1,0 +1,14 @@
+[
+  {
+    "type": "text",
+    "content": "Hello"
+  },
+  {
+    "type": "text",
+    "content": " "
+  },
+  {
+    "type": "text",
+    "content": "World!"
+  }
+]

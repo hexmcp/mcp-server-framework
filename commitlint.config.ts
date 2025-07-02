@@ -3,7 +3,7 @@ import type { UserConfig } from '@commitlint/types';
 const config: UserConfig = {
   extends: ['@commitlint/config-conventional'],
   rules: {
-    'scope-enum': [2, 'always', ['cli', 'core', 'transport', 'transport-stdio', 'codec-jsonrpc']],
+    'scope-enum': [2, 'always', ['cli', 'core', 'transport', 'transport-stdio', 'codec-jsonrpc', 'testing']],
     'scope-empty': [0, 'never'],
     'subject-case': [2, 'never', ['pascal-case', 'upper-case']],
     'subject-empty': [2, 'never'],

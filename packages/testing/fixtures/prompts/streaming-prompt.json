@@ -1,0 +1,26 @@
+{
+  "name": "streaming-prompt",
+  "input": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "prompts/get",
+    "params": {
+      "name": "streaming-example",
+      "arguments": {
+        "topic": "TypeScript"
+      }
+    }
+  },
+  "expected": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "error": {
+      "code": -32000,
+      "message": "Operational request 'prompts/get' requires server to be in ready state",
+      "data": {
+        "currentState": "initializing",
+        "operation": "prompts/get"
+      }
+    }
+  }
+}

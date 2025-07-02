@@ -1,0 +1,26 @@
+{
+  "name": "valid-tool-call",
+  "input": {
+    "jsonrpc": "2.0",
+    "id": 1,
+    "method": "tools/call",
+    "params": {
+      "name": "echo",
+      "arguments": {
+        "message": "Hello, World!"
+      }
+    }
+  },
+  "expected": {
+    "jsonrpc": "2.0",
+    "id": 1,
+    "error": {
+      "code": -32000,
+      "message": "Operational request 'tools/call' requires server to be in ready state",
+      "data": {
+        "currentState": "initializing",
+        "operation": "tools/call"
+      }
+    }
+  }
+}
