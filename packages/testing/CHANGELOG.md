@@ -1,5 +1,12 @@
 # @hexmcp/testing
 
+## 0.0.2
+
+### Patch Changes
+
+- Updated dependencies [affdb0b]
+  - @hexmcp/core@0.5.0
+
 ## 0.0.1
 
 ### Patch Changes
