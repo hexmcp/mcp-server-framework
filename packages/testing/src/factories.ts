@@ -1,4 +1,21 @@
-import type { Fixture, JsonRpcChunk, JsonRpcRequest, JsonRpcResponse } from './types';
+import type { Fixture, JsonRpcChunk, JsonRpcErrorChunk, JsonRpcRequest, JsonRpcResponse } from './types';
+
+/**
+ * Creates a generic JSON-RPC 2.0 request with the specified method and parameters.
+ *
+ * @param id - Request ID (string or number)
+ * @param method - JSON-RPC method name
+ * @param params - Optional parameters for the method
+ * @returns A JsonRpcRequest object
+ */
+export function createRequest(id: string | number, method: string, params?: unknown): JsonRpcRequest {
+  return {
+    jsonrpc: '2.0',
+    id,
+    method,
+    ...(params !== undefined && { params }),
+  };
+}
 
 /**
  * Builds a valid JSON-RPC 2.0 request for calling a tool handler.
@@ -168,6 +185,96 @@ export function createImageChunk(url: string, alt?: string): JsonRpcChunk {
     url,
     ...(alt !== undefined && { alt }),
   };
+}
+
+/**
+ * Creates a structured error chunk for streaming responses.
+ * Used when a stream fails mid-execution but needs to report the error gracefully.
+ */
+export function createErrorChunk(code: number, message: string, data?: unknown): JsonRpcErrorChunk {
+  return {
+    type: 'error',
+    code,
+    message,
+    ...(data !== undefined && { data }),
+  };
+}
+
+/**
+ * Creates a streaming fixture that includes both successful chunks and an error.
+ * Useful for testing partial success scenarios in streaming operations.
+ */
+export function createStreamingErrorFixture(
+  name: string,
+  method: string,
+  params: unknown,
+  successChunks: JsonRpcChunk[],
+  errorChunk: JsonRpcErrorChunk,
+  id: string | number = 1
+): Fixture {
+  return {
+    name,
+    input: createRequest(id, method, params),
+    expected: [...successChunks, errorChunk],
+  };
+}
+
+/**
+ * Creates a fixture for testing timeout scenarios in streaming operations.
+ */
+export function createStreamingTimeoutFixture(
+  name: string,
+  method: string,
+  params: unknown,
+  successChunks: JsonRpcChunk[],
+  timeoutMs: number,
+  id: string | number = 1
+): Fixture {
+  const timeoutError = createErrorChunk(-32001, `Stream operation timed out after ${timeoutMs}ms`, {
+    timeout: timeoutMs,
+    timestamp: new Date().toISOString(),
+  });
+
+  return createStreamingErrorFixture(name, method, params, successChunks, timeoutError, id);
+}
+
+/**
+ * Creates a fixture for testing resource exhaustion in streaming operations.
+ */
+export function createStreamingResourceExhaustionFixture(
+  name: string,
+  method: string,
+  params: unknown,
+  successChunks: JsonRpcChunk[],
+  resourceType: string,
+  id: string | number = 1
+): Fixture {
+  const resourceError = createErrorChunk(-32002, `Resource exhausted: ${resourceType}`, {
+    resourceType,
+    chunksProcessed: successChunks.length,
+  });
+
+  return createStreamingErrorFixture(name, method, params, successChunks, resourceError, id);
+}
+
+/**
+ * Creates a fixture for testing validation errors that occur mid-stream.
+ */
+export function createStreamingValidationErrorFixture(
+  name: string,
+  method: string,
+  params: unknown,
+  successChunks: JsonRpcChunk[],
+  validationError: string,
+  invalidData?: unknown,
+  id: string | number = 1
+): Fixture {
+  const validationErrorChunk = createErrorChunk(-32602, `Validation error: ${validationError}`, {
+    invalidData,
+    position: successChunks.length,
+  });
+
+  return createStreamingErrorFixture(name, method, params, successChunks, validationErrorChunk, id);
 }
 
 /**

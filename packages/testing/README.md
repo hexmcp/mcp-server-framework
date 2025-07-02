@@ -280,6 +280,57 @@ if (process.env.UPDATE_SNAPSHOTS === 'true' && process.env.NODE_ENV === 'develop
 4. **Commit Snapshots**: Add snapshot files to version control
 5. **Normal Testing**: Run tests without the flag to validate against snapshots
 
+### Streaming Error Fixtures
+
+```typescript
+import {
+  wrapStreamingOutput,
+  createPartiallyFailingStreamHandler,
+  validateStreamErrorPattern,
+  createStreamingErrorFixture,
+  isErrorChunk,
+  separateStreamErrors
+} from '@hexmcp/testing';
+
+// Wrap streams to convert errors to structured chunks
+const safeStream = wrapStreamingOutput(unreliableStream(), {
+  includeStackTrace: true,
+  maxChunks: 100
+});
+
+// Create handlers that fail mid-stream for testing
+const handler = createPartiallyFailingStreamHandler(
+  [
+    { type: 'text', content: 'Processing...' },
+    { type: 'text', content: 'Almost done...' }
+  ],
+  new Error('Database connection failed')
+);
+
+// Validate streaming error patterns
+await validateStreamErrorPattern(stream, {
+  successCount: 2,
+  errorCode: -32000,
+  errorMessage: /Database connection failed/,
+  endsWithError: true
+});
+
+// Create fixtures for streaming errors
+const fixture = createStreamingErrorFixture(
+  'partial-failure-test',
+  'tools/call',
+  { name: 'process', arguments: { data: 'test' } },
+  [
+    { type: 'text', content: 'Starting...' },
+    { type: 'event', name: 'progress', data: { percent: 50 } }
+  ],
+  { type: 'error', code: -32000, message: 'Process failed' }
+);
+
+// Separate success and error chunks for analysis
+const { successChunks, errorChunks } = await separateStreamErrors(stream);
+```
+
 ## Scripts
 
 - `pnpm build` - Build the package
@@ -332,6 +383,15 @@ The package includes comprehensive fixture factories for creating spec-compliant
 - `expectMatchesOrUpdateSnapshot(name, actual)` - Compare or update snapshots based on flag
 - `updateAllFixtureSnapshots(fixtureDir, snapshotDir?)` - Batch update all fixture snapshots
 
+### Streaming Error Testing
+- `wrapStreamingOutput(stream, options?)` - Convert stream errors to structured chunks
+- `createPartiallyFailingStreamHandler(successChunks, error, options?)` - Create handlers that fail mid-stream
+- `createRandomlyFailingStreamHandler(chunks, failureRate?, options?)` - Create randomly failing handlers
+- `validateStreamErrorPattern(stream, pattern)` - Validate streaming error patterns
+- `separateStreamErrors(stream)` - Separate success and error chunks
+- `isErrorChunk(chunk)` - Type guard for error chunks
+- `withStreamTimeout(stream, timeoutMs)` - Add timeout protection to streams
+
 ### Error Codes
 - `ErrorCodes` - Standard JSON-RPC and MCP-specific error codes
 
@@ -344,6 +404,7 @@ The package includes comprehensive fixture factories for creating spec-compliant
 - Golden snapshot testing utilities
 - Golden fixture flag support (`UPDATE_SNAPSHOTS=true`)
 - Advanced streaming handler testing
+- Streaming error fixtures with structured error chunks
 - Transport-agnostic AsyncIterable testing
 - Jest integration and CI/CD support
-- 87/87 tests passing with comprehensive coverage
+- 107/107 tests passing with comprehensive coverage

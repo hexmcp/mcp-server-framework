@@ -13,4 +13,5 @@ export {
 } from './run-fixtures';
 export * from './snapshot';
 export * from './streaming';
+export * from './streaming-errors';
 export * from './types';

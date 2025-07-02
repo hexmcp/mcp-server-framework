@@ -50,9 +50,24 @@ export interface JsonRpcResponse {
  */
 export interface JsonRpcChunk {
   /** Type of chunk content */
-  type: 'text' | 'image' | 'event';
+  type: 'text' | 'image' | 'event' | 'error';
   /** Extensible properties for different chunk types */
   [key: string]: unknown;
+}
+
+/**
+ * Error chunk for streaming responses that fail mid-stream.
+ * Allows structured error reporting without aborting the entire stream.
+ */
+export interface JsonRpcErrorChunk extends JsonRpcChunk {
+  /** Always 'error' for error chunks */
+  type: 'error';
+  /** JSON-RPC or application-defined error code */
+  code: number;
+  /** Short error description */
+  message: string;
+  /** Optional error details, stack trace, or context */
+  data?: unknown;
 }
 
 /**
