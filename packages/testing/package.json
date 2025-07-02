@@ -22,7 +22,7 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
-    "test-fixtures": "jest --testNamePattern='Fixture'",
+    "test-fixtures": "jest --testNamePattern='Fixture' --runInBand",
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist",
     "update-snapshots": "tsx scripts/update-snapshots.ts",

@@ -13,3 +13,7 @@ pnpm run typecheck:test
 # Run tests
 echo "🧪 Running tests..."
 pnpm test
+
+# Run fixture tests
+echo "🎯 Running fixture tests..."
+pnpm test-fixtures
