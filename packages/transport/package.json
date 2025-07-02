@@ -1,6 +1,6 @@
 {
   "name": "@hexmcp/transport",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Transport abstraction layer for MCP Server Framework",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

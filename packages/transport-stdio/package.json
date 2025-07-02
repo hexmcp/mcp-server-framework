@@ -1,6 +1,6 @@
 {
   "name": "@hexmcp/transport-stdio",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "STDIO transport implementation for MCP Server Framework using JSON-RPC 2.0 over NDJSON",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
