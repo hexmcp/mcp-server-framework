@@ -8,6 +8,7 @@
   ],
   "scripts": {
     "prepare": "husky",
+    "build": "pnpm -r build",
     "test": "jest --passWithNoTests",
     "test-fixtures": "jest --testNamePattern='Fixture' --runInBand",
     "typecheck": "tsc --noEmit",
