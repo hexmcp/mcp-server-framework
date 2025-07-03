@@ -50,6 +50,9 @@ jobs:
       - name: Generate documentation
         run: pnpm run docs:generate
 
+      - name: Quality gate validation
+        run: pnpm run quality:gate:simple
+
       - name: Upload documentation artifacts
         uses: actions/upload-artifact@v4
         if: github.ref == 'refs/heads/main'

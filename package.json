@@ -30,7 +30,7 @@
     "check:api-extractor": "cd packages/core && pnpm exec api-extractor run",
     "update:surface": "pnpm exec attw --pack packages/core --format json > .api-surface-lock.json && echo '✅ API surface lock updated'",
     "update:api-reports": "cd packages/core && pnpm exec api-extractor run --local && echo '✅ API reports updated'",
-    "quality:gate": "ts-node scripts/quality-gate.ts",
+    "quality:gate": "npx ts-node --esm scripts/quality-gate.ts",
     "quality:gate:simple": "pnpm lint && pnpm typecheck && pnpm typecheck:test && pnpm test",
     "quality:fix": "pnpm lint:fix && pnpm quality:gate",
     "changeset": "changeset",
