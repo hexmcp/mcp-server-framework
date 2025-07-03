@@ -4,7 +4,79 @@ import { REGISTRY_KINDS } from './base';
 import type { HandlerContext, PromptContent, PromptDefinition } from './types';
 
 /**
- * Registry for managing prompt handlers
+ * Registry for managing prompt handlers with enhanced validation, streaming support, and lifecycle hooks.
+ *
+ * The PromptRegistry provides a comprehensive system for registering, validating, and executing
+ * prompt handlers in MCP servers. It supports advanced features like streaming responses,
+ * input validation, caching, rate limiting, and lifecycle hooks.
+ *
+ * @example Basic prompt registration
+ * ```typescript
+ * const registry = new PromptRegistry();
+ *
+ * registry.register({
+ *   name: 'greeting',
+ *   description: 'Generate a personalized greeting',
+ *   arguments: [
+ *     { name: 'name', description: 'Person to greet', required: true }
+ *   ],
+ *   handler: async (args) => ({
+ *     content: [{ type: 'text', text: `Hello, ${args.name}!` }]
+ *   })
+ * });
+ * ```
+ *
+ * @example Streaming prompt with validation
+ * ```typescript
+ * registry.register({
+ *   name: 'story-generator',
+ *   description: 'Generate a story with streaming output',
+ *   streaming: true,
+ *   arguments: [
+ *     { name: 'topic', description: 'Story topic', required: true },
+ *     { name: 'length', description: 'Story length', required: false }
+ *   ],
+ *   validate: (args) => {
+ *     if (typeof args.topic !== 'string' || args.topic.length < 3) {
+ *       return { success: false, errors: [{ path: ['topic'], message: 'Topic must be at least 3 characters' }] };
+ *     }
+ *     return { success: true };
+ *   },
+ *   handler: async function* (args) {
+ *     for (const chunk of generateStoryChunks(args.topic)) {
+ *       yield { content: [{ type: 'text', text: chunk }] };
+ *     }
+ *   }
+ * });
+ * ```
+ *
+ * @example With lifecycle hooks and caching
+ * ```typescript
+ * registry.register({
+ *   name: 'expensive-computation',
+ *   description: 'Perform expensive computation with caching',
+ *   cache: {
+ *     enabled: true,
+ *     ttl: 300000, // 5 minutes
+ *     key: (args) => `computation-${JSON.stringify(args)}`
+ *   },
+ *   hooks: {
+ *     beforeExecution: async (args, context) => {
+ *       console.log(`Starting computation for user ${context.user?.id}`);
+ *     },
+ *     afterExecution: async (result, context) => {
+ *       console.log(`Computation completed in ${context.execution?.duration}ms`);
+ *     },
+ *     onError: async (error, context) => {
+ *       console.error(`Computation failed: ${error.message}`);
+ *     }
+ *   },
+ *   handler: async (args) => {
+ *     // Expensive computation logic
+ *     return { content: [{ type: 'text', text: 'Result' }] };
+ *   }
+ * });
+ * ```
  */
 export class PromptRegistry implements Registry {
   public readonly kind = REGISTRY_KINDS.PROMPTS;
@@ -16,7 +88,44 @@ export class PromptRegistry implements Registry {
   };
 
   /**
-   * Register a prompt handler with validation
+   * Register a prompt handler with comprehensive validation.
+   *
+   * Validates the prompt definition and registers it for execution. The prompt name
+   * must be unique within the registry. Supports various validation methods including
+   * Zod schemas, argument definitions, and custom validation functions.
+   *
+   * @param definition - The prompt definition to register
+   * @throws {Error} When the definition is invalid or the prompt name is already registered
+   *
+   * @example Register a simple prompt
+   * ```typescript
+   * registry.register({
+   *   name: 'echo',
+   *   description: 'Echo the input message',
+   *   arguments: [{ name: 'message', description: 'Message to echo', required: true }],
+   *   handler: async (args) => ({ content: [{ type: 'text', text: args.message }] })
+   * });
+   * ```
+   *
+   * @example Register with validation and streaming
+   * ```typescript
+   * registry.register({
+   *   name: 'chat',
+   *   description: 'Chat with AI assistant',
+   *   streaming: true,
+   *   validate: (args) => {
+   *     if (!args.message || typeof args.message !== 'string') {
+   *       return { success: false, errors: [{ path: ['message'], message: 'Message is required' }] };
+   *     }
+   *     return { success: true };
+   *   },
+   *   handler: async function* (args) {
+   *     for (const chunk of generateResponse(args.message)) {
+   *       yield { content: [{ type: 'text', text: chunk }] };
+   *     }
+   *   }
+   * });
+   * ```
    */
   register(definition: PromptDefinition): void {
     const validation = this.validateDefinition(definition);
@@ -34,7 +143,39 @@ export class PromptRegistry implements Registry {
   }
 
   /**
-   * Dispatch a prompt request
+   * Dispatch a prompt request to the registered handler.
+   *
+   * Executes the prompt handler with the provided arguments and context. Performs
+   * input validation, executes lifecycle hooks, and handles both streaming and
+   * non-streaming responses. The execution context is enhanced with registry
+   * metadata and execution tracking information.
+   *
+   * @param name - The name of the prompt to execute
+   * @param args - Arguments to pass to the prompt handler
+   * @param context - Execution context containing user info, transport details, etc.
+   * @returns Promise resolving to the prompt content (text, images, etc.)
+   * @throws {Error} When the prompt is not found or validation fails
+   *
+   * @example Execute a simple prompt
+   * ```typescript
+   * const result = await registry.dispatch('greeting',
+   *   { name: 'Alice' },
+   *   { user: { id: 'user123' }, transport: { name: 'stdio' } }
+   * );
+   * console.log(result.content); // [{ type: 'text', text: 'Hello, Alice!' }]
+   * ```
+   *
+   * @example Execute with timeout and metadata
+   * ```typescript
+   * const result = await registry.dispatch('complex-prompt',
+   *   { query: 'analyze data' },
+   *   {
+   *     user: { id: 'user123', permissions: ['read'] },
+   *     transport: { name: 'websocket' },
+   *     execution: { timeout: 10000 }
+   *   }
+   * );
+   * ```
    */
   async dispatch(name: string, args: Record<string, unknown>, context: HandlerContext): Promise<PromptContent> {
     const definition = this._prompts.get(name);

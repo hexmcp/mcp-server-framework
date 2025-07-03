@@ -162,7 +162,81 @@ export interface PrimitiveRegistry {
 }
 
 /**
- * Lifecycle manager interface
+ * Lifecycle manager interface for MCP server state management.
+ *
+ * The LifecycleManager manages the server lifecycle according to the MCP protocol specification.
+ * It handles state transitions (idle → initializing → ready → shutting-down), validates
+ * operations against the current state, and emits lifecycle events for monitoring and integration.
+ *
+ * @example Basic lifecycle management
+ * ```typescript
+ * const lifecycleManager = new McpLifecycleManager(capabilityRegistry);
+ *
+ * // Listen for state changes
+ * lifecycleManager.on(LifecycleEvent.STATE_CHANGED, (event) => {
+ *   console.log(`State changed from ${event.previousState} to ${event.newState}`);
+ * });
+ *
+ * // Initialize the server
+ * const initializeRequest = {
+ *   method: 'initialize',
+ *   params: {
+ *     protocolVersion: '2025-06-18',
+ *     capabilities: { experimental: {} },
+ *     clientInfo: { name: 'Test Client', version: '1.0.0' }
+ *   }
+ * };
+ *
+ * const result = await lifecycleManager.initialize(initializeRequest);
+ * console.log('Server initialized:', result);
+ *
+ * // Check if server is ready
+ * if (lifecycleManager.isReady) {
+ *   console.log('Server is ready to process requests');
+ * }
+ *
+ * // Shutdown when done
+ * await lifecycleManager.shutdown('Server shutdown requested');
+ * ```
+ *
+ * @example Operation validation
+ * ```typescript
+ * // Validate operations against current state
+ * try {
+ *   lifecycleManager.validateOperation('tools/list');
+ *   // Operation is valid for current state
+ * } catch (error) {
+ *   if (error instanceof LifecycleViolationError) {
+ *     console.error(`Operation not allowed in ${lifecycleManager.currentState} state`);
+ *   }
+ * }
+ *
+ * // Check state transitions
+ * if (lifecycleManager.canTransitionTo(LifecycleState.READY)) {
+ *   console.log('Can transition to ready state');
+ * }
+ * ```
+ *
+ * @example Event handling
+ * ```typescript
+ * // Listen for initialization events
+ * lifecycleManager.on(LifecycleEvent.INITIALIZATION_STARTED, (event) => {
+ *   console.log('Initialization started:', event.initializeRequest);
+ * });
+ *
+ * lifecycleManager.on(LifecycleEvent.INITIALIZATION_COMPLETED, (event) => {
+ *   console.log('Initialization completed:', event.initializeResult);
+ * });
+ *
+ * lifecycleManager.on(LifecycleEvent.INITIALIZATION_FAILED, (event) => {
+ *   console.error('Initialization failed:', event.error);
+ * });
+ *
+ * // Listen for shutdown events
+ * lifecycleManager.on(LifecycleEvent.SHUTDOWN_STARTED, (event) => {
+ *   console.log('Shutdown started:', event.reason);
+ * });
+ * ```
  */
 export interface LifecycleManager {
   readonly currentState: LifecycleState;

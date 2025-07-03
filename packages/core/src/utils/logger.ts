@@ -5,6 +5,32 @@ export interface LoggerOptions {
   baseLogger?: Logger;
 }
 
+/**
+ * Create a default console-based logger implementation.
+ *
+ * Creates a simple logger that outputs to the console with level prefixes.
+ * This is the fallback logger used when no custom logger is provided.
+ * Suitable for development and simple deployments.
+ *
+ * @returns Logger implementation using console output
+ *
+ * @example Using default logger
+ * ```typescript
+ * const logger = createDefaultLogger();
+ *
+ * logger.info('Server starting');
+ * logger.error('Connection failed', { error: 'ECONNREFUSED' });
+ * logger.debug('Processing request', { method: 'tools/list' });
+ * ```
+ *
+ * @example In middleware configuration
+ * ```typescript
+ * const errorMapper = createErrorMapperMiddleware({
+ *   logger: createDefaultLogger(),
+ *   enableLogging: true
+ * });
+ * ```
+ */
 export function createDefaultLogger(): Logger {
   return {
     // biome-ignore lint/suspicious/noConsole: Default logger needs console for fallback
@@ -38,10 +64,59 @@ export function createDefaultLogger(): Logger {
   };
 }
 
+/**
+ * Generate a unique trace ID for request tracking.
+ *
+ * Creates a random trace ID with 'req-' prefix for identifying and correlating
+ * log entries across the request lifecycle. Used by logging and tracing middleware.
+ *
+ * @returns Unique trace ID string
+ *
+ * @example
+ * ```typescript
+ * const traceId = generateTraceId();
+ * console.log(traceId); // "req-a7b3c9d2"
+ *
+ * // Use in middleware
+ * const tracingMiddleware: Middleware = async (ctx, next) => {
+ *   ctx.state.traceId = generateTraceId();
+ *   await next();
+ * };
+ * ```
+ */
 export function generateTraceId(): string {
   return `req-${Math.random().toString(36).substring(2, 10)}`;
 }
 
+/**
+ * Check if debug mode is enabled via environment variable.
+ *
+ * Checks the MCPKIT_DEBUG environment variable to determine if debug mode
+ * is enabled. Debug mode affects logging verbosity, error detail inclusion,
+ * and other development-friendly features.
+ *
+ * @returns True if MCPKIT_DEBUG environment variable is set to '1'
+ *
+ * @example
+ * ```typescript
+ * // Set environment variable
+ * process.env.MCPKIT_DEBUG = '1';
+ *
+ * if (isDebugMode()) {
+ *   console.log('Debug mode enabled');
+ *   // Enable verbose logging, stack traces, etc.
+ * }
+ * ```
+ *
+ * @example In middleware configuration
+ * ```typescript
+ * const errorMapper = createErrorMapperMiddleware({
+ *   debugMode: isDebugMode(),
+ *   includeStackTrace: isDebugMode(),
+ *   logLevel: isDebugMode() ? 'debug' : 'error'
+ * });
+ * ```
+ */
 export function isDebugMode(): boolean {
   return process.env.MCPKIT_DEBUG === '1';
 }
@@ -62,6 +137,57 @@ export function formatLogMetadata(data: Record<string, unknown>): Record<string,
   return formatted;
 }
 
+/**
+ * Create a child logger with additional metadata context.
+ *
+ * Creates a child logger that inherits from a base logger and automatically
+ * includes additional metadata in all log entries. If the base logger supports
+ * child logger creation (like Pino or Bunyan), it uses that feature. Otherwise,
+ * it creates a wrapper that includes the metadata.
+ *
+ * @param baseLogger - The parent logger to extend
+ * @param metadata - Additional metadata to include in all log entries
+ * @returns Child logger with enhanced context
+ *
+ * @example Creating child logger with request context
+ * ```typescript
+ * const baseLogger = createDefaultLogger();
+ * const requestLogger = createChildLogger(baseLogger, {
+ *   traceId: 'req-123',
+ *   userId: 'user-456',
+ *   method: 'tools/list'
+ * });
+ *
+ * requestLogger.info('Processing request');
+ * // Logs: [info] Processing request { traceId: 'req-123', userId: 'user-456', method: 'tools/list' }
+ * ```
+ *
+ * @example In middleware for per-request logging
+ * ```typescript
+ * const loggingMiddleware: Middleware = async (ctx, next) => {
+ *   const requestLogger = createChildLogger(baseLogger, {
+ *     traceId: ctx.state.traceId,
+ *     method: ctx.request.method,
+ *     transport: ctx.transport.name
+ *   });
+ *
+ *   ctx.state.logger = requestLogger;
+ *
+ *   requestLogger.info('Request started');
+ *   await next();
+ *   requestLogger.info('Request completed');
+ * };
+ * ```
+ *
+ * @example With structured logger (Pino/Bunyan)
+ * ```typescript
+ * const pinoLogger = pino();
+ * const childLogger = createChildLogger(pinoLogger, { service: 'mcp-server' });
+ *
+ * // If pinoLogger has child() method, it will be used
+ * // Otherwise, falls back to wrapper implementation
+ * ```
+ */
 export function createChildLogger(baseLogger: Logger, metadata: Record<string, unknown>): Logger {
   const loggerWithChild = baseLogger as Logger & { child?: (meta: Record<string, unknown>) => Logger };
   if (typeof loggerWithChild.child === 'function') {

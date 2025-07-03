@@ -119,7 +119,128 @@ export interface PromptArgument {
 export type PromptContent = string | AsyncIterable<string>;
 
 /**
- * Enhanced prompt definition for registration
+ * Enhanced prompt definition for registration with comprehensive configuration options.
+ *
+ * The PromptDefinition interface defines the structure for registering prompt handlers
+ * in the MCP server framework. Prompts are templates or generators that produce content
+ * based on input arguments. This interface supports advanced features like streaming
+ * responses, input validation, caching, rate limiting, and lifecycle hooks.
+ *
+ * @example Basic prompt definition
+ * ```typescript
+ * const greetingPrompt: PromptDefinition = {
+ *   name: 'greeting',
+ *   description: 'Generate a personalized greeting message',
+ *   arguments: [
+ *     {
+ *       name: 'name',
+ *       description: 'Name of the person to greet',
+ *       required: true
+ *     },
+ *     {
+ *       name: 'style',
+ *       description: 'Greeting style (formal, casual, friendly)',
+ *       required: false
+ *     }
+ *   ],
+ *   handler: async (args) => ({
+ *     content: [
+ *       {
+ *         type: 'text',
+ *         text: `Hello, ${args.name}! ${getGreetingStyle(args.style)}`
+ *       }
+ *     ]
+ *   })
+ * };
+ * ```
+ *
+ * @example Streaming prompt with validation
+ * ```typescript
+ * const storyPrompt: PromptDefinition = {
+ *   name: 'story-generator',
+ *   description: 'Generate a story with streaming output',
+ *   streaming: true,
+ *   arguments: [
+ *     {
+ *       name: 'topic',
+ *       description: 'Story topic or theme',
+ *       required: true
+ *     },
+ *     {
+ *       name: 'length',
+ *       description: 'Desired story length (short, medium, long)',
+ *       required: false
+ *     }
+ *   ],
+ *   validate: (args) => {
+ *     if (!args.topic || typeof args.topic !== 'string' || args.topic.length < 3) {
+ *       return {
+ *         success: false,
+ *         errors: [{ path: ['topic'], message: 'Topic must be at least 3 characters' }]
+ *       };
+ *     }
+ *     return { success: true };
+ *   },
+ *   handler: async function* (args) {
+ *     const storyChunks = generateStoryChunks(args.topic, args.length);
+ *     for (const chunk of storyChunks) {
+ *       yield {
+ *         content: [{ type: 'text', text: chunk }]
+ *       };
+ *     }
+ *   }
+ * };
+ * ```
+ *
+ * @example Prompt with caching and lifecycle hooks
+ * ```typescript
+ * const researchPrompt: PromptDefinition = {
+ *   name: 'research-summary',
+ *   description: 'Generate research summary with caching',
+ *   cache: {
+ *     enabled: true,
+ *     ttl: 600000, // 10 minutes
+ *     key: (args) => `research-${args.topic}-${args.depth}`
+ *   },
+ *   rateLimit: {
+ *     maxCalls: 5,
+ *     windowMs: 60000, // 1 minute
+ *     keyGenerator: (context) => context.user?.id || 'anonymous'
+ *   },
+ *   arguments: [
+ *     {
+ *       name: 'topic',
+ *       description: 'Research topic',
+ *       required: true
+ *     },
+ *     {
+ *       name: 'depth',
+ *       description: 'Research depth (basic, detailed, comprehensive)',
+ *       required: false
+ *     }
+ *   ],
+ *   hooks: {
+ *     beforeExecution: async (args, context) => {
+ *       console.log(`Starting research on ${args.topic} for user ${context.user?.id}`);
+ *     },
+ *     afterExecution: async (result, context) => {
+ *       console.log(`Research completed, generated ${result.content.length} content blocks`);
+ *     },
+ *     onError: async (error, context) => {
+ *       console.error(`Research failed: ${error.message}`);
+ *     }
+ *   },
+ *   handler: async (args) => {
+ *     const summary = await generateResearchSummary(args.topic, args.depth);
+ *     return {
+ *       content: [
+ *         { type: 'text', text: summary.text },
+ *         { type: 'image', data: summary.chart, mimeType: 'image/png' }
+ *       ]
+ *     };
+ *   }
+ * };
+ * ```
  */
 export interface PromptDefinition {
   /**
@@ -256,7 +377,103 @@ export interface ToolResult {
 }
 
 /**
- * Enhanced tool definition for registration
+ * Enhanced tool definition for registration with comprehensive configuration options.
+ *
+ * The ToolDefinition interface defines the structure for registering tool handlers
+ * in the MCP server framework. Tools are executable functions that clients can invoke
+ * to perform specific operations. This interface supports advanced features like
+ * parameter validation, authorization, caching, rate limiting, and lifecycle hooks.
+ *
+ * @example Basic tool definition
+ * ```typescript
+ * const echoTool: ToolDefinition = {
+ *   name: 'echo',
+ *   description: 'Echo back the input message',
+ *   parameters: [
+ *     {
+ *       name: 'message',
+ *       description: 'The message to echo back',
+ *       required: true,
+ *       type: 'string'
+ *     }
+ *   ],
+ *   handler: async (args) => ({
+ *     content: [{ type: 'text', text: `Echo: ${args.message}` }]
+ *   })
+ * };
+ * ```
+ *
+ * @example Advanced tool with validation and authorization
+ * ```typescript
+ * const deleteFileTool: ToolDefinition = {
+ *   name: 'delete-file',
+ *   description: 'Delete a file from the filesystem',
+ *   dangerous: true,
+ *   scopes: ['filesystem:write'],
+ *   parameters: [
+ *     {
+ *       name: 'path',
+ *       description: 'Path to the file to delete',
+ *       required: true,
+ *       type: 'string'
+ *     }
+ *   ],
+ *   validate: (args) => {
+ *     if (!args.path || typeof args.path !== 'string') {
+ *       return { success: false, errors: [{ path: ['path'], message: 'Path is required' }] };
+ *     }
+ *     if (args.path.includes('..')) {
+ *       return { success: false, errors: [{ path: ['path'], message: 'Path traversal not allowed' }] };
+ *     }
+ *     return { success: true };
+ *   },
+ *   handler: async (args, context) => {
+ *     if (!context.user?.permissions?.includes('delete')) {
+ *       throw new Error('Insufficient permissions');
+ *     }
+ *     await fs.unlink(args.path);
+ *     return { content: [{ type: 'text', text: `File ${args.path} deleted` }] };
+ *   },
+ *   hooks: {
+ *     beforeExecution: async (args, context) => {
+ *       console.log(`User ${context.user?.id} attempting to delete ${args.path}`);
+ *     },
+ *     afterExecution: async (result, context) => {
+ *       console.log('File deletion completed successfully');
+ *     }
+ *   }
+ * };
+ * ```
+ *
+ * @example Tool with caching and rate limiting
+ * ```typescript
+ * const expensiveComputationTool: ToolDefinition = {
+ *   name: 'expensive-computation',
+ *   description: 'Perform expensive computation with caching',
+ *   cache: {
+ *     enabled: true,
+ *     ttl: 300000, // 5 minutes
+ *     key: (args) => `computation-${JSON.stringify(args)}`
+ *   },
+ *   rateLimit: {
+ *     maxCalls: 10,
+ *     windowMs: 60000, // 1 minute
+ *     keyGenerator: (context) => context.user?.id || 'anonymous'
+ *   },
+ *   parameters: [
+ *     {
+ *       name: 'input',
+ *       description: 'Input data for computation',
+ *       required: true,
+ *       type: 'object'
+ *     }
+ *   ],
+ *   handler: async (args) => {
+ *     const result = await performExpensiveComputation(args.input);
+ *     return { content: [{ type: 'text', text: JSON.stringify(result) }] };
+ *   }
+ * };
+ * ```
  */
 export interface ToolDefinition {
   /**
@@ -506,7 +723,164 @@ export interface ResourceChangeEvent {
 }
 
 /**
- * Enhanced resource definition for registration
+ * Enhanced resource definition for registration with comprehensive URI pattern matching and lifecycle management.
+ *
+ * The ResourceDefinition interface defines the structure for registering resource providers
+ * in the MCP server framework. Resources represent external data sources that can be accessed
+ * via URI patterns. This interface supports features like streaming content, caching, rate limiting,
+ * authorization, search capabilities, and lifecycle hooks for comprehensive resource management.
+ *
+ * @example Basic file system resource
+ * ```typescript
+ * const fileSystemResource: ResourceDefinition = {
+ *   uriPattern: 'file://**',
+ *   name: 'File System',
+ *   description: 'Access local file system resources',
+ *   mimeType: 'text/plain',
+ *   provider: {
+ *     get: async (uri) => {
+ *       const filePath = uri.replace('file://', '');
+ *       const content = await fs.readFile(filePath, 'utf8');
+ *       return {
+ *         uri,
+ *         mimeType: 'text/plain',
+ *         text: content
+ *       };
+ *     },
+ *     list: async () => {
+ *       const files = await fs.readdir('./');
+ *       return {
+ *         resources: files.map(file => ({
+ *           uri: `file://${file}`,
+ *           name: file,
+ *           mimeType: 'text/plain'
+ *         }))
+ *       };
+ *     }
+ *   }
+ * };
+ * ```
+ *
+ * @example API resource with caching and rate limiting
+ * ```typescript
+ * const apiResource: ResourceDefinition = {
+ *   uriPattern: 'api://data/**',
+ *   name: 'External API',
+ *   description: 'Access external API data with caching',
+ *   mimeType: 'application/json',
+ *   watchable: true,
+ *   searchable: true,
+ *   cache: {
+ *     enabled: true,
+ *     ttl: 300000, // 5 minutes
+ *     key: (uri) => `api-${uri.replace('api://', '')}`
+ *   },
+ *   rateLimit: {
+ *     maxCalls: 100,
+ *     windowMs: 60000, // 1 minute
+ *     keyGenerator: (context) => context.user?.id || 'anonymous'
+ *   },
+ *   provider: {
+ *     get: async (uri, context) => {
+ *       const apiPath = uri.replace('api://data/', '');
+ *       const response = await fetch(`https://api.example.com/${apiPath}`, {
+ *         headers: { 'Authorization': `Bearer ${context.user?.token}` }
+ *       });
+ *       return {
+ *         uri,
+ *         mimeType: 'application/json',
+ *         text: await response.text()
+ *       };
+ *     },
+ *     list: async (cursor, context) => {
+ *       const response = await fetch(`https://api.example.com/list?cursor=${cursor}`);
+ *       const data = await response.json();
+ *       return {
+ *         resources: data.items.map(item => ({
+ *           uri: `api://data/${item.id}`,
+ *           name: item.name,
+ *           description: item.description,
+ *           mimeType: 'application/json'
+ *         })),
+ *         nextCursor: data.nextCursor
+ *       };
+ *     },
+ *     search: async (query, context) => {
+ *       const response = await fetch(`https://api.example.com/search?q=${query}`);
+ *       const data = await response.json();
+ *       return {
+ *         resources: data.results.map(item => ({
+ *           uri: `api://data/${item.id}`,
+ *           name: item.title,
+ *           description: item.summary
+ *         })),
+ *         hasMore: data.hasMore
+ *       };
+ *     }
+ *   }
+ * };
+ * ```
+ *
+ * @example Secure resource with validation and hooks
+ * ```typescript
+ * const secureResource: ResourceDefinition = {
+ *   uriPattern: 'secure://private/**',
+ *   name: 'Secure Resources',
+ *   description: 'Access private resources with authorization',
+ *   mimeType: 'application/json',
+ *   validateUri: (uri) => {
+ *     if (!uri.startsWith('secure://private/')) {
+ *       return {
+ *         success: false,
+ *         errors: [{ path: ['uri'], message: 'Invalid URI format' }]
+ *       };
+ *     }
+ *     if (uri.includes('..')) {
+ *       return {
+ *         success: false,
+ *         errors: [{ path: ['uri'], message: 'Path traversal not allowed' }]
+ *       };
+ *     }
+ *     return { success: true };
+ *   },
+ *   hooks: {
+ *     beforeGet: async (uri, context) => {
+ *       console.log(`User ${context.user?.id} accessing ${uri}`);
+ *       if (!context.user?.permissions?.includes('read:private')) {
+ *         throw new Error('Insufficient permissions');
+ *       }
+ *     },
+ *     afterGet: async (result, context) => {
+ *       console.log(`Successfully retrieved resource: ${result.uri}`);
+ *     },
+ *     onError: async (error, context) => {
+ *       console.error(`Resource access failed: ${error.message}`);
+ *     }
+ *   },
+ *   provider: {
+ *     get: async (uri, context) => {
+ *       const resourceId = uri.replace('secure://private/', '');
+ *       const resource = await getSecureResource(resourceId, context.user);
+ *       return {
+ *         uri,
+ *         mimeType: 'application/json',
+ *         text: JSON.stringify(resource)
+ *       };
+ *     },
+ *     list: async (cursor, context) => {
+ *       const resources = await listAuthorizedResources(context.user, cursor);
+ *       return {
+ *         resources: resources.items.map(item => ({
+ *           uri: `secure://private/${item.id}`,
+ *           name: item.name,
+ *           description: item.description
+ *         })),
+ *         nextCursor: resources.nextCursor
+ *       };
+ *     }
+ *   }
+ * };
+ * ```
  */
 export interface ResourceDefinition {
   /**
