@@ -91,31 +91,9 @@
             },
             "files": [
               "/node_modules/typescript/lib/lib.d.ts",
-              "/node_modules/@hexmcp/core/dist/middleware/types.d.ts",
-              "/node_modules/@hexmcp/core/dist/registries/base.d.ts",
-              "/node_modules/@hexmcp/core/dist/registries/types.d.ts",
-              "/node_modules/@hexmcp/core/dist/builder/types.d.ts",
-              "/node_modules/@hexmcp/core/dist/builder/server.d.ts",
-              "/node_modules/@hexmcp/core/dist/builder/index.d.ts",
-              "/node_modules/@hexmcp/core/dist/registries/prompts.d.ts",
-              "/node_modules/@hexmcp/core/dist/registries/resources.d.ts",
-              "/node_modules/@hexmcp/core/dist/registries/tools.d.ts",
-              "/node_modules/@hexmcp/core/dist/lifecycle/types.d.ts",
-              "/node_modules/@hexmcp/core/dist/lifecycle/capability-registry.d.ts",
-              "/node_modules/@hexmcp/core/dist/lifecycle/handshake-handlers.d.ts",
-              "/node_modules/@hexmcp/core/dist/lifecycle/request-gate.d.ts",
-              "/node_modules/@hexmcp/core/dist/lifecycle/state-machine.d.ts",
               "/node_modules/@hexmcp/core/dist/lifecycle/index.d.ts",
-              "/node_modules/@hexmcp/core/dist/middleware/builder.d.ts",
-              "/node_modules/@hexmcp/core/dist/middleware/dispatcher.d.ts",
-              "/node_modules/@hexmcp/core/dist/middleware/engine.d.ts",
-              "/node_modules/@hexmcp/core/dist/middleware/error-mapper.d.ts",
-              "/node_modules/@hexmcp/core/dist/middleware/logger.d.ts",
-              "/node_modules/@hexmcp/core/dist/middleware/registry.d.ts",
               "/node_modules/@hexmcp/core/dist/middleware/index.d.ts",
               "/node_modules/@hexmcp/core/dist/registries/index.d.ts",
-              "/node_modules/@hexmcp/core/dist/utils/logger.d.ts",
-              "/node_modules/@hexmcp/core/dist/utils/index.d.ts",
               "/node_modules/@hexmcp/core/dist/index.d.ts"
             ],
             "visibleProblems": []
@@ -148,31 +126,9 @@
             },
             "files": [
               "/node_modules/typescript/lib/lib.d.ts",
-              "/node_modules/@hexmcp/core/dist/middleware/types.d.ts",
-              "/node_modules/@hexmcp/core/dist/registries/base.d.ts",
-              "/node_modules/@hexmcp/core/dist/registries/types.d.ts",
-              "/node_modules/@hexmcp/core/dist/builder/types.d.ts",
-              "/node_modules/@hexmcp/core/dist/builder/server.d.ts",
-              "/node_modules/@hexmcp/core/dist/builder/index.d.ts",
-              "/node_modules/@hexmcp/core/dist/registries/prompts.d.ts",
-              "/node_modules/@hexmcp/core/dist/registries/resources.d.ts",
-              "/node_modules/@hexmcp/core/dist/registries/tools.d.ts",
-              "/node_modules/@hexmcp/core/dist/lifecycle/types.d.ts",
-              "/node_modules/@hexmcp/core/dist/lifecycle/capability-registry.d.ts",
-              "/node_modules/@hexmcp/core/dist/lifecycle/handshake-handlers.d.ts",
-              "/node_modules/@hexmcp/core/dist/lifecycle/request-gate.d.ts",
-              "/node_modules/@hexmcp/core/dist/lifecycle/state-machine.d.ts",
               "/node_modules/@hexmcp/core/dist/lifecycle/index.d.ts",
-              "/node_modules/@hexmcp/core/dist/middleware/builder.d.ts",
-              "/node_modules/@hexmcp/core/dist/middleware/dispatcher.d.ts",
-              "/node_modules/@hexmcp/core/dist/middleware/engine.d.ts",
-              "/node_modules/@hexmcp/core/dist/middleware/error-mapper.d.ts",
-              "/node_modules/@hexmcp/core/dist/middleware/logger.d.ts",
-              "/node_modules/@hexmcp/core/dist/middleware/registry.d.ts",
               "/node_modules/@hexmcp/core/dist/middleware/index.d.ts",
               "/node_modules/@hexmcp/core/dist/registries/index.d.ts",
-              "/node_modules/@hexmcp/core/dist/utils/logger.d.ts",
-              "/node_modules/@hexmcp/core/dist/utils/index.d.ts",
               "/node_modules/@hexmcp/core/dist/index.d.ts"
             ],
             "visibleProblems": []
@@ -256,31 +212,9 @@
             },
             "files": [
               "/node_modules/typescript/lib/lib.d.ts",
-              "/node_modules/@hexmcp/core/dist/middleware/types.d.ts",
-              "/node_modules/@hexmcp/core/dist/registries/base.d.ts",
-              "/node_modules/@hexmcp/core/dist/registries/types.d.ts",
-              "/node_modules/@hexmcp/core/dist/builder/types.d.ts",
-              "/node_modules/@hexmcp/core/dist/builder/server.d.ts",
-              "/node_modules/@hexmcp/core/dist/builder/index.d.ts",
-              "/node_modules/@hexmcp/core/dist/registries/prompts.d.ts",
-              "/node_modules/@hexmcp/core/dist/registries/resources.d.ts",
-              "/node_modules/@hexmcp/core/dist/registries/tools.d.ts",
-              "/node_modules/@hexmcp/core/dist/lifecycle/types.d.ts",
-              "/node_modules/@hexmcp/core/dist/lifecycle/capability-registry.d.ts",
-              "/node_modules/@hexmcp/core/dist/lifecycle/handshake-handlers.d.ts",
-              "/node_modules/@hexmcp/core/dist/lifecycle/request-gate.d.ts",
-              "/node_modules/@hexmcp/core/dist/lifecycle/state-machine.d.ts",
               "/node_modules/@hexmcp/core/dist/lifecycle/index.d.ts",
-              "/node_modules/@hexmcp/core/dist/middleware/builder.d.ts",
-              "/node_modules/@hexmcp/core/dist/middleware/dispatcher.d.ts",
-              "/node_modules/@hexmcp/core/dist/middleware/engine.d.ts",
-              "/node_modules/@hexmcp/core/dist/middleware/error-mapper.d.ts",
-              "/node_modules/@hexmcp/core/dist/middleware/logger.d.ts",
-              "/node_modules/@hexmcp/core/dist/middleware/registry.d.ts",
               "/node_modules/@hexmcp/core/dist/middleware/index.d.ts",
               "/node_modules/@hexmcp/core/dist/registries/index.d.ts",
-              "/node_modules/@hexmcp/core/dist/utils/logger.d.ts",
-              "/node_modules/@hexmcp/core/dist/utils/index.d.ts",
               "/node_modules/@hexmcp/core/dist/index.d.ts"
             ],
             "visibleProblems": []
@@ -370,31 +304,9 @@
             },
             "files": [
               "/node_modules/typescript/lib/lib.d.ts",
-              "/node_modules/@hexmcp/core/dist/middleware/types.d.ts",
-              "/node_modules/@hexmcp/core/dist/registries/base.d.ts",
-              "/node_modules/@hexmcp/core/dist/registries/types.d.ts",
-              "/node_modules/@hexmcp/core/dist/builder/types.d.ts",
-              "/node_modules/@hexmcp/core/dist/builder/server.d.ts",
-              "/node_modules/@hexmcp/core/dist/builder/index.d.ts",
-              "/node_modules/@hexmcp/core/dist/registries/prompts.d.ts",
-              "/node_modules/@hexmcp/core/dist/registries/resources.d.ts",
-              "/node_modules/@hexmcp/core/dist/registries/tools.d.ts",
-              "/node_modules/@hexmcp/core/dist/lifecycle/types.d.ts",
-              "/node_modules/@hexmcp/core/dist/lifecycle/capability-registry.d.ts",
-              "/node_modules/@hexmcp/core/dist/lifecycle/handshake-handlers.d.ts",
-              "/node_modules/@hexmcp/core/dist/lifecycle/request-gate.d.ts",
-              "/node_modules/@hexmcp/core/dist/lifecycle/state-machine.d.ts",
               "/node_modules/@hexmcp/core/dist/lifecycle/index.d.ts",
-              "/node_modules/@hexmcp/core/dist/middleware/builder.d.ts",
-              "/node_modules/@hexmcp/core/dist/middleware/dispatcher.d.ts",
-              "/node_modules/@hexmcp/core/dist/middleware/engine.d.ts",
-              "/node_modules/@hexmcp/core/dist/middleware/error-mapper.d.ts",
-              "/node_modules/@hexmcp/core/dist/middleware/logger.d.ts",
-              "/node_modules/@hexmcp/core/dist/middleware/registry.d.ts",
               "/node_modules/@hexmcp/core/dist/middleware/index.d.ts",
               "/node_modules/@hexmcp/core/dist/registries/index.d.ts",
-              "/node_modules/@hexmcp/core/dist/utils/logger.d.ts",
-              "/node_modules/@hexmcp/core/dist/utils/index.d.ts",
               "/node_modules/@hexmcp/core/dist/index.d.ts"
             ],
             "visibleProblems": []
@@ -722,107 +634,7 @@
             "detectedReason": "no:type",
             "reasonFileName": "/node_modules/typescript/lib/lib.d.ts"
           },
-          "/node_modules/@hexmcp/core/dist/middleware/types.d.ts": {
-            "detectedKind": 1,
-            "detectedReason": "no:type",
-            "reasonFileName": "/node_modules/@hexmcp/core/package.json"
-          },
-          "/node_modules/@hexmcp/core/dist/registries/base.d.ts": {
-            "detectedKind": 1,
-            "detectedReason": "no:type",
-            "reasonFileName": "/node_modules/@hexmcp/core/package.json"
-          },
-          "/node_modules/@hexmcp/core/dist/registries/types.d.ts": {
-            "detectedKind": 1,
-            "detectedReason": "no:type",
-            "reasonFileName": "/node_modules/@hexmcp/core/package.json"
-          },
-          "/node_modules/@hexmcp/core/dist/builder/types.d.ts": {
-            "detectedKind": 1,
-            "detectedReason": "no:type",
-            "reasonFileName": "/node_modules/@hexmcp/core/package.json"
-          },
-          "/node_modules/@hexmcp/core/dist/builder/server.d.ts": {
-            "detectedKind": 1,
-            "detectedReason": "no:type",
-            "reasonFileName": "/node_modules/@hexmcp/core/package.json"
-          },
-          "/node_modules/@hexmcp/core/dist/builder/index.d.ts": {
-            "detectedKind": 1,
-            "detectedReason": "no:type",
-            "reasonFileName": "/node_modules/@hexmcp/core/package.json"
-          },
-          "/node_modules/@hexmcp/core/dist/registries/prompts.d.ts": {
-            "detectedKind": 1,
-            "detectedReason": "no:type",
-            "reasonFileName": "/node_modules/@hexmcp/core/package.json"
-          },
-          "/node_modules/@hexmcp/core/dist/registries/resources.d.ts": {
-            "detectedKind": 1,
-            "detectedReason": "no:type",
-            "reasonFileName": "/node_modules/@hexmcp/core/package.json"
-          },
-          "/node_modules/@hexmcp/core/dist/registries/tools.d.ts": {
-            "detectedKind": 1,
-            "detectedReason": "no:type",
-            "reasonFileName": "/node_modules/@hexmcp/core/package.json"
-          },
-          "/node_modules/@hexmcp/core/dist/lifecycle/types.d.ts": {
-            "detectedKind": 1,
-            "detectedReason": "no:type",
-            "reasonFileName": "/node_modules/@hexmcp/core/package.json"
-          },
-          "/node_modules/@hexmcp/core/dist/lifecycle/capability-registry.d.ts": {
-            "detectedKind": 1,
-            "detectedReason": "no:type",
-            "reasonFileName": "/node_modules/@hexmcp/core/package.json"
-          },
-          "/node_modules/@hexmcp/core/dist/lifecycle/handshake-handlers.d.ts": {
-            "detectedKind": 1,
-            "detectedReason": "no:type",
-            "reasonFileName": "/node_modules/@hexmcp/core/package.json"
-          },
-          "/node_modules/@hexmcp/core/dist/lifecycle/request-gate.d.ts": {
-            "detectedKind": 1,
-            "detectedReason": "no:type",
-            "reasonFileName": "/node_modules/@hexmcp/core/package.json"
-          },
-          "/node_modules/@hexmcp/core/dist/lifecycle/state-machine.d.ts": {
-            "detectedKind": 1,
-            "detectedReason": "no:type",
-            "reasonFileName": "/node_modules/@hexmcp/core/package.json"
-          },
           "/node_modules/@hexmcp/core/dist/lifecycle/index.d.ts": {
-            "detectedKind": 1,
-            "detectedReason": "no:type",
-            "reasonFileName": "/node_modules/@hexmcp/core/package.json"
-          },
-          "/node_modules/@hexmcp/core/dist/middleware/builder.d.ts": {
-            "detectedKind": 1,
-            "detectedReason": "no:type",
-            "reasonFileName": "/node_modules/@hexmcp/core/package.json"
-          },
-          "/node_modules/@hexmcp/core/dist/middleware/dispatcher.d.ts": {
-            "detectedKind": 1,
-            "detectedReason": "no:type",
-            "reasonFileName": "/node_modules/@hexmcp/core/package.json"
-          },
-          "/node_modules/@hexmcp/core/dist/middleware/engine.d.ts": {
-            "detectedKind": 1,
-            "detectedReason": "no:type",
-            "reasonFileName": "/node_modules/@hexmcp/core/package.json"
-          },
-          "/node_modules/@hexmcp/core/dist/middleware/error-mapper.d.ts": {
-            "detectedKind": 1,
-            "detectedReason": "no:type",
-            "reasonFileName": "/node_modules/@hexmcp/core/package.json"
-          },
-          "/node_modules/@hexmcp/core/dist/middleware/logger.d.ts": {
-            "detectedKind": 1,
-            "detectedReason": "no:type",
-            "reasonFileName": "/node_modules/@hexmcp/core/package.json"
-          },
-          "/node_modules/@hexmcp/core/dist/middleware/registry.d.ts": {
             "detectedKind": 1,
             "detectedReason": "no:type",
             "reasonFileName": "/node_modules/@hexmcp/core/package.json"
@@ -833,16 +645,6 @@
             "reasonFileName": "/node_modules/@hexmcp/core/package.json"
           },
           "/node_modules/@hexmcp/core/dist/registries/index.d.ts": {
-            "detectedKind": 1,
-            "detectedReason": "no:type",
-            "reasonFileName": "/node_modules/@hexmcp/core/package.json"
-          },
-          "/node_modules/@hexmcp/core/dist/utils/logger.d.ts": {
-            "detectedKind": 1,
-            "detectedReason": "no:type",
-            "reasonFileName": "/node_modules/@hexmcp/core/package.json"
-          },
-          "/node_modules/@hexmcp/core/dist/utils/index.d.ts": {
             "detectedKind": 1,
             "detectedReason": "no:type",
             "reasonFileName": "/node_modules/@hexmcp/core/package.json"

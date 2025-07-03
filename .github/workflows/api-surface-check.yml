@@ -1,0 +1,79 @@
+name: API Surface Check
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'packages/core/src/**'
+      - 'packages/core/package.json'
+      - 'packages/core/tsconfig.json'
+
+jobs:
+  check-api-surface:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup PNPM
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Build packages
+        run: pnpm run build
+
+      - name: Check current API surface
+        run: pnpm run check:types
+
+      - name: Generate current API surface
+        run: pnpm exec attw --pack packages/core --format json > current-api-surface.json
+
+      - name: Checkout main branch API surface
+        run: |
+          git show main:.api-surface-lock.json > main-api-surface.json || echo '{}' > main-api-surface.json
+
+      - name: Compare API surfaces
+        run: |
+          if ! diff -q main-api-surface.json current-api-surface.json > /dev/null; then
+            echo "🔍 API surface changes detected!"
+            echo "## API Surface Changes" >> $GITHUB_STEP_SUMMARY
+            echo "The following changes were detected in the public API surface:" >> $GITHUB_STEP_SUMMARY
+            echo '```diff' >> $GITHUB_STEP_SUMMARY
+            diff -u main-api-surface.json current-api-surface.json || true >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            echo "⚠️ Please review these changes carefully to ensure they are intentional." >> $GITHUB_STEP_SUMMARY
+            echo "If these changes are expected, the API surface lock will be updated when this PR is merged." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✅ No API surface changes detected." >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Generate API report diff
+        run: |
+          # Generate current API report
+          cd packages/core && pnpm exec api-extractor run --local
+          
+          # Check if there are changes in the API report
+          if [ -f "../../temp/api-reports/@hexmcp/core.api.md" ]; then
+            echo "📋 API Report generated successfully" >> $GITHUB_STEP_SUMMARY
+            echo "Review the detailed API changes in the artifacts." >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Upload API surface comparison
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-surface-comparison
+          path: |
+            current-api-surface.json
+            main-api-surface.json
+            temp/api-reports/
+          retention-days: 7
