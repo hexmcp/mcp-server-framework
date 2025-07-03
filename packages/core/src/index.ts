@@ -10,3 +10,4 @@ export * from './builder/index';
 export * from './lifecycle/index';
 export * from './middleware/index';
 export * from './registries/index';
+export * from './utils/index';
