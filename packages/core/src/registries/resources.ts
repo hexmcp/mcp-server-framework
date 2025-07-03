@@ -322,7 +322,7 @@ export class ResourceRegistry implements Registry {
    * resource matching and comprehensive validation of provider implementations.
    *
    * @param definition - The resource definition to register
-   * @throws {Error} When the definition is invalid or the URI pattern is already registered
+   * @throws \{Error\} When the definition is invalid or the URI pattern is already registered
    *
    * @example Register a file system resource
    * ```typescript

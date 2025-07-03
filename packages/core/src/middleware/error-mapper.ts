@@ -446,16 +446,7 @@ function createDefaultOptions(): Required<
  * catching all unhandled errors and converting them to proper JSON-RPC error responses.
  * It provides structured logging, debug mode support, and comprehensive error classification.
  *
- * @param options - Configuration options for error mapping behavior
- * @param options.enableLogging - Whether to log errors (default: true)
- * @param options.logLevel - Log level for error messages (default: 'error')
- * @param options.logFormat - Log format: 'json' or 'console' (default: 'json')
- * @param options.includeStackTrace - Whether to include stack traces in logs (default: false)
- * @param options.includeRequestContext - Whether to include request context in logs (default: true)
- * @param options.debugMode - Enable debug mode with detailed error info (default: from MCPKIT_DEBUG env)
- * @param options.logger - Custom logger implementation
- * @param options.customErrorMapper - Custom error mapping function for specialized error handling
- * @param options.onError - Callback function called when an error is processed
+ * @param options - Configuration options for error mapping behavior including logging, debug mode, and custom handlers
  * @returns Middleware function that handles error mapping
  *
  * @example Basic error mapper (recommended as outermost middleware)

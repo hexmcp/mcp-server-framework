@@ -143,12 +143,10 @@ export class McpMiddlewareEngine implements MiddlewareEngine {
    *
    * @param ctx - The request context to pass through the middleware stack
    * @param middleware - Array of middleware functions to execute
-   * @param options - Optional execution configuration
-   * @param options.timeout - Maximum execution time in milliseconds (default: 30000)
-   * @param options.maxDepth - Maximum call depth to prevent infinite recursion (default: 100)
-   * @throws {MiddlewareTimeoutError} When execution exceeds the timeout
-   * @throws {ReentrantCallError} When re-entrant calls are detected
-   * @throws {MiddlewareError} When any middleware in the stack fails
+   * @param options - Optional execution configuration with timeout (default: 30000ms) and maxDepth (default: 100)
+   * @throws \{MiddlewareTimeoutError\} When execution exceeds the timeout
+   * @throws \{ReentrantCallError\} When re-entrant calls are detected
+   * @throws \{MiddlewareError\} When any middleware in the stack fails
    *
    * @example Basic execution
    * ```typescript

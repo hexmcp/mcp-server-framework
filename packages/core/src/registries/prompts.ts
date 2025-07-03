@@ -175,7 +175,7 @@ export class PromptRegistry implements Registry {
    * Zod schemas, argument definitions, and custom validation functions.
    *
    * @param definition - The prompt definition to register
-   * @throws {Error} When the definition is invalid or the prompt name is already registered
+   * @throws \{Error\} When the definition is invalid or the prompt name is already registered
    *
    * @example Register a simple prompt
    * ```typescript
@@ -234,7 +234,7 @@ export class PromptRegistry implements Registry {
    * @param args - Arguments to pass to the prompt handler
    * @param context - Execution context containing user info, transport details, etc.
    * @returns Promise resolving to the prompt content (text, images, etc.)
-   * @throws {Error} When the prompt is not found or validation fails
+   * @throws \{Error\} When the prompt is not found or validation fails
    *
    * @example Execute a simple prompt
    * ```typescript
