@@ -454,8 +454,8 @@ function createDefaultOptions(): Required<
  * @param options.includeRequestContext - Whether to include request context in logs (default: true)
  * @param options.debugMode - Enable debug mode with detailed error info (default: from MCPKIT_DEBUG env)
  * @param options.logger - Custom logger implementation
- * @param options.errorClassifier - Custom error classification function
- * @param options.contextExtractor - Custom context extraction function
+ * @param options.customErrorMapper - Custom error mapping function for specialized error handling
+ * @param options.onError - Callback function called when an error is processed
  * @returns Middleware function that handles error mapping
  *
  * @example Basic error mapper (recommended as outermost middleware)

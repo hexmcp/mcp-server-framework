@@ -1,6 +1,6 @@
 import type { JsonRpcRequest } from '@hexmcp/codec-jsonrpc';
 import { createErrorMapperMiddleware } from './error-mapper';
-import { createBuiltInLoggingMiddleware } from './logger';
+import { createBuiltInLoggingMiddleware, type LoggingMiddlewareOptions } from './logger';
 import type { LogLevel, Middleware, MiddlewareRegistry } from './types';
 
 export interface MiddlewareBuilder {
@@ -83,14 +83,6 @@ export interface BuiltInMiddleware {
   tracing(options?: TracingMiddlewareOptions): Middleware;
   cors(options?: CorsMiddlewareOptions): Middleware;
   timeout(options: TimeoutMiddlewareOptions): Middleware;
-}
-
-export interface LoggingMiddlewareOptions {
-  level?: 'debug' | 'info' | 'warn' | 'error';
-  includeRequest?: boolean;
-  includeResponse?: boolean;
-  includeMetadata?: boolean;
-  logger?: (level: string, message: string, data?: unknown) => void;
 }
 
 export interface AuthMiddlewareOptions {

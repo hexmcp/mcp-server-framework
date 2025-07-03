@@ -187,6 +187,141 @@ export interface RequestContext {
  *   console.log(`Trace ${ctx.state.traceId}: ${ctx.state.duration}ms`);
  * };
  * ```
+ *
+ * @example Advanced middleware composition patterns
+ * ```typescript
+ * // 1. Error handling with recovery
+ * const resilientMiddleware: Middleware = async (ctx, next) => {
+ *   const maxRetries = 3;
+ *   let attempt = 0;
+ *
+ *   while (attempt < maxRetries) {
+ *     try {
+ *       await next();
+ *       return; // Success, exit retry loop
+ *     } catch (error) {
+ *       attempt++;
+ *       if (attempt >= maxRetries) {
+ *         throw error; // Final attempt failed
+ *       }
+ *
+ *       // Exponential backoff
+ *       const delay = Math.pow(2, attempt) * 100;
+ *       await new Promise(resolve => setTimeout(resolve, delay));
+ *       console.log(`Retry attempt ${attempt} after ${delay}ms`);
+ *     }
+ *   }
+ * };
+ *
+ * // 2. Conditional middleware execution
+ * const conditionalMiddleware: Middleware = async (ctx, next) => {
+ *   const shouldApplyMiddleware = ctx.request.method.startsWith('tools/');
+ *
+ *   if (shouldApplyMiddleware) {
+ *     // Apply middleware logic only for tool requests
+ *     ctx.state.toolRequest = true;
+ *     console.log('Processing tool request:', ctx.request.method);
+ *   }
+ *
+ *   await next();
+ *
+ *   if (shouldApplyMiddleware) {
+ *     console.log('Tool request completed');
+ *   }
+ * };
+ *
+ * // 3. Middleware with cleanup and resource management
+ * const resourceMiddleware: Middleware = async (ctx, next) => {
+ *   const resources: Array<() => Promise<void>> = [];
+ *
+ *   // Provide resource registration function
+ *   ctx.state.addCleanup = (cleanup: () => Promise<void>) => {
+ *     resources.push(cleanup);
+ *   };
+ *
+ *   try {
+ *     await next();
+ *   } finally {
+ *     // Always cleanup resources, even on error
+ *     for (const cleanup of resources.reverse()) {
+ *       try {
+ *         await cleanup();
+ *       } catch (cleanupError) {
+ *         console.error('Cleanup failed:', cleanupError);
+ *       }
+ *     }
+ *   }
+ * };
+ * ```
+ *
+ * @example Production-ready middleware stack composition
+ * ```typescript
+ * // Complete middleware stack for production use
+ * const createProductionMiddlewareStack = (config: ProductionConfig): Middleware[] => {
+ *   return [
+ *     // 1. Error handling (outermost layer)
+ *     createErrorMapperMiddleware({
+ *       enableLogging: true,
+ *       logLevel: 'error',
+ *       includeStackTrace: config.debug,
+ *       debugMode: config.debug
+ *     }),
+ *
+ *     // 2. Request/response logging
+ *     createLoggingMiddleware({
+ *       level: config.logLevel,
+ *       includeRequest: true,
+ *       includeResponse: true,
+ *       logger: config.logger
+ *     }),
+ *
+ *     // 3. Security and authentication
+ *     createAuthMiddleware({
+ *       validateToken: config.auth.validateToken,
+ *       requiredScopes: config.auth.requiredScopes
+ *     }),
+ *
+ *     // 4. Rate limiting
+ *     createRateLimitMiddleware({
+ *       maxRequests: config.rateLimit.maxRequests,
+ *       windowMs: config.rateLimit.windowMs,
+ *       keyGenerator: (ctx) => ctx.state.user?.id || 'anonymous'
+ *     }),
+ *
+ *     // 5. Request validation
+ *     createValidationMiddleware({
+ *       validateSchema: true,
+ *       sanitizeInput: true
+ *     }),
+ *
+ *     // 6. Performance monitoring
+ *     createMetricsMiddleware({
+ *       collectMetrics: config.metrics.enabled,
+ *       metricsEndpoint: config.metrics.endpoint
+ *     }),
+ *
+ *     // 7. Caching (if enabled)
+ *     ...(config.cache.enabled ? [createCacheMiddleware(config.cache)] : []),
+ *
+ *     // 8. Business logic middleware (innermost layer)
+ *     createBusinessLogicMiddleware()
+ *   ];
+ * };
+ *
+ * // Usage with middleware engine
+ * const engine = new McpMiddlewareEngine();
+ * const middlewareStack = createProductionMiddlewareStack(productionConfig);
+ * const composedMiddleware = engine.applyMiddleware(middlewareStack);
+ *
+ * // Execute with request context
+ * await composedMiddleware(requestContext, async () => {
+ *   // Core business logic
+ *   ctx.response = await handleRequest(ctx.request);
+ * });
+ * ```
+ *
+ * @see McpMiddlewareEngine For middleware execution and composition
+ * @see RequestContext For context properties and state management
  */
 export type Middleware = (ctx: RequestContext, next: () => Promise<void>) => Promise<void>;
 

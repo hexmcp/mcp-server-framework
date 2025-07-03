@@ -179,6 +179,130 @@ export class InMemoryResourceProvider implements ResourceProvider {
  *   }
  * });
  * ```
+ *
+ * @example Advanced resource registry patterns
+ * ```typescript
+ * // 1. Multi-provider resource aggregation
+ * const registry = new ResourceRegistry();
+ *
+ * // Register multiple providers for different URI schemes
+ * registry.register({
+ *   uriPattern: 'file://**',
+ *   name: 'Local Files',
+ *   description: 'Access local file system',
+ *   provider: new FileSystemProvider()
+ * });
+ *
+ * registry.register({
+ *   uriPattern: 'http://**',
+ *   name: 'HTTP Resources',
+ *   description: 'Access HTTP resources',
+ *   provider: new HttpProvider()
+ * });
+ *
+ * registry.register({
+ *   uriPattern: 'db://table/**',
+ *   name: 'Database Tables',
+ *   description: 'Access database tables',
+ *   provider: new DatabaseProvider()
+ * });
+ *
+ * // Register an aggregator resource that combines multiple sources
+ * registry.register({
+ *   uriPattern: 'aggregate://search/**',
+ *   name: 'Aggregated Search',
+ *   description: 'Search across multiple resource types',
+ *   searchable: true,
+ *   provider: {
+ *     get: async (uri, context) => {
+ *       const query = uri.split('/').pop();
+ *       const results = [];
+ *
+ *       // Search across all registered providers
+ *       for (const [pattern, definition] of registry.getRegisteredResources()) {
+ *         if (definition.searchable && definition.provider.search) {
+ *           try {
+ *             const searchResults = await definition.provider.search(query, context);
+ *             results.push(...searchResults.resources);
+ *           } catch (error) {
+ *             console.warn(`Search failed for ${pattern}: ${error.message}`);
+ *           }
+ *         }
+ *       }
+ *
+ *       return {
+ *         uri,
+ *         mimeType: 'application/json',
+ *         text: JSON.stringify({ query, results, totalFound: results.length })
+ *       };
+ *     },
+ *     list: async () => ({ resources: [] }) // Not applicable for aggregator
+ *   }
+ * });
+ *
+ * // 2. Resource with real-time updates and caching
+ * const createRealtimeResourceRegistry = () => {
+ *   const registry = new ResourceRegistry();
+ *   const cache = new Map();
+ *   const watchers = new Map();
+ *
+ *   registry.register({
+ *     uriPattern: 'live://data/**',
+ *     name: 'Live Data Stream',
+ *     description: 'Real-time data with caching and change notifications',
+ *     watchable: true,
+ *     cache: {
+ *       enabled: true,
+ *       ttl: 5000, // 5 seconds
+ *       key: (uri) => `live-${uri}`
+ *     },
+ *     provider: {
+ *       get: async (uri, context) => {
+ *         const cacheKey = `live-${uri}`;
+ *         const cached = cache.get(cacheKey);
+ *
+ *         if (cached && Date.now() - cached.timestamp < 5000) {
+ *           return cached.data;
+ *         }
+ *
+ *         const data = await fetchLiveData(uri);
+ *         cache.set(cacheKey, { data, timestamp: Date.now() });
+ *
+ *         // Notify watchers of data change
+ *         const uriWatchers = watchers.get(uri) || [];
+ *         for (const callback of uriWatchers) {
+ *           callback({
+ *             type: 'updated',
+ *             uri,
+ *             timestamp: new Date(),
+ *             metadata: { source: 'live-data' }
+ *           });
+ *         }
+ *
+ *         return data;
+ *       },
+ *       list: async () => ({ resources: await listLiveDataSources() }),
+ *       watch: async (uri, callback) => {
+ *         if (!watchers.has(uri)) {
+ *           watchers.set(uri, []);
+ *         }
+ *         watchers.get(uri).push(callback);
+ *
+ *         // Return unwatch function
+ *         return () => {
+ *           const uriWatchers = watchers.get(uri) || [];
+ *           const index = uriWatchers.indexOf(callback);
+ *           if (index > -1) {
+ *             uriWatchers.splice(index, 1);
+ *           }
+ *         };
+ *       }
+ *     }
+ *   });
+ *
+ *   return registry;
+ * };
+ * ```
  */
 export class ResourceRegistry implements Registry {
   public readonly kind = REGISTRY_KINDS.RESOURCES;

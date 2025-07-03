@@ -77,6 +77,86 @@ import type { HandlerContext, PromptContent, PromptDefinition } from './types';
  *   }
  * });
  * ```
+ *
+ * @example Advanced registry integration patterns
+ * ```typescript
+ * // 1. Multi-registry coordination
+ * const promptRegistry = new PromptRegistry();
+ * const toolRegistry = new ToolRegistry();
+ * const resourceRegistry = new ResourceRegistry();
+ *
+ * // Register a prompt that uses tools and resources
+ * promptRegistry.register({
+ *   name: 'research-assistant',
+ *   description: 'Research assistant that uses tools and resources',
+ *   arguments: [
+ *     { name: 'topic', description: 'Research topic', required: true },
+ *     { name: 'depth', description: 'Research depth (shallow, medium, deep)', required: false }
+ *   ],
+ *   handler: async (args, context) => {
+ *     // Use resource registry to gather information
+ *     const searchResults = await resourceRegistry.dispatch('search://web', {
+ *       query: args.topic,
+ *       limit: args.depth === 'deep' ? 20 : 10
+ *     }, context);
+ *
+ *     // Use tool registry to analyze data
+ *     const analysis = await toolRegistry.dispatch('analyze-text', {
+ *       text: searchResults.content,
+ *       type: 'research'
+ *     }, context);
+ *
+ *     return {
+ *       content: [
+ *         { type: 'text', text: `Research on ${args.topic}:` },
+ *         { type: 'text', text: analysis.summary },
+ *         { type: 'text', text: `Sources: ${searchResults.sources.length}` }
+ *       ]
+ *     };
+ *   }
+ * });
+ *
+ * // 2. Registry with middleware integration
+ * const createRegistryWithMiddleware = () => {
+ *   const registry = new PromptRegistry();
+ *
+ *   // Add middleware-aware prompts
+ *   registry.register({
+ *     name: 'authenticated-prompt',
+ *     description: 'Prompt that requires authentication',
+ *     arguments: [{ name: 'query', required: true }],
+ *     hooks: {
+ *       beforeExecution: async (args, context) => {
+ *         // Check authentication from middleware context
+ *         if (!context.state.authenticated) {
+ *           throw new Error('Authentication required');
+ *         }
+ *
+ *         // Log request with trace ID from middleware
+ *         console.log(`Authenticated request ${context.state.traceId}: ${args.query}`);
+ *       },
+ *       afterExecution: async (result, context) => {
+ *         // Update metrics in middleware state
+ *         context.state.metrics = {
+ *           ...context.state.metrics,
+ *           promptsExecuted: (context.state.metrics?.promptsExecuted || 0) + 1
+ *         };
+ *       }
+ *     },
+ *     handler: async (args, context) => {
+ *       const userId = context.state.user?.id;
+ *       return {
+ *         content: [{
+ *           type: 'text',
+ *           text: `Authenticated response for user ${userId}: ${args.query}`
+ *         }]
+ *       };
+ *     }
+ *   });
+ *
+ *   return registry;
+ * };
+ * ```
  */
 export class PromptRegistry implements Registry {
   public readonly kind = REGISTRY_KINDS.PROMPTS;

@@ -3,7 +3,83 @@ import type { RequestContext } from '../middleware/types';
 import type { RegistryKind } from './base';
 
 /**
- * Handler execution context with timing and performance metrics
+ * Handler execution context with timing and performance metrics for comprehensive execution tracking.
+ *
+ * The HandlerExecutionContext provides detailed information about the current handler execution,
+ * including unique identifiers for tracing, timing information for performance monitoring,
+ * timeout configuration, and extensible metadata for custom tracking requirements.
+ *
+ * @example Basic execution tracking
+ * ```typescript
+ * const trackedHandler = async (args: Record<string, unknown>, context: HandlerContext) => {
+ *   const execution = context.execution;
+ *   if (!execution) {
+ *     console.warn('No execution context available');
+ *     return { content: [{ type: 'text', text: 'No tracking' }] };
+ *   }
+ *
+ *   console.log(`Execution ID: ${execution.executionId}`);
+ *   console.log(`Started at: ${execution.startTime.toISOString()}`);
+ *
+ *   const elapsed = Date.now() - execution.startTime.getTime();
+ *   console.log(`Elapsed time: ${elapsed}ms`);
+ *
+ *   return { content: [{ type: 'text', text: `Tracked execution ${execution.executionId}` }] };
+ * };
+ * ```
+ *
+ * @example Timeout-aware execution
+ * ```typescript
+ * const timeoutAwareHandler = async (args: Record<string, unknown>, context: HandlerContext) => {
+ *   const execution = context.execution;
+ *   const timeout = execution?.timeout || 30000; // Default 30 seconds
+ *
+ *   // Create a timeout promise
+ *   const timeoutPromise = new Promise((_, reject) => {
+ *     setTimeout(() => reject(new Error('Handler timeout')), timeout);
+ *   });
+ *
+ *   // Race between actual work and timeout
+ *   const workPromise = performLongRunningTask(args);
+ *
+ *   try {
+ *     const result = await Promise.race([workPromise, timeoutPromise]);
+ *     return { content: [{ type: 'text', text: 'Task completed within timeout' }] };
+ *   } catch (error) {
+ *     if (error.message === 'Handler timeout') {
+ *       console.error(`Handler ${execution?.executionId} timed out after ${timeout}ms`);
+ *     }
+ *     throw error;
+ *   }
+ * };
+ * ```
+ *
+ * @example Custom metadata tracking
+ * ```typescript
+ * const metadataTrackingHandler = async (args: Record<string, unknown>, context: HandlerContext) => {
+ *   const execution = context.execution;
+ *   if (!execution?.metadata) {
+ *     console.warn('No metadata tracking available');
+ *     return { content: [{ type: 'text', text: 'No metadata' }] };
+ *   }
+ *
+ *   // Add custom tracking metadata
+ *   execution.metadata.inputSize = JSON.stringify(args).length;
+ *   execution.metadata.userAgent = context.transport.peer?.userAgent;
+ *   execution.metadata.requestMethod = context.request.method;
+ *
+ *   const result = await processRequest(args);
+ *
+ *   // Add result metadata
+ *   execution.metadata.outputSize = JSON.stringify(result).length;
+ *   execution.metadata.processingSteps = result.steps?.length || 0;
+ *   execution.metadata.cacheHit = result.fromCache || false;
+ *
+ *   return result;
+ * };
+ * ```
+ *
+ * @see HandlerContext For the complete handler context interface
  */
 export interface HandlerExecutionContext {
   /**
@@ -28,7 +104,136 @@ export interface HandlerExecutionContext {
 }
 
 /**
- * Handler context that includes middleware request context
+ * Handler context that includes middleware request context with enhanced registry and execution metadata.
+ *
+ * The HandlerContext extends RequestContext with additional registry-specific information,
+ * execution tracking, and user authorization data. This context is passed to all handler
+ * functions in prompts, tools, and resources, providing comprehensive access to request
+ * state, execution metrics, and authorization information.
+ *
+ * @example Basic handler context usage
+ * ```typescript
+ * const toolHandler = async (args: Record<string, unknown>, context: HandlerContext) => {
+ *   // Access request information
+ *   const { method, id } = context.request;
+ *
+ *   // Check user authorization
+ *   if (!context.user?.permissions?.includes('tool:execute')) {
+ *     throw new Error('Insufficient permissions');
+ *   }
+ *
+ *   // Use execution context for tracing
+ *   const executionId = context.execution?.executionId || 'unknown';
+ *   console.log(`Executing tool ${method} with ID ${executionId}`);
+ *
+ *   return { content: [{ type: 'text', text: 'Tool executed successfully' }] };
+ * };
+ * ```
+ *
+ * @example Performance tracking with execution context
+ * ```typescript
+ * const performanceAwareHandler = async (args: Record<string, unknown>, context: HandlerContext) => {
+ *   const startTime = context.execution?.startTime || new Date();
+ *   const executionId = context.execution?.executionId;
+ *
+ *   // Add performance metadata to execution context
+ *   if (context.execution?.metadata) {
+ *     context.execution.metadata.startTime = startTime.toISOString();
+ *     context.execution.metadata.args = args;
+ *   }
+ *
+ *   try {
+ *     const result = await performExpensiveOperation(args);
+ *
+ *     // Track success metrics
+ *     if (context.execution?.metadata) {
+ *       context.execution.metadata.duration = Date.now() - startTime.getTime();
+ *       context.execution.metadata.status = 'success';
+ *     }
+ *
+ *     return result;
+ *   } catch (error) {
+ *     // Track error metrics
+ *     if (context.execution?.metadata) {
+ *       context.execution.metadata.duration = Date.now() - startTime.getTime();
+ *       context.execution.metadata.status = 'error';
+ *       context.execution.metadata.error = error.message;
+ *     }
+ *     throw error;
+ *   }
+ * };
+ * ```
+ *
+ * @example Registry-specific context usage
+ * ```typescript
+ * const registryAwareHandler = async (args: Record<string, unknown>, context: HandlerContext) => {
+ *   // Access registry information
+ *   const registryKind = context.registry?.kind;
+ *   const registryMetadata = context.registry?.metadata;
+ *
+ *   if (registryKind === 'tools') {
+ *     // Tool-specific logic
+ *     console.log('Executing tool with registry metadata:', registryMetadata);
+ *   } else if (registryKind === 'prompts') {
+ *     // Prompt-specific logic
+ *     console.log('Executing prompt with registry metadata:', registryMetadata);
+ *   }
+ *
+ *   // Use transport information for protocol-specific handling
+ *   const transportName = context.transport.name;
+ *   if (transportName === 'stdio') {
+ *     // Handle stdio-specific requirements
+ *     console.log('Using stdio transport');
+ *   }
+ *
+ *   return { content: [{ type: 'text', text: `Handled by ${registryKind} registry` }] };
+ * };
+ * ```
+ *
+ * @example User authorization and role-based access
+ * ```typescript
+ * const authorizedHandler = async (args: Record<string, unknown>, context: HandlerContext) => {
+ *   const user = context.user;
+ *
+ *   if (!user) {
+ *     throw new Error('Authentication required');
+ *   }
+ *
+ *   // Check user roles
+ *   const hasAdminRole = user.roles?.includes('admin');
+ *   const hasUserRole = user.roles?.includes('user');
+ *
+ *   // Check specific permissions
+ *   const canWrite = user.permissions?.includes('write');
+ *   const canRead = user.permissions?.includes('read');
+ *
+ *   if (args.operation === 'delete' && !hasAdminRole) {
+ *     throw new Error('Admin role required for delete operations');
+ *   }
+ *
+ *   if (args.operation === 'write' && !canWrite) {
+ *     throw new Error('Write permission required');
+ *   }
+ *
+ *   // Use user metadata for personalization
+ *   const userPreferences = user.metadata?.preferences as Record<string, unknown> || {};
+ *
+ *   return {
+ *     content: [{
+ *       type: 'text',
+ *       text: `Operation ${args.operation} executed for user ${user.id}`
+ *     }],
+ *     metadata: {
+ *       userId: user.id,
+ *       userRoles: user.roles,
+ *       preferences: userPreferences
+ *     }
+ *   };
+ * };
+ * ```
+ *
+ * @see RequestContext For base context properties and middleware examples
+ * @see HandlerExecutionContext For execution tracking details
  */
 export interface HandlerContext extends RequestContext {
   /**

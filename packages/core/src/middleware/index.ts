@@ -8,7 +8,6 @@ export {
   createBuiltInMiddleware,
   createMiddlewareBuilder,
   type ErrorMapperMiddlewareOptions,
-  type LoggingMiddlewareOptions,
   McpMiddlewareBuilder,
   type MiddlewareBuilder,
   type RateLimitMiddlewareOptions,
@@ -27,6 +26,7 @@ export {
   createBuiltInLoggingMiddleware,
   type LoggerMiddlewareOptions,
   type LoggerRequestContext,
+  type LoggingMiddlewareOptions,
   loggerMiddleware,
 } from './logger';
 export { McpMiddlewareRegistry } from './registry';
