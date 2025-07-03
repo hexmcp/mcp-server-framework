@@ -4,7 +4,33 @@ import { REGISTRY_KINDS } from './base';
 import type { HandlerContext, ToolDefinition } from './types';
 
 /**
- * Registry for managing tool handlers
+ * Registry for managing tool handlers in the MCP Server Framework.
+ *
+ * Tools are functions that clients can call to perform specific operations.
+ * This registry manages tool registration, validation, execution, and capability
+ * negotiation for the MCP protocol.
+ *
+ * @example
+ * ```typescript
+ * const registry = new ToolRegistry();
+ *
+ * registry.register({
+ *   name: 'calculate',
+ *   description: 'Perform mathematical calculations',
+ *   parameters: {
+ *     type: 'object',
+ *     properties: {
+ *       expression: { type: 'string' }
+ *     }
+ *   },
+ *   handler: async ({ expression }) => {
+ *     const result = eval(expression);
+ *     return { content: [{ type: 'text', text: String(result) }] };
+ *   }
+ * });
+ * ```
+ *
+ * @public
  */
 export class ToolRegistry implements Registry {
   public readonly kind = REGISTRY_KINDS.TOOLS;
