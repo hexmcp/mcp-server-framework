@@ -16,6 +16,12 @@ build/
 *.tsbuildinfo
 **/*.tsbuildinfo
 
+# Generated documentation (keep structure, ignore generated content)
+docs/api/
+**/docs/api/
+temp/
+**/temp/
+
 # TypeScript compilation artifacts (should not be in src directories)
 src/**/*.js
 src/**/*.d.ts

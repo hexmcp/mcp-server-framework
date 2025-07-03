@@ -1,5 +1,6 @@
 import { promises as fs } from 'node:fs';
 import { join } from 'node:path';
+import type { RequestContext } from '@hexmcp/core';
 import { configureSnapshots } from '../src/snapshot';
 import {
   collectStream,
@@ -8,14 +9,16 @@ import {
   createMockStream,
   createTextStreamHandler,
   expectStreamShape,
-  type HandlerContext,
   type StreamShape,
   testStreamedFixture,
 } from '../src/streaming';
 
+// Use RequestContext directly instead of the local HandlerContext
+type HandlerContext = RequestContext;
+
 function createMockContext(id: string): HandlerContext {
   return {
-    request: { jsonrpc: '2.0', id, method: 'test' },
+    request: { jsonrpc: '2.0', id, method: 'test', params: {} },
     send: async () => {
       // Mock send function for testing
     },

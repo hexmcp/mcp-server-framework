@@ -1,3 +1,4 @@
+import type { RequestContext } from '@hexmcp/core';
 import {
   collectStream,
   collectStreamWithMetadata,
@@ -5,14 +6,16 @@ import {
   createMockStream,
   createTextStreamHandler,
   expectStreamShape,
-  type HandlerContext,
   testStreamedFixture,
 } from '../src/streaming';
+
+// Use RequestContext directly instead of the local HandlerContext
+type HandlerContext = RequestContext;
 
 // Helper function to create mock context
 function createMockContext(id: string): HandlerContext {
   return {
-    request: { jsonrpc: '2.0', id, method: 'test' },
+    request: { jsonrpc: '2.0', id, method: 'test', params: {} },
     send: async () => {
       // No-op for testing
     },
