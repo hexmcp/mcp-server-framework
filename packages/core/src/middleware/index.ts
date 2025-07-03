@@ -22,6 +22,13 @@ export {
   createErrorMapperMiddleware,
   createErrorMapperMiddlewareWithDefaults,
 } from './error-mapper';
+export {
+  type ContextLogger,
+  createBuiltInLoggingMiddleware,
+  type LoggerMiddlewareOptions,
+  type LoggerRequestContext,
+  loggerMiddleware,
+} from './logger';
 export { McpMiddlewareRegistry } from './registry';
 export type {
   ErrorContext,

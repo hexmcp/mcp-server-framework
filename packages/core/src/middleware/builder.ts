@@ -1,5 +1,6 @@
 import type { JsonRpcRequest } from '@hexmcp/codec-jsonrpc';
 import { createErrorMapperMiddleware } from './error-mapper';
+import { createBuiltInLoggingMiddleware } from './logger';
 import type { LogLevel, Middleware, MiddlewareRegistry } from './types';
 
 export interface MiddlewareBuilder {
@@ -159,9 +160,7 @@ export function createBuiltInErrorMapperMiddleware(options?: ErrorMapperMiddlewa
 export function createBuiltInMiddleware(): BuiltInMiddleware {
   return {
     errorMapper: (options?: ErrorMapperMiddlewareOptions) => createBuiltInErrorMapperMiddleware(options),
-    logging: (_options?: LoggingMiddlewareOptions) => {
-      throw new Error('Logging middleware not yet implemented');
-    },
+    logging: (options?: LoggingMiddlewareOptions) => createBuiltInLoggingMiddleware(options),
     auth: (_options: AuthMiddlewareOptions) => {
       throw new Error('Auth middleware not yet implemented');
     },
