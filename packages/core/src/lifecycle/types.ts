@@ -17,6 +17,8 @@ export enum LifecycleState {
 
 /**
  * Valid state transitions in the MCP lifecycle
+ *
+ * @internal
  */
 export const VALID_TRANSITIONS: Record<LifecycleState, LifecycleState[]> = {
   [LifecycleState.IDLE]: [LifecycleState.INITIALIZING],
@@ -75,6 +77,8 @@ export interface ShutdownEvent {
 
 /**
  * Custom error for invalid state transitions
+ *
+ * @internal
  */
 export class InvalidStateTransitionError extends Error {
   constructor(
@@ -89,6 +93,8 @@ export class InvalidStateTransitionError extends Error {
 
 /**
  * Custom error for lifecycle violations
+ *
+ * @internal
  */
 export class LifecycleViolationError extends Error {
   constructor(
@@ -115,6 +121,8 @@ export class NotInitializedError extends Error {
 
 /**
  * MCP protocol error for duplicate initialization
+ *
+ * @internal
  */
 export class AlreadyInitializedError extends Error {
   public readonly code = ErrorCode.InvalidRequest;

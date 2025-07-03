@@ -121,10 +121,16 @@ export function isDebugMode(): boolean {
   return process.env.MCPKIT_DEBUG === '1';
 }
 
+/**
+ * @internal
+ */
 export function calculateDuration(startTime: number): number {
   return Date.now() - startTime;
 }
 
+/**
+ * @internal
+ */
 export function formatLogMetadata(data: Record<string, unknown>): Record<string, unknown> {
   const formatted: Record<string, unknown> = {};
 

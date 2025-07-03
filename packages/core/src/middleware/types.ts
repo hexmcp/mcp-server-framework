@@ -208,6 +208,9 @@ export interface MiddlewareEngine {
   executeMiddleware(ctx: RequestContext, middleware: Middleware[], options?: MiddlewareExecutionOptions): Promise<void>;
 }
 
+/**
+ * @internal
+ */
 export interface MiddlewareExecutionContext {
   readonly isExecuting: boolean;
   readonly currentIndex: number;
@@ -215,6 +218,9 @@ export interface MiddlewareExecutionContext {
   readonly executionId: string;
 }
 
+/**
+ * @internal
+ */
 export class MiddlewareError extends Error {
   constructor(
     message: string,
@@ -226,6 +232,9 @@ export class MiddlewareError extends Error {
   }
 }
 
+/**
+ * @internal
+ */
 export class ReentrantCallError extends Error {
   constructor(public readonly executionId: string) {
     super(`Re-entrant call detected in middleware execution ${executionId}`);
@@ -233,6 +242,9 @@ export class ReentrantCallError extends Error {
   }
 }
 
+/**
+ * @internal
+ */
 export class MiddlewareTimeoutError extends Error {
   constructor(
     public readonly timeout: number,
@@ -243,6 +255,9 @@ export class MiddlewareTimeoutError extends Error {
   }
 }
 
+/**
+ * @internal
+ */
 export enum MiddlewareExecutionState {
   Idle = 'idle',
   Executing = 'executing',
@@ -250,6 +265,9 @@ export enum MiddlewareExecutionState {
   Failed = 'failed',
 }
 
+/**
+ * @internal
+ */
 export interface MiddlewareMetrics {
   executionTime: number;
   middlewareIndex: number;
@@ -258,6 +276,9 @@ export interface MiddlewareMetrics {
   error?: Error;
 }
 
+/**
+ * @internal
+ */
 export interface MiddlewareExecutionResult {
   state: MiddlewareExecutionState;
   metrics: MiddlewareMetrics[];

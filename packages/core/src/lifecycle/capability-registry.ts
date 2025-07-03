@@ -391,6 +391,8 @@ export class McpCapabilityRegistry implements CapabilityRegistry {
 
 /**
  * Registry-based primitive registry that integrates with actual registries
+ *
+ * @internal
  */
 export class RegistryPrimitiveRegistry implements PrimitiveRegistry {
   private _promptRegistry?: PromptRegistry;
@@ -487,6 +489,8 @@ export class RegistryPrimitiveRegistry implements PrimitiveRegistry {
 
 /**
  * Mock primitive registry for testing and standalone usage
+ *
+ * @internal
  */
 export class MockPrimitiveRegistry implements PrimitiveRegistry {
   private _promptCount = 0;
