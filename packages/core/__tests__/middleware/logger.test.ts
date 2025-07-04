@@ -1,6 +1,6 @@
 import { encodeJsonRpcSuccess, JSON_RPC_ERROR_CODES, RpcError } from '@hexmcp/codec-jsonrpc';
-import { createBuiltInLoggingMiddleware, loggerMiddleware } from '../../src/middleware/logger';
-import type { LogEntry, Logger, LogLevel, Middleware } from '../../src/middleware/types';
+import { createBuiltInLoggingMiddleware, createStreamingInfoMiddleware, loggerMiddleware } from '../../src/middleware/logger';
+import type { LogEntry, Logger, LogLevel, Middleware, StreamingRequestContext } from '../../src/middleware/types';
 import { createMockRequestContext, SAMPLE_JSON_RPC_REQUEST } from '../fixtures/middleware-fixtures';
 
 interface MockLogEntry {
@@ -394,7 +394,6 @@ describe('loggerMiddleware', () => {
         ctx.response = encodeJsonRpcSuccess('1', {});
       });
 
-      // Should have debug start + info completion
       expect(logs).toHaveLength(2);
       expect(logs[0]?.level).toBe('debug');
       expect(logs[0]?.message).toBe('Request started');
@@ -439,12 +438,10 @@ describe('loggerMiddleware', () => {
 
       await middleware(ctx, async () => {
         contextLogger = (ctx as any).log;
-        // Test all log levels
         contextLogger.error('Error message');
         contextLogger.warn('Warn message');
         contextLogger.info('Info message');
         contextLogger.debug('Debug message');
-        // Note: ContextLogger doesn't have log method, only debug/info/warn/error
         ctx.response = encodeJsonRpcSuccess('1', {});
       });
 
@@ -508,9 +505,183 @@ describe('loggerMiddleware', () => {
       expect(entry.meta?.metadata?.traceId).toBe(capturedTraceId);
     });
   });
+
+  describe('transport-aware logging', () => {
+    it('should use stderr logger for stdio transport when no custom logger provided', async () => {
+      const stderrSpy = jest.spyOn(console, 'error').mockImplementation();
+      const stdoutSpy = jest.spyOn(process.stdout, 'write').mockImplementation();
+
+      try {
+        const middleware = createBuiltInLoggingMiddleware();
+
+        const ctx = createMockRequestContext({
+          transport: { name: 'stdio' },
+        });
+
+        await middleware(ctx, async () => {
+          ctx.response = encodeJsonRpcSuccess('1', {});
+        });
+
+        expect(stderrSpy).toHaveBeenCalled();
+
+        const stdoutCalls = stdoutSpy.mock.calls.filter((call) => {
+          const content = call[0];
+          if (typeof content === 'string') {
+            return !content.includes('jsonrpc') && content.trim().length > 0;
+          }
+          const contentStr = new TextDecoder().decode(content);
+          return !contentStr.includes('jsonrpc') && contentStr.trim().length > 0;
+        });
+        expect(stdoutCalls).toHaveLength(0);
+
+        expect(stderrSpy.mock.calls).toHaveLength(1);
+        const stderrCall = stderrSpy.mock.calls[0];
+        if (!stderrCall) {
+          throw new Error('Expected stderr call to be defined');
+        }
+        const logData = JSON.parse(stderrCall[0] as string);
+        expect(logData).toMatchObject({
+          level: 'info',
+          message: 'Request completed',
+          timestamp: expect.any(String),
+        });
+      } finally {
+        stderrSpy.mockRestore();
+        stdoutSpy.mockRestore();
+      }
+    });
+
+    it('should use default logger for non-stdio transport', async () => {
+      const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
+
+      try {
+        const middleware = createBuiltInLoggingMiddleware();
+
+        const ctx = createMockRequestContext({
+          transport: { name: 'websocket' },
+        });
+
+        await middleware(ctx, async () => {
+          ctx.response = encodeJsonRpcSuccess('1', {});
+        });
+
+        expect(consoleSpy).toHaveBeenCalledWith('[info]', 'Request completed', expect.any(Object));
+      } finally {
+        consoleSpy.mockRestore();
+      }
+    });
+
+    it('should use custom logger when provided, overriding transport detection', async () => {
+      const customLogs: Array<{ level: string; message: string; data?: unknown }> = [];
+      const customLogger = (level: string, message: string, data?: unknown) => {
+        customLogs.push({ level, message, data });
+      };
+
+      const middleware = createBuiltInLoggingMiddleware({
+        logger: customLogger,
+      });
+
+      const ctx = createMockRequestContext({
+        transport: { name: 'stdio' },
+      });
+
+      await middleware(ctx, async () => {
+        ctx.response = encodeJsonRpcSuccess('1', {});
+      });
+
+      expect(customLogs).toHaveLength(1);
+      expect(customLogs[0]).toMatchObject({
+        level: 'info',
+        message: 'Request completed',
+      });
+    });
+  });
+
+  describe('createStreamingInfoMiddleware', () => {
+    it('should add streamInfo method for non-stdio transports', async () => {
+      const middleware = createStreamingInfoMiddleware();
+      const sentMessages: unknown[] = [];
+
+      const ctx = createMockRequestContext({
+        transport: { name: 'websocket' },
+        send: async (message: unknown) => {
+          sentMessages.push(message);
+        },
+      });
+
+      let streamingCtx: StreamingRequestContext;
+
+      await middleware(ctx, async () => {
+        streamingCtx = ctx as StreamingRequestContext;
+        expect(streamingCtx.streamInfo).toBeDefined();
+
+        if (streamingCtx.streamInfo) {
+          await streamingCtx.streamInfo('Processing started');
+          await streamingCtx.streamInfo('Processing completed');
+        }
+      });
+
+      expect(sentMessages).toHaveLength(2);
+      expect(sentMessages[0]).toEqual({ type: 'info', text: 'Processing started' });
+      expect(sentMessages[1]).toEqual({ type: 'info', text: 'Processing completed' });
+    });
+
+    it('should not add streamInfo method for stdio transport', async () => {
+      const middleware = createStreamingInfoMiddleware();
+
+      const ctx = createMockRequestContext({
+        transport: { name: 'stdio' },
+      });
+
+      let streamingCtx: StreamingRequestContext;
+
+      await middleware(ctx, async () => {
+        streamingCtx = ctx as StreamingRequestContext;
+        expect(streamingCtx.streamInfo).toBeUndefined();
+      });
+    });
+
+    it('should work with optional chaining pattern', async () => {
+      const middleware = createStreamingInfoMiddleware();
+      const sentMessages: unknown[] = [];
+
+      const ctx = createMockRequestContext({
+        transport: { name: 'http' },
+        send: async (message: unknown) => {
+          sentMessages.push(message);
+        },
+      });
+
+      await middleware(ctx, async () => {
+        const streamingCtx = ctx as StreamingRequestContext;
+
+        // This should work for non-stdio transport
+        streamingCtx.streamInfo?.('Optional chaining works');
+      });
+
+      expect(sentMessages).toHaveLength(1);
+      expect(sentMessages[0]).toEqual({ type: 'info', text: 'Optional chaining works' });
+    });
+
+    it('should handle stdio transport with optional chaining gracefully', async () => {
+      const middleware = createStreamingInfoMiddleware();
+
+      const ctx = createMockRequestContext({
+        transport: { name: 'stdio' },
+      });
+
+      await middleware(ctx, async () => {
+        const streamingCtx = ctx as StreamingRequestContext;
+
+        // This should not throw for stdio transport
+        expect(() => {
+          streamingCtx.streamInfo?.('This should be ignored');
+        }).not.toThrow();
+      });
+    });
+  });
 });
 
-// Helper function to safely access log entries
 function getLogEntry(logs: MockLogger['logs'], index: number) {
   const entry = logs[index];
   if (!entry) {
