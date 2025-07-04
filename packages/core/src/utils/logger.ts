@@ -65,6 +65,93 @@ export function createDefaultLogger(): Logger {
 }
 
 /**
+ * Create a stderr-only logger that avoids stdout pollution.
+ *
+ * Creates a logger that writes all output to stderr using structured JSON format.
+ * This is safe for stdio transports because MCP clients only read from stdin/stdout,
+ * not stderr. Stderr output won't interfere with JSON-RPC message exchange.
+ *
+ * @returns Logger implementation using stderr-only output
+ *
+ * @example Using stderr logger for stdio transport
+ * ```typescript
+ * const logger = createStderrLogger();
+ *
+ * logger.info('Server starting');
+ * logger.error('Connection failed', { error: 'ECONNREFUSED' });
+ * ```
+ *
+ * @example In middleware configuration for stdio transport
+ * ```typescript
+ * const loggingMiddleware = createBuiltInLoggingMiddleware({
+ *   logger: (level, message, data) => {
+ *     const stderrLogger = createStderrLogger();
+ *     stderrLogger.log(level, message, data);
+ *   }
+ * });
+ * ```
+ */
+export function createStderrLogger(): Logger {
+  const writeToStderr = (level: LogLevel, message: string, meta?: LogEntry): void => {
+    const logData = {
+      level,
+      message,
+      timestamp: new Date().toISOString(),
+      ...(meta ? { meta } : {}),
+    };
+
+    // biome-ignore lint/suspicious/noConsole: Stderr logger specifically uses console.error for stderr output
+    console.error(JSON.stringify(logData));
+  };
+
+  return {
+    error: (message: string, meta?: LogEntry) => writeToStderr('error', message, meta),
+    warn: (message: string, meta?: LogEntry) => writeToStderr('warn', message, meta),
+    info: (message: string, meta?: LogEntry) => writeToStderr('info', message, meta),
+    debug: (message: string, meta?: LogEntry) => writeToStderr('debug', message, meta),
+    log: (level: LogLevel, message: string, meta?: LogEntry) => writeToStderr(level, message, meta),
+  };
+}
+
+/**
+ * Create a silent logger that discards all log output.
+ *
+ * Creates a no-op logger that silently discards all log messages.
+ * Useful for stdio transports when you want to completely disable logging
+ * to avoid any potential interference with the JSON-RPC protocol.
+ *
+ * @returns Logger implementation that discards all output
+ *
+ * @example Using silent logger for stdio transport
+ * ```typescript
+ * const logger = createSilentLogger();
+ *
+ * logger.info('This will be discarded');
+ * logger.error('This will also be discarded');
+ * ```
+ *
+ * @example In middleware configuration for stdio transport
+ * ```typescript
+ * const loggingMiddleware = createBuiltInLoggingMiddleware({
+ *   logger: () => {} // Silent logger function
+ * });
+ * ```
+ */
+export function createSilentLogger(): Logger {
+  const noop = (): void => {
+    // Intentionally empty - silent logger discards all output
+  };
+
+  return {
+    error: noop,
+    warn: noop,
+    info: noop,
+    debug: noop,
+    log: noop,
+  };
+}
+
+/**
  * Generate a unique trace ID for request tracking.
  *
  * Creates a random trace ID with 'req-' prefix for identifying and correlating

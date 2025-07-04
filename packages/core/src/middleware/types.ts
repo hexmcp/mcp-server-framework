@@ -106,6 +106,57 @@ export interface RequestContext {
 }
 
 /**
+ * Extended request context with streaming info support for client-visible progress updates.
+ *
+ * This interface extends RequestContext with a streamInfo method that provides
+ * a convenient way to send progress updates to clients via streaming transports.
+ * The streamInfo method automatically formats messages as info chunks and only
+ * sends them if the transport supports streaming.
+ *
+ * @example Using streamInfo in a tool handler
+ * ```typescript
+ * const toolHandler = async (args: unknown, ctx: StreamingRequestContext) => {
+ *   ctx.streamInfo?.('Starting data processing...');
+ *
+ *   // Process data
+ *   await processData(args);
+ *   ctx.streamInfo?.('Data processing complete');
+ *
+ *   return { result: 'success' };
+ * };
+ * ```
+ *
+ * @example Middleware that adds streamInfo support
+ * ```typescript
+ * const streamingMiddleware: Middleware = async (ctx, next) => {
+ *   const streamingCtx = ctx as StreamingRequestContext;
+ *
+ *   // Add streamInfo method if transport supports streaming
+ *   if (ctx.transport.name !== 'stdio') {
+ *     streamingCtx.streamInfo = async (text: string) => {
+ *       await ctx.send({ type: 'info', text });
+ *     };
+ *   }
+ *
+ *   await next();
+ * };
+ * ```
+ */
+export interface StreamingRequestContext extends RequestContext {
+  /**
+   * Send an info message to the client for progress updates.
+   *
+   * This method is optional and may be undefined for transports that don't
+   * support streaming (like stdio). Always check if the method exists before
+   * calling it, or use optional chaining.
+   *
+   * @param text - The info message to send to the client
+   * @returns Promise that resolves when the message is sent
+   */
+  streamInfo?: (text: string) => Promise<void>;
+}
+
+/**
  * Middleware function type for the onion-style middleware pattern.
  *
  * A middleware function receives the request context and a next function. It can perform

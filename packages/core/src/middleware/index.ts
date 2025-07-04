@@ -24,6 +24,7 @@ export {
 export {
   type ContextLogger,
   createBuiltInLoggingMiddleware,
+  createStreamingInfoMiddleware,
   type LoggerMiddlewareOptions,
   type LoggerRequestContext,
   type LoggingMiddlewareOptions,
@@ -51,6 +52,7 @@ export type {
   MiddlewareRegistry,
   RequestContext,
   RequestLogContext,
+  StreamingRequestContext,
 } from './types';
 export {
   ErrorClassification,

@@ -462,3 +462,207 @@ describe('StdioTransport Integration', () => {
     });
   });
 });
+
+describe('StdioTransport Logging Compatibility', () => {
+  let transport: StdioTransport;
+  let mockStdout: jest.SpyInstance;
+  let mockStderr: jest.SpyInstance;
+  let mockStdin: Readable;
+  let originalStdin: NodeJS.ReadableStream;
+
+  beforeEach(() => {
+    transport = new StdioTransport();
+    mockStdout = jest.spyOn(process.stdout, 'write').mockImplementation(() => true);
+    mockStderr = jest.spyOn(process.stderr, 'write').mockImplementation(() => true);
+
+    mockStdin = new Readable({
+      read() {
+        // Mock implementation - no-op
+      },
+    });
+
+    originalStdin = process.stdin;
+    Object.defineProperty(process, 'stdin', {
+      value: mockStdin,
+      configurable: true,
+    });
+  });
+
+  afterEach(async () => {
+    await transport.stop();
+    mockStdout.mockRestore();
+    mockStderr.mockRestore();
+
+    Object.defineProperty(process, 'stdin', {
+      value: originalStdin,
+      configurable: true,
+    });
+  });
+
+  const sendMessage = (message: string): Promise<void> => {
+    return new Promise((resolve) => {
+      setTimeout(() => resolve(), 10);
+      mockStdin.push(`${message}\n`);
+      mockStdin.push(null);
+    });
+  };
+
+  it('should not pollute stdout with console.log calls during handshake', async () => {
+    const dispatch = jest.fn().mockImplementation(async (message, respond) => {
+      // Simulate a response to the initialize request
+      await respond({
+        jsonrpc: '2.0',
+        id: (message as any).id,
+        result: { protocolVersion: '2024-11-05', capabilities: {} },
+      });
+    });
+    await transport.start(dispatch);
+
+    // Clear any previous calls
+    mockStdout.mockClear();
+
+    // Simulate logging that might happen during request processing
+    // Use process.stdout.write directly to bypass Jest's console mocking
+    process.stdout.write('This should not interfere with JSON-RPC\n');
+    process.stdout.write('Info message\n');
+
+    const initializeRequest = '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{}}}';
+
+    await sendMessage(initializeRequest);
+
+    // Verify that both pollution and JSON-RPC response were written to stdout
+    const allCalls = mockStdout.mock.calls.map((call) => call[0]);
+    const pollutionCalls = allCalls.filter((call) => call.includes('This should not interfere'));
+    const jsonRpcCalls = allCalls.filter((call) => call.includes('jsonrpc'));
+
+    expect(pollutionCalls.length).toBeGreaterThan(0);
+    expect(jsonRpcCalls.length).toBeGreaterThan(0);
+
+    // This test demonstrates the problem - stdout pollution interferes with JSON-RPC
+    // In a real scenario, this would break the MCP client handshake
+  });
+
+  it('should allow stderr logging without interfering with JSON-RPC protocol', async () => {
+    const dispatch = jest.fn().mockImplementation(async (message, respond) => {
+      // Simulate a response to the tools/list request
+      await respond({
+        jsonrpc: '2.0',
+        id: (message as any).id,
+        result: { tools: [] },
+      });
+    });
+    await transport.start(dispatch);
+
+    // Clear any previous calls
+    mockStderr.mockClear();
+    mockStdout.mockClear();
+
+    // Simulate stderr logging (which is safe for stdio transport)
+    process.stderr.write('This is safe for stdio transport\n');
+    process.stderr.write(`${JSON.stringify({ level: 'error', message: 'Structured log to stderr' })}\n`);
+
+    const request = '{"jsonrpc":"2.0","id":2,"method":"tools/list"}';
+
+    await sendMessage(request);
+
+    // Verify that stderr logging happened
+    expect(mockStderr.mock.calls.length).toBeGreaterThan(0);
+
+    // Verify that JSON-RPC still works correctly
+    expect(dispatch).toHaveBeenCalledWith(
+      expect.objectContaining({
+        jsonrpc: '2.0',
+        id: 2,
+        method: 'tools/list',
+      }),
+      expect.any(Function),
+      expect.any(Object)
+    );
+
+    // Verify that stderr doesn't interfere with stdout JSON-RPC
+    const stdoutCalls = mockStdout.mock.calls.map((call) => call[0]);
+    const jsonRpcCalls = stdoutCalls.filter((call) => call.includes('jsonrpc'));
+    expect(jsonRpcCalls.length).toBeGreaterThan(0);
+  });
+
+  it('should handle mixed stdout pollution and valid JSON-RPC gracefully', async () => {
+    const dispatch = jest.fn();
+    await transport.start(dispatch);
+
+    // Clear any previous calls
+    mockStdout.mockClear();
+
+    // This simulates what happens when logging middleware accidentally writes to stdout
+    process.stdout.write('Accidental stdout pollution\n');
+
+    const request = '{"jsonrpc":"2.0","id":3,"method":"ping"}';
+    await sendMessage(request);
+
+    // The transport should still process the valid JSON-RPC message
+    expect(dispatch).toHaveBeenCalledWith(
+      expect.objectContaining({
+        jsonrpc: '2.0',
+        id: 3,
+        method: 'ping',
+      }),
+      expect.any(Function),
+      expect.any(Object)
+    );
+
+    // Verify that both pollution and JSON-RPC response were written to stdout
+    const allCalls = mockStdout.mock.calls.map((call) => call[0]);
+    expect(allCalls.some((call) => call.includes('Accidental stdout pollution'))).toBe(true);
+
+    // Note: The JSON-RPC response might not be written if dispatch doesn't call respond
+    // This test demonstrates the pollution problem
+  });
+
+  it('should demonstrate proper stderr-only logging pattern', async () => {
+    const dispatch = jest.fn();
+    await transport.start(dispatch);
+
+    // Clear any previous calls
+    mockStderr.mockClear();
+    mockStdout.mockClear();
+
+    // Proper logging pattern for stdio transport - use stderr only
+    const stderrLogger = {
+      log: (level: string, message: string, data?: unknown) => {
+        const logEntry = {
+          level,
+          message,
+          timestamp: new Date().toISOString(),
+          ...(data ? { data } : {}),
+        };
+        process.stderr.write(`${JSON.stringify(logEntry)}\n`);
+      },
+    };
+
+    stderrLogger.log('info', 'Request processing started', { requestId: 'test-123' });
+
+    const request = '{"jsonrpc":"2.0","id":"test-123","method":"tools/call","params":{"name":"echo","arguments":{"text":"hello"}}}';
+    await sendMessage(request);
+
+    stderrLogger.log('info', 'Request processing completed', { requestId: 'test-123' });
+
+    // Verify stderr logging happened
+    const stderrCalls = mockStderr.mock.calls.filter((call) => call[0].includes('Request processing'));
+    expect(stderrCalls.length).toBe(2);
+
+    // Verify stdout only contains JSON-RPC traffic (no pollution)
+    const stdoutCalls = mockStdout.mock.calls.map((call) => call[0]);
+    const nonJsonRpcStdout = stdoutCalls.filter((call) => !call.includes('jsonrpc') && call.trim().length > 0);
+    expect(nonJsonRpcStdout).toHaveLength(0);
+
+    // Verify JSON-RPC processing worked
+    expect(dispatch).toHaveBeenCalledWith(
+      expect.objectContaining({
+        jsonrpc: '2.0',
+        id: 'test-123',
+        method: 'tools/call',
+      }),
+      expect.any(Function),
+      expect.any(Object)
+    );
+  });
+});

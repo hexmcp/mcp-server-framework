@@ -112,7 +112,7 @@ class SurfaceLockManager {
 
     // Check API Extractor is available
     try {
-      execSync('pnpm exec api-extractor --version', { stdio: 'pipe' });
+      execSync('pnpm exec api-extractor --help', { stdio: 'pipe' });
     } catch {
       throw new Error('API Extractor not found. Run: pnpm install');
     }
