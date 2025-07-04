@@ -1,6 +1,6 @@
 {
   "name": "@hexmcp/testing",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Test fixture coverage system for MCP Server Framework with JSON-based fixtures and Jest integration",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
