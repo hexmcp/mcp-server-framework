@@ -7,7 +7,16 @@
   },
   "files": {
     "ignoreUnknown": false,
-    "includes": ["packages/**/*.ts", "packages/**/*.tsx", "packages/**/*.json", "*.ts", "*.json"]
+    "includes": [
+      "packages/**/*.ts",
+      "packages/**/*.tsx",
+      "packages/**/*.json",
+      "examples/**/*.ts",
+      "examples/**/*.js",
+      "examples/**/*.json",
+      "*.ts",
+      "*.json"
+    ]
   },
   "formatter": {
     "enabled": true,
@@ -216,6 +225,17 @@
       "includes": [".api-surface-lock.json"],
       "formatter": {
         "enabled": false
+      }
+    },
+    {
+      "includes": ["examples/**/*.test.js", "examples/**/*.spec.js"],
+      "linter": {
+        "rules": {
+          "suspicious": {
+            "noExplicitAny": "off",
+            "noConsole": "off"
+          }
+        }
       }
     }
   ]

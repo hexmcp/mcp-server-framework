@@ -1,0 +1,24 @@
+{
+  "name": "get-note-success",
+  "input": {
+    "jsonrpc": "2.0",
+    "id": 8,
+    "method": "resources/read",
+    "params": {
+      "uri": "notes://__SAMPLE_NOTE_ID__"
+    }
+  },
+  "expected": {
+    "jsonrpc": "2.0",
+    "id": 8,
+    "result": {
+      "contents": [
+        {
+          "uri": "notes://__SAMPLE_NOTE_ID__",
+          "mimeType": "application/json",
+          "text": "__DYNAMIC_NOTE_JSON__"
+        }
+      ]
+    }
+  }
+}

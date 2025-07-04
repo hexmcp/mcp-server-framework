@@ -1,0 +1,27 @@
+{
+  "name": "add-note-missing-content",
+  "input": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+      "name": "addNote",
+      "arguments": {
+        "title": "Valid Title"
+      }
+    }
+  },
+  "expected": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "Validation error: content: Required"
+        }
+      ],
+      "isError": true
+    }
+  }
+}

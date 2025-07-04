@@ -149,6 +149,46 @@ class McpServerBuilderImpl implements McpServerBuilder {
               await handshakeHandlers.handleInitialized(notification);
               break;
             }
+            case 'tools/list': {
+              const validationError = requestGate.getValidationError('tools/list');
+              if (validationError) {
+                requestContext.response = encodeJsonRpcError(
+                  jsonRpcRequest.id,
+                  new RpcError(validationError.code, validationError.message, validationError.data)
+                );
+                break;
+              }
+              const tools = toolRegistry.list();
+              requestContext.response = encodeJsonRpcSuccess(jsonRpcRequest.id, { tools });
+              break;
+            }
+            case 'resources/list': {
+              const validationError = requestGate.getValidationError('resources/list');
+              if (validationError) {
+                requestContext.response = encodeJsonRpcError(
+                  jsonRpcRequest.id,
+                  new RpcError(validationError.code, validationError.message, validationError.data)
+                );
+                break;
+              }
+              const params = jsonRpcRequest.params as { cursor?: string } | undefined;
+              const result = await resourceRegistry.list(params?.cursor, handlerContext);
+              requestContext.response = encodeJsonRpcSuccess(jsonRpcRequest.id, result);
+              break;
+            }
+            case 'prompts/list': {
+              const validationError = requestGate.getValidationError('prompts/list');
+              if (validationError) {
+                requestContext.response = encodeJsonRpcError(
+                  jsonRpcRequest.id,
+                  new RpcError(validationError.code, validationError.message, validationError.data)
+                );
+                break;
+              }
+              const prompts = promptRegistry.list();
+              requestContext.response = encodeJsonRpcSuccess(jsonRpcRequest.id, { prompts });
+              break;
+            }
             case 'shutdown': {
               const validationError = requestGate.getValidationError('shutdown');
               if (validationError) {

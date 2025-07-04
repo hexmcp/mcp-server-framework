@@ -1,0 +1,19 @@
+{
+  "name": "get-note-not-found",
+  "input": {
+    "jsonrpc": "2.0",
+    "id": 9,
+    "method": "resources/read",
+    "params": {
+      "uri": "notes://00000000-0000-0000-0000-000000000000"
+    }
+  },
+  "expected": {
+    "jsonrpc": "2.0",
+    "id": 9,
+    "error": {
+      "code": -32000,
+      "message": "Failed to get note resource: Note with ID '00000000-0000-0000-0000-000000000000' not found"
+    }
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "name": "get-all-notes-success",
+  "input": {
+    "jsonrpc": "2.0",
+    "id": 10,
+    "method": "resources/read",
+    "params": {
+      "uri": "notes://"
+    }
+  },
+  "expected": {
+    "jsonrpc": "2.0",
+    "id": 10,
+    "result": {
+      "contents": [
+        {
+          "uri": "notes://",
+          "mimeType": "application/json",
+          "text": "__DYNAMIC_ALL_NOTES_JSON__"
+        }
+      ]
+    }
+  }
+}

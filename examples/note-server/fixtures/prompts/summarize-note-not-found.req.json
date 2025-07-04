@@ -1,0 +1,26 @@
+{
+  "name": "summarize-note-not-found",
+  "input": {
+    "jsonrpc": "2.0",
+    "id": 5,
+    "method": "prompts/get",
+    "params": {
+      "name": "summarizeNote",
+      "arguments": {
+        "noteId": "00000000-0000-0000-0000-000000000000"
+      }
+    }
+  },
+  "expected": {
+    "jsonrpc": "2.0",
+    "id": 5,
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "Error: Note with ID '00000000-0000-0000-0000-000000000000' not found. Please check the note ID and try again."
+        }
+      ]
+    }
+  }
+}

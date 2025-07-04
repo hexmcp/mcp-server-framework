@@ -1,0 +1,26 @@
+{
+  "name": "list-notes-success",
+  "input": {
+    "jsonrpc": "2.0",
+    "id": 7,
+    "method": "resources/list",
+    "params": {
+      "uri": "notes://"
+    }
+  },
+  "expected": {
+    "jsonrpc": "2.0",
+    "id": 7,
+    "result": {
+      "resources": [
+        {
+          "uri": "__DYNAMIC_NOTE_URI__",
+          "name": "__DYNAMIC_NOTE_TITLE__",
+          "description": "__DYNAMIC_NOTE_DESCRIPTION__",
+          "mimeType": "application/json"
+        }
+      ],
+      "nextCursor": "__DYNAMIC_CURSOR__"
+    }
+  }
+}

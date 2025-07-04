@@ -1,0 +1,46 @@
+{
+  "name": "@hexmcp/example-note-server",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Example MCP server implementation demonstrating note-taking capabilities",
+  "type": "module",
+  "main": "dist/note-server.js",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx src/note-server.ts",
+    "start": "node dist/note-server.js",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "lint": "biome check .",
+    "lint:fix": "biome check . --write",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@hexmcp/core": "workspace:*",
+    "@hexmcp/transport-stdio": "workspace:*",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "@hexmcp/testing": "workspace:*",
+    "@types/jest": "^29.5.8",
+    "@types/node": "^20.9.0",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.1.1",
+    "tsx": "^4.20.3",
+    "typescript": "^5.2.2"
+  },
+  "keywords": [
+    "mcp",
+    "server",
+    "example",
+    "notes",
+    "framework"
+  ],
+  "author": "Augment Code",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
