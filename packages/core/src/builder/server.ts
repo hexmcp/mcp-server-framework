@@ -231,6 +231,37 @@ class McpServerBuilderImpl implements McpServerBuilder {
   }
 }
 
+/**
+ * Creates a new MCP Server Framework builder instance.
+ *
+ * This is the main entry point for creating MCP servers using the framework.
+ * The builder provides a fluent API for configuring middleware, registering
+ * prompts/tools/resources, and setting up transport adapters.
+ *
+ * @example
+ * ```typescript
+ * import { createMcpKitServer } from '@hexmcp/core';
+ *
+ * const server = createMcpKitServer()
+ *   .tool('echo', {
+ *     description: 'Echo back the input',
+ *     parameters: {
+ *       type: 'object',
+ *       properties: {
+ *         message: { type: 'string' }
+ *       }
+ *     },
+ *     handler: async ({ message }) => ({
+ *       content: [{ type: 'text', text: message }]
+ *     })
+ *   })
+ *   .transport(transport)
+ *   .listen();
+ * ```
+ *
+ * @returns A new MCP server builder instance
+ * @public
+ */
 export function createMcpKitServer(): McpServerBuilder {
   return new McpServerBuilderImpl();
 }

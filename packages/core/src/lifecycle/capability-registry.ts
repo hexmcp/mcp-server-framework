@@ -13,8 +13,65 @@ const DEFAULT_CAPABILITIES: ServerCapabilities = {
 };
 
 /**
- * Implementation of capability registry that dynamically generates
- * server capabilities based on registered primitives
+ * Implementation of capability registry that dynamically generates server capabilities based on registered primitives.
+ *
+ * The McpCapabilityRegistry manages both server and client capabilities for MCP protocol negotiation.
+ * It dynamically detects available capabilities from registered primitive registries (prompts, tools, resources)
+ * and provides a unified interface for capability management during the MCP handshake process.
+ *
+ * @example Basic capability registry setup
+ * ```typescript
+ * const capabilityRegistry = new McpCapabilityRegistry({
+ *   experimental: {},
+ *   logging: {}
+ * });
+ *
+ * // Set primitive registry for dynamic capability detection
+ * const primitiveRegistry = new RegistryPrimitiveRegistry();
+ * primitiveRegistry.registerPromptRegistry(promptRegistry);
+ * primitiveRegistry.registerToolRegistry(toolRegistry);
+ * capabilityRegistry.setPrimitiveRegistry(primitiveRegistry);
+ *
+ * // Get server capabilities for handshake
+ * const serverCapabilities = capabilityRegistry.getServerCapabilities();
+ * console.log(serverCapabilities); // { prompts: {}, tools: {}, experimental: {}, logging: {} }
+ * ```
+ *
+ * @example Processing client capabilities
+ * ```typescript
+ * // During MCP initialize request
+ * const clientCapabilities = {
+ *   experimental: {},
+ *   sampling: {}
+ * };
+ *
+ * capabilityRegistry.processClientCapabilities(clientCapabilities);
+ *
+ * // Check if client supports specific capabilities
+ * if (capabilityRegistry.isClientCapabilitySupported('sampling')) {
+ *   console.log('Client supports sampling');
+ * }
+ * ```
+ *
+ * @example Dynamic capability updates
+ * ```typescript
+ * // Enable additional capabilities
+ * capabilityRegistry.enablePrompts();
+ * capabilityRegistry.enableTools();
+ * capabilityRegistry.enableResources();
+ *
+ * // Update with custom capabilities
+ * capabilityRegistry.updateCapabilities({
+ *   experimental: {
+ *     customFeature: { enabled: true }
+ *   }
+ * });
+ *
+ * // Check capability availability
+ * if (capabilityRegistry.hasCapability('prompts')) {
+ *   console.log('Prompts capability is enabled');
+ * }
+ * ```
  */
 export class McpCapabilityRegistry implements CapabilityRegistry {
   private _capabilities: ServerCapabilities;
@@ -29,14 +86,61 @@ export class McpCapabilityRegistry implements CapabilityRegistry {
   }
 
   /**
-   * Set the primitive registry for dynamic capability detection
+   * Set the primitive registry for dynamic capability detection.
+   *
+   * Links the capability registry to a primitive registry that contains registered
+   * prompts, tools, and resources. This enables automatic capability detection
+   * based on what primitives are actually registered in the server.
+   *
+   * @param registry - The primitive registry containing registered prompts, tools, and resources
+   *
+   * @example
+   * ```typescript
+   * const primitiveRegistry = new RegistryPrimitiveRegistry();
+   * primitiveRegistry.registerPromptRegistry(promptRegistry);
+   * primitiveRegistry.registerToolRegistry(toolRegistry);
+   *
+   * capabilityRegistry.setPrimitiveRegistry(primitiveRegistry);
+   *
+   * // Now getServerCapabilities() will automatically include prompts and tools
+   * const capabilities = capabilityRegistry.getServerCapabilities();
+   * ```
    */
   setPrimitiveRegistry(registry: PrimitiveRegistry): void {
     this._primitiveRegistry = registry;
   }
 
   /**
-   * Process and store client capabilities from initialize request
+   * Process and store client capabilities from initialize request.
+   *
+   * Stores the client capabilities received during the MCP initialize handshake
+   * for later capability negotiation and feature detection. This information
+   * is used to determine what features the client supports.
+   *
+   * @param clientCapabilities - The capabilities declared by the client during initialization
+   *
+   * @example
+   * ```typescript
+   * // During MCP initialize request handling
+   * const initializeRequest = {
+   *   method: 'initialize',
+   *   params: {
+   *     protocolVersion: '2025-06-18',
+   *     capabilities: {
+   *       experimental: {},
+   *       sampling: {}
+   *     },
+   *     clientInfo: { name: 'Test Client', version: '1.0.0' }
+   *   }
+   * };
+   *
+   * capabilityRegistry.processClientCapabilities(initializeRequest.params.capabilities);
+   *
+   * // Later check if client supports sampling
+   * if (capabilityRegistry.isClientCapabilitySupported('sampling')) {
+   *   // Enable sampling features
+   * }
+   * ```
    */
   processClientCapabilities(clientCapabilities: ClientCapabilities): void {
     this._clientCapabilities = clientCapabilities;
@@ -287,6 +391,8 @@ export class McpCapabilityRegistry implements CapabilityRegistry {
 
 /**
  * Registry-based primitive registry that integrates with actual registries
+ *
+ * @internal
  */
 export class RegistryPrimitiveRegistry implements PrimitiveRegistry {
   private _promptRegistry?: PromptRegistry;
@@ -383,6 +489,8 @@ export class RegistryPrimitiveRegistry implements PrimitiveRegistry {
 
 /**
  * Mock primitive registry for testing and standalone usage
+ *
+ * @internal
  */
 export class MockPrimitiveRegistry implements PrimitiveRegistry {
   private _promptCount = 0;

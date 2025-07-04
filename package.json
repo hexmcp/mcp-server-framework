@@ -9,12 +9,30 @@
   "scripts": {
     "prepare": "husky",
     "build": "pnpm -r build",
+    "build:docs": "pnpm docs:generate",
     "test": "jest --passWithNoTests",
     "test-fixtures": "jest --testNamePattern='Fixture' --runInBand",
     "typecheck": "tsc --noEmit",
     "typecheck:test": "tsc --project tsconfig.test.json --noEmit",
     "lint": "biome check .",
     "lint:fix": "biome check . --write",
+    "docs:generate": "typedoc",
+    "docs:build": "pnpm build && pnpm docs:generate",
+    "docs:serve": "pnpm docs:generate && pnpm dlx serve docs/api",
+    "docs:clean": "rm -rf docs/api",
+    "docs:advanced": "npx ts-node --esm scripts/docs-generator.ts",
+    "surface:generate": "npx ts-node --esm scripts/surface-lock.ts generate",
+    "surface:validate": "npx ts-node --esm scripts/surface-lock.ts validate",
+    "surface:report": "npx ts-node --esm scripts/surface-lock.ts report",
+    "build:deploy": "npx ts-node --esm scripts/build-deploy.ts",
+    "check:types": "pnpm check:surface && pnpm check:api-extractor",
+    "check:surface": "pnpm exec attw --pack packages/core --format json | diff .api-surface-lock.json - || (echo '❌ API surface has changed! Run: pnpm update:surface' && exit 1)",
+    "check:api-extractor": "mkdir -p temp/api-reports/@hexmcp temp/api-models/@hexmcp temp/dts-rollups/@hexmcp && cd packages/core && pnpm exec api-extractor run --local",
+    "update:surface": "pnpm exec attw --pack packages/core --format json > .api-surface-lock.json && echo '✅ API surface lock updated'",
+    "update:api-reports": "mkdir -p temp/api-reports/@hexmcp temp/api-models/@hexmcp temp/dts-rollups/@hexmcp && cd packages/core && pnpm exec api-extractor run --local && echo '✅ API reports updated'",
+    "quality:gate": "npx ts-node --esm scripts/quality-gate.ts",
+    "quality:gate:simple": "pnpm lint && pnpm typecheck && pnpm typecheck:test && pnpm test",
+    "quality:fix": "pnpm lint:fix && pnpm quality:gate",
     "changeset": "changeset",
     "version-packages": "changeset version",
     "publish-packages": "changeset publish",
@@ -40,10 +58,12 @@
     ]
   },
   "devDependencies": {
+    "@arethetypeswrong/cli": "^0.18.2",
     "@biomejs/biome": "^2.0.6",
     "@changesets/cli": "^2.29.5",
     "@commitlint/cli": "^19.8.1",
     "@commitlint/config-conventional": "^19.8.1",
+    "@microsoft/api-extractor": "^7.52.8",
     "@types/jest": "^30.0.0",
     "@types/node": "^24.0.7",
     "husky": "^9.1.7",
@@ -51,10 +71,12 @@
     "lint-staged": "^16.1.2",
     "ts-jest": "^29.4.0",
     "ts-node": "^10.9.2",
+    "tslib": "^2.8.1",
+    "typedoc": "^0.28.7",
+    "typedoc-plugin-markdown": "^4.7.0",
     "typescript": "^5.8.3"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.13.2",
-    "tslib": "^2.8.1"
+    "@modelcontextprotocol/sdk": "^1.13.2"
   }
 }

@@ -3,7 +3,83 @@ import type { RequestContext } from '../middleware/types';
 import type { RegistryKind } from './base';
 
 /**
- * Handler execution context with timing and performance metrics
+ * Handler execution context with timing and performance metrics for comprehensive execution tracking.
+ *
+ * The HandlerExecutionContext provides detailed information about the current handler execution,
+ * including unique identifiers for tracing, timing information for performance monitoring,
+ * timeout configuration, and extensible metadata for custom tracking requirements.
+ *
+ * @example Basic execution tracking
+ * ```typescript
+ * const trackedHandler = async (args: Record<string, unknown>, context: HandlerContext) => {
+ *   const execution = context.execution;
+ *   if (!execution) {
+ *     console.warn('No execution context available');
+ *     return { content: [{ type: 'text', text: 'No tracking' }] };
+ *   }
+ *
+ *   console.log(`Execution ID: ${execution.executionId}`);
+ *   console.log(`Started at: ${execution.startTime.toISOString()}`);
+ *
+ *   const elapsed = Date.now() - execution.startTime.getTime();
+ *   console.log(`Elapsed time: ${elapsed}ms`);
+ *
+ *   return { content: [{ type: 'text', text: `Tracked execution ${execution.executionId}` }] };
+ * };
+ * ```
+ *
+ * @example Timeout-aware execution
+ * ```typescript
+ * const timeoutAwareHandler = async (args: Record<string, unknown>, context: HandlerContext) => {
+ *   const execution = context.execution;
+ *   const timeout = execution?.timeout || 30000; // Default 30 seconds
+ *
+ *   // Create a timeout promise
+ *   const timeoutPromise = new Promise((_, reject) => {
+ *     setTimeout(() => reject(new Error('Handler timeout')), timeout);
+ *   });
+ *
+ *   // Race between actual work and timeout
+ *   const workPromise = performLongRunningTask(args);
+ *
+ *   try {
+ *     const result = await Promise.race([workPromise, timeoutPromise]);
+ *     return { content: [{ type: 'text', text: 'Task completed within timeout' }] };
+ *   } catch (error) {
+ *     if (error.message === 'Handler timeout') {
+ *       console.error(`Handler ${execution?.executionId} timed out after ${timeout}ms`);
+ *     }
+ *     throw error;
+ *   }
+ * };
+ * ```
+ *
+ * @example Custom metadata tracking
+ * ```typescript
+ * const metadataTrackingHandler = async (args: Record<string, unknown>, context: HandlerContext) => {
+ *   const execution = context.execution;
+ *   if (!execution?.metadata) {
+ *     console.warn('No metadata tracking available');
+ *     return { content: [{ type: 'text', text: 'No metadata' }] };
+ *   }
+ *
+ *   // Add custom tracking metadata
+ *   execution.metadata.inputSize = JSON.stringify(args).length;
+ *   execution.metadata.userAgent = context.transport.peer?.userAgent;
+ *   execution.metadata.requestMethod = context.request.method;
+ *
+ *   const result = await processRequest(args);
+ *
+ *   // Add result metadata
+ *   execution.metadata.outputSize = JSON.stringify(result).length;
+ *   execution.metadata.processingSteps = result.steps?.length || 0;
+ *   execution.metadata.cacheHit = result.fromCache || false;
+ *
+ *   return result;
+ * };
+ * ```
+ *
+ * @see HandlerContext For the complete handler context interface
  */
 export interface HandlerExecutionContext {
   /**
@@ -28,7 +104,136 @@ export interface HandlerExecutionContext {
 }
 
 /**
- * Handler context that includes middleware request context
+ * Handler context that includes middleware request context with enhanced registry and execution metadata.
+ *
+ * The HandlerContext extends RequestContext with additional registry-specific information,
+ * execution tracking, and user authorization data. This context is passed to all handler
+ * functions in prompts, tools, and resources, providing comprehensive access to request
+ * state, execution metrics, and authorization information.
+ *
+ * @example Basic handler context usage
+ * ```typescript
+ * const toolHandler = async (args: Record<string, unknown>, context: HandlerContext) => {
+ *   // Access request information
+ *   const { method, id } = context.request;
+ *
+ *   // Check user authorization
+ *   if (!context.user?.permissions?.includes('tool:execute')) {
+ *     throw new Error('Insufficient permissions');
+ *   }
+ *
+ *   // Use execution context for tracing
+ *   const executionId = context.execution?.executionId || 'unknown';
+ *   console.log(`Executing tool ${method} with ID ${executionId}`);
+ *
+ *   return { content: [{ type: 'text', text: 'Tool executed successfully' }] };
+ * };
+ * ```
+ *
+ * @example Performance tracking with execution context
+ * ```typescript
+ * const performanceAwareHandler = async (args: Record<string, unknown>, context: HandlerContext) => {
+ *   const startTime = context.execution?.startTime || new Date();
+ *   const executionId = context.execution?.executionId;
+ *
+ *   // Add performance metadata to execution context
+ *   if (context.execution?.metadata) {
+ *     context.execution.metadata.startTime = startTime.toISOString();
+ *     context.execution.metadata.args = args;
+ *   }
+ *
+ *   try {
+ *     const result = await performExpensiveOperation(args);
+ *
+ *     // Track success metrics
+ *     if (context.execution?.metadata) {
+ *       context.execution.metadata.duration = Date.now() - startTime.getTime();
+ *       context.execution.metadata.status = 'success';
+ *     }
+ *
+ *     return result;
+ *   } catch (error) {
+ *     // Track error metrics
+ *     if (context.execution?.metadata) {
+ *       context.execution.metadata.duration = Date.now() - startTime.getTime();
+ *       context.execution.metadata.status = 'error';
+ *       context.execution.metadata.error = error.message;
+ *     }
+ *     throw error;
+ *   }
+ * };
+ * ```
+ *
+ * @example Registry-specific context usage
+ * ```typescript
+ * const registryAwareHandler = async (args: Record<string, unknown>, context: HandlerContext) => {
+ *   // Access registry information
+ *   const registryKind = context.registry?.kind;
+ *   const registryMetadata = context.registry?.metadata;
+ *
+ *   if (registryKind === 'tools') {
+ *     // Tool-specific logic
+ *     console.log('Executing tool with registry metadata:', registryMetadata);
+ *   } else if (registryKind === 'prompts') {
+ *     // Prompt-specific logic
+ *     console.log('Executing prompt with registry metadata:', registryMetadata);
+ *   }
+ *
+ *   // Use transport information for protocol-specific handling
+ *   const transportName = context.transport.name;
+ *   if (transportName === 'stdio') {
+ *     // Handle stdio-specific requirements
+ *     console.log('Using stdio transport');
+ *   }
+ *
+ *   return { content: [{ type: 'text', text: `Handled by ${registryKind} registry` }] };
+ * };
+ * ```
+ *
+ * @example User authorization and role-based access
+ * ```typescript
+ * const authorizedHandler = async (args: Record<string, unknown>, context: HandlerContext) => {
+ *   const user = context.user;
+ *
+ *   if (!user) {
+ *     throw new Error('Authentication required');
+ *   }
+ *
+ *   // Check user roles
+ *   const hasAdminRole = user.roles?.includes('admin');
+ *   const hasUserRole = user.roles?.includes('user');
+ *
+ *   // Check specific permissions
+ *   const canWrite = user.permissions?.includes('write');
+ *   const canRead = user.permissions?.includes('read');
+ *
+ *   if (args.operation === 'delete' && !hasAdminRole) {
+ *     throw new Error('Admin role required for delete operations');
+ *   }
+ *
+ *   if (args.operation === 'write' && !canWrite) {
+ *     throw new Error('Write permission required');
+ *   }
+ *
+ *   // Use user metadata for personalization
+ *   const userPreferences = user.metadata?.preferences as Record<string, unknown> || {};
+ *
+ *   return {
+ *     content: [{
+ *       type: 'text',
+ *       text: `Operation ${args.operation} executed for user ${user.id}`
+ *     }],
+ *     metadata: {
+ *       userId: user.id,
+ *       userRoles: user.roles,
+ *       preferences: userPreferences
+ *     }
+ *   };
+ * };
+ * ```
+ *
+ * @see RequestContext For base context properties and middleware examples
+ * @see HandlerExecutionContext For execution tracking details
  */
 export interface HandlerContext extends RequestContext {
   /**
@@ -119,7 +324,128 @@ export interface PromptArgument {
 export type PromptContent = string | AsyncIterable<string>;
 
 /**
- * Enhanced prompt definition for registration
+ * Enhanced prompt definition for registration with comprehensive configuration options.
+ *
+ * The PromptDefinition interface defines the structure for registering prompt handlers
+ * in the MCP server framework. Prompts are templates or generators that produce content
+ * based on input arguments. This interface supports advanced features like streaming
+ * responses, input validation, caching, rate limiting, and lifecycle hooks.
+ *
+ * @example Basic prompt definition
+ * ```typescript
+ * const greetingPrompt: PromptDefinition = {
+ *   name: 'greeting',
+ *   description: 'Generate a personalized greeting message',
+ *   arguments: [
+ *     {
+ *       name: 'name',
+ *       description: 'Name of the person to greet',
+ *       required: true
+ *     },
+ *     {
+ *       name: 'style',
+ *       description: 'Greeting style (formal, casual, friendly)',
+ *       required: false
+ *     }
+ *   ],
+ *   handler: async (args) => ({
+ *     content: [
+ *       {
+ *         type: 'text',
+ *         text: `Hello, ${args.name}! ${getGreetingStyle(args.style)}`
+ *       }
+ *     ]
+ *   })
+ * };
+ * ```
+ *
+ * @example Streaming prompt with validation
+ * ```typescript
+ * const storyPrompt: PromptDefinition = {
+ *   name: 'story-generator',
+ *   description: 'Generate a story with streaming output',
+ *   streaming: true,
+ *   arguments: [
+ *     {
+ *       name: 'topic',
+ *       description: 'Story topic or theme',
+ *       required: true
+ *     },
+ *     {
+ *       name: 'length',
+ *       description: 'Desired story length (short, medium, long)',
+ *       required: false
+ *     }
+ *   ],
+ *   validate: (args) => {
+ *     if (!args.topic || typeof args.topic !== 'string' || args.topic.length < 3) {
+ *       return {
+ *         success: false,
+ *         errors: [{ path: ['topic'], message: 'Topic must be at least 3 characters' }]
+ *       };
+ *     }
+ *     return { success: true };
+ *   },
+ *   handler: async function* (args) {
+ *     const storyChunks = generateStoryChunks(args.topic, args.length);
+ *     for (const chunk of storyChunks) {
+ *       yield {
+ *         content: [{ type: 'text', text: chunk }]
+ *       };
+ *     }
+ *   }
+ * };
+ * ```
+ *
+ * @example Prompt with caching and lifecycle hooks
+ * ```typescript
+ * const researchPrompt: PromptDefinition = {
+ *   name: 'research-summary',
+ *   description: 'Generate research summary with caching',
+ *   cache: {
+ *     enabled: true,
+ *     ttl: 600000, // 10 minutes
+ *     key: (args) => `research-${args.topic}-${args.depth}`
+ *   },
+ *   rateLimit: {
+ *     maxCalls: 5,
+ *     windowMs: 60000, // 1 minute
+ *     keyGenerator: (context) => context.user?.id || 'anonymous'
+ *   },
+ *   arguments: [
+ *     {
+ *       name: 'topic',
+ *       description: 'Research topic',
+ *       required: true
+ *     },
+ *     {
+ *       name: 'depth',
+ *       description: 'Research depth (basic, detailed, comprehensive)',
+ *       required: false
+ *     }
+ *   ],
+ *   hooks: {
+ *     beforeExecution: async (args, context) => {
+ *       console.log(`Starting research on ${args.topic} for user ${context.user?.id}`);
+ *     },
+ *     afterExecution: async (result, context) => {
+ *       console.log(`Research completed, generated ${result.content.length} content blocks`);
+ *     },
+ *     onError: async (error, context) => {
+ *       console.error(`Research failed: ${error.message}`);
+ *     }
+ *   },
+ *   handler: async (args) => {
+ *     const summary = await generateResearchSummary(args.topic, args.depth);
+ *     return {
+ *       content: [
+ *         { type: 'text', text: summary.text },
+ *         { type: 'image', data: summary.chart, mimeType: 'image/png' }
+ *       ]
+ *     };
+ *   }
+ * };
+ * ```
  */
 export interface PromptDefinition {
   /**
@@ -256,7 +582,103 @@ export interface ToolResult {
 }
 
 /**
- * Enhanced tool definition for registration
+ * Enhanced tool definition for registration with comprehensive configuration options.
+ *
+ * The ToolDefinition interface defines the structure for registering tool handlers
+ * in the MCP server framework. Tools are executable functions that clients can invoke
+ * to perform specific operations. This interface supports advanced features like
+ * parameter validation, authorization, caching, rate limiting, and lifecycle hooks.
+ *
+ * @example Basic tool definition
+ * ```typescript
+ * const echoTool: ToolDefinition = {
+ *   name: 'echo',
+ *   description: 'Echo back the input message',
+ *   parameters: [
+ *     {
+ *       name: 'message',
+ *       description: 'The message to echo back',
+ *       required: true,
+ *       type: 'string'
+ *     }
+ *   ],
+ *   handler: async (args) => ({
+ *     content: [{ type: 'text', text: `Echo: ${args.message}` }]
+ *   })
+ * };
+ * ```
+ *
+ * @example Advanced tool with validation and authorization
+ * ```typescript
+ * const deleteFileTool: ToolDefinition = {
+ *   name: 'delete-file',
+ *   description: 'Delete a file from the filesystem',
+ *   dangerous: true,
+ *   scopes: ['filesystem:write'],
+ *   parameters: [
+ *     {
+ *       name: 'path',
+ *       description: 'Path to the file to delete',
+ *       required: true,
+ *       type: 'string'
+ *     }
+ *   ],
+ *   validate: (args) => {
+ *     if (!args.path || typeof args.path !== 'string') {
+ *       return { success: false, errors: [{ path: ['path'], message: 'Path is required' }] };
+ *     }
+ *     if (args.path.includes('..')) {
+ *       return { success: false, errors: [{ path: ['path'], message: 'Path traversal not allowed' }] };
+ *     }
+ *     return { success: true };
+ *   },
+ *   handler: async (args, context) => {
+ *     if (!context.user?.permissions?.includes('delete')) {
+ *       throw new Error('Insufficient permissions');
+ *     }
+ *     await fs.unlink(args.path);
+ *     return { content: [{ type: 'text', text: `File ${args.path} deleted` }] };
+ *   },
+ *   hooks: {
+ *     beforeExecution: async (args, context) => {
+ *       console.log(`User ${context.user?.id} attempting to delete ${args.path}`);
+ *     },
+ *     afterExecution: async (result, context) => {
+ *       console.log('File deletion completed successfully');
+ *     }
+ *   }
+ * };
+ * ```
+ *
+ * @example Tool with caching and rate limiting
+ * ```typescript
+ * const expensiveComputationTool: ToolDefinition = {
+ *   name: 'expensive-computation',
+ *   description: 'Perform expensive computation with caching',
+ *   cache: {
+ *     enabled: true,
+ *     ttl: 300000, // 5 minutes
+ *     key: (args) => `computation-${JSON.stringify(args)}`
+ *   },
+ *   rateLimit: {
+ *     maxCalls: 10,
+ *     windowMs: 60000, // 1 minute
+ *     keyGenerator: (context) => context.user?.id || 'anonymous'
+ *   },
+ *   parameters: [
+ *     {
+ *       name: 'input',
+ *       description: 'Input data for computation',
+ *       required: true,
+ *       type: 'object'
+ *     }
+ *   ],
+ *   handler: async (args) => {
+ *     const result = await performExpensiveComputation(args.input);
+ *     return { content: [{ type: 'text', text: JSON.stringify(result) }] };
+ *   }
+ * };
+ * ```
  */
 export interface ToolDefinition {
   /**
@@ -506,7 +928,164 @@ export interface ResourceChangeEvent {
 }
 
 /**
- * Enhanced resource definition for registration
+ * Enhanced resource definition for registration with comprehensive URI pattern matching and lifecycle management.
+ *
+ * The ResourceDefinition interface defines the structure for registering resource providers
+ * in the MCP server framework. Resources represent external data sources that can be accessed
+ * via URI patterns. This interface supports features like streaming content, caching, rate limiting,
+ * authorization, search capabilities, and lifecycle hooks for comprehensive resource management.
+ *
+ * @example Basic file system resource
+ * ```typescript
+ * const fileSystemResource: ResourceDefinition = {
+ *   uriPattern: 'file://**',
+ *   name: 'File System',
+ *   description: 'Access local file system resources',
+ *   mimeType: 'text/plain',
+ *   provider: {
+ *     get: async (uri) => {
+ *       const filePath = uri.replace('file://', '');
+ *       const content = await fs.readFile(filePath, 'utf8');
+ *       return {
+ *         uri,
+ *         mimeType: 'text/plain',
+ *         text: content
+ *       };
+ *     },
+ *     list: async () => {
+ *       const files = await fs.readdir('./');
+ *       return {
+ *         resources: files.map(file => ({
+ *           uri: `file://${file}`,
+ *           name: file,
+ *           mimeType: 'text/plain'
+ *         }))
+ *       };
+ *     }
+ *   }
+ * };
+ * ```
+ *
+ * @example API resource with caching and rate limiting
+ * ```typescript
+ * const apiResource: ResourceDefinition = {
+ *   uriPattern: 'api://data/**',
+ *   name: 'External API',
+ *   description: 'Access external API data with caching',
+ *   mimeType: 'application/json',
+ *   watchable: true,
+ *   searchable: true,
+ *   cache: {
+ *     enabled: true,
+ *     ttl: 300000, // 5 minutes
+ *     key: (uri) => `api-${uri.replace('api://', '')}`
+ *   },
+ *   rateLimit: {
+ *     maxCalls: 100,
+ *     windowMs: 60000, // 1 minute
+ *     keyGenerator: (context) => context.user?.id || 'anonymous'
+ *   },
+ *   provider: {
+ *     get: async (uri, context) => {
+ *       const apiPath = uri.replace('api://data/', '');
+ *       const response = await fetch(`https://api.example.com/${apiPath}`, {
+ *         headers: { 'Authorization': `Bearer ${context.user?.token}` }
+ *       });
+ *       return {
+ *         uri,
+ *         mimeType: 'application/json',
+ *         text: await response.text()
+ *       };
+ *     },
+ *     list: async (cursor, context) => {
+ *       const response = await fetch(`https://api.example.com/list?cursor=${cursor}`);
+ *       const data = await response.json();
+ *       return {
+ *         resources: data.items.map(item => ({
+ *           uri: `api://data/${item.id}`,
+ *           name: item.name,
+ *           description: item.description,
+ *           mimeType: 'application/json'
+ *         })),
+ *         nextCursor: data.nextCursor
+ *       };
+ *     },
+ *     search: async (query, context) => {
+ *       const response = await fetch(`https://api.example.com/search?q=${query}`);
+ *       const data = await response.json();
+ *       return {
+ *         resources: data.results.map(item => ({
+ *           uri: `api://data/${item.id}`,
+ *           name: item.title,
+ *           description: item.summary
+ *         })),
+ *         hasMore: data.hasMore
+ *       };
+ *     }
+ *   }
+ * };
+ * ```
+ *
+ * @example Secure resource with validation and hooks
+ * ```typescript
+ * const secureResource: ResourceDefinition = {
+ *   uriPattern: 'secure://private/**',
+ *   name: 'Secure Resources',
+ *   description: 'Access private resources with authorization',
+ *   mimeType: 'application/json',
+ *   validateUri: (uri) => {
+ *     if (!uri.startsWith('secure://private/')) {
+ *       return {
+ *         success: false,
+ *         errors: [{ path: ['uri'], message: 'Invalid URI format' }]
+ *       };
+ *     }
+ *     if (uri.includes('..')) {
+ *       return {
+ *         success: false,
+ *         errors: [{ path: ['uri'], message: 'Path traversal not allowed' }]
+ *       };
+ *     }
+ *     return { success: true };
+ *   },
+ *   hooks: {
+ *     beforeGet: async (uri, context) => {
+ *       console.log(`User ${context.user?.id} accessing ${uri}`);
+ *       if (!context.user?.permissions?.includes('read:private')) {
+ *         throw new Error('Insufficient permissions');
+ *       }
+ *     },
+ *     afterGet: async (result, context) => {
+ *       console.log(`Successfully retrieved resource: ${result.uri}`);
+ *     },
+ *     onError: async (error, context) => {
+ *       console.error(`Resource access failed: ${error.message}`);
+ *     }
+ *   },
+ *   provider: {
+ *     get: async (uri, context) => {
+ *       const resourceId = uri.replace('secure://private/', '');
+ *       const resource = await getSecureResource(resourceId, context.user);
+ *       return {
+ *         uri,
+ *         mimeType: 'application/json',
+ *         text: JSON.stringify(resource)
+ *       };
+ *     },
+ *     list: async (cursor, context) => {
+ *       const resources = await listAuthorizedResources(context.user, cursor);
+ *       return {
+ *         resources: resources.items.map(item => ({
+ *           uri: `secure://private/${item.id}`,
+ *           name: item.name,
+ *           description: item.description
+ *         })),
+ *         nextCursor: resources.nextCursor
+ *       };
+ *     }
+ *   }
+ * };
+ * ```
  */
 export interface ResourceDefinition {
   /**

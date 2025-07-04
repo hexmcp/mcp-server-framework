@@ -4,7 +4,127 @@ import { REGISTRY_KINDS } from './base';
 import type { HandlerContext, ToolDefinition } from './types';
 
 /**
- * Registry for managing tool handlers
+ * Registry for managing tool handlers in the MCP Server Framework.
+ *
+ * Tools are functions that clients can call to perform specific operations.
+ * This registry manages tool registration, validation, execution, and capability
+ * negotiation for the MCP protocol.
+ *
+ * @example
+ * ```typescript
+ * const registry = new ToolRegistry();
+ *
+ * registry.register({
+ *   name: 'calculate',
+ *   description: 'Perform mathematical calculations',
+ *   parameters: {
+ *     type: 'object',
+ *     properties: {
+ *       expression: { type: 'string' }
+ *     }
+ *   },
+ *   handler: async ({ expression }) => {
+ *     const result = eval(expression);
+ *     return { content: [{ type: 'text', text: String(result) }] };
+ *   }
+ * });
+ * ```
+ *
+ * @example Advanced tool registry patterns
+ * ```typescript
+ * // 1. Tool composition and chaining
+ * const registry = new ToolRegistry();
+ *
+ * // Register individual tools
+ * registry.register({
+ *   name: 'fetch-data',
+ *   description: 'Fetch data from external API',
+ *   parameters: [
+ *     { name: 'url', type: 'string', required: true },
+ *     { name: 'headers', type: 'object', required: false }
+ *   ],
+ *   handler: async (args) => {
+ *     const response = await fetch(args.url, { headers: args.headers });
+ *     return { content: [{ type: 'text', text: await response.text() }] };
+ *   }
+ * });
+ *
+ * registry.register({
+ *   name: 'process-data',
+ *   description: 'Process and transform data',
+ *   parameters: [
+ *     { name: 'data', type: 'string', required: true },
+ *     { name: 'format', type: 'string', enum: ['json', 'csv', 'xml'], required: true }
+ *   ],
+ *   handler: async (args) => {
+ *     const processed = transformData(args.data, args.format);
+ *     return { content: [{ type: 'text', text: processed }] };
+ *   }
+ * });
+ *
+ * // Register a composite tool that uses other tools
+ * registry.register({
+ *   name: 'fetch-and-process',
+ *   description: 'Fetch data from API and process it',
+ *   parameters: [
+ *     { name: 'url', type: 'string', required: true },
+ *     { name: 'format', type: 'string', enum: ['json', 'csv', 'xml'], required: true }
+ *   ],
+ *   handler: async (args, context) => {
+ *     // Use other tools in the registry
+ *     const fetchResult = await registry.dispatch('fetch-data', { url: args.url }, context);
+ *     const processResult = await registry.dispatch('process-data', {
+ *       data: fetchResult.content[0].text,
+ *       format: args.format
+ *     }, context);
+ *
+ *     return {
+ *       content: [
+ *         { type: 'text', text: 'Data fetched and processed successfully' },
+ *         { type: 'text', text: processResult.content[0].text }
+ *       ]
+ *     };
+ *   }
+ * });
+ *
+ * // 2. Authorization and security patterns
+ * const createSecureToolRegistry = () => {
+ *   const registry = new ToolRegistry();
+ *
+ *   registry.register({
+ *     name: 'admin-operation',
+ *     description: 'Administrative operation requiring elevated privileges',
+ *     dangerous: true,
+ *     scopes: ['admin', 'system'],
+ *     parameters: [{ name: 'action', type: 'string', required: true }],
+ *     hooks: {
+ *       beforeExecution: async (args, context) => {
+ *         // Verify user has required permissions
+ *         const userRoles = context.user?.roles || [];
+ *         const requiredScopes = ['admin', 'system'];
+ *
+ *         if (!requiredScopes.some(scope => userRoles.includes(scope))) {
+ *           throw new Error(`Insufficient permissions. Required: ${requiredScopes.join(' or ')}`);
+ *         }
+ *
+ *         // Log security-sensitive operation
+ *         console.log(`Admin operation ${args.action} initiated by user ${context.user?.id}`);
+ *       },
+ *       afterExecution: async (result, context) => {
+ *         // Audit log
+ *         console.log(`Admin operation completed by user ${context.user?.id}`);
+ *       }
+ *     },
+ *     handler: async (args, context) => {
+ *       return performAdminOperation(args.action, context.user);
+ *     }
+ *   });
+ *
+ *   return registry;
+ * };
+ * ```
+ *
+ * @public
  */
 export class ToolRegistry implements Registry {
   public readonly kind = REGISTRY_KINDS.TOOLS;

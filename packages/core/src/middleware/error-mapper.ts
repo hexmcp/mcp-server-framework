@@ -439,6 +439,95 @@ function createDefaultOptions(): Required<
   };
 }
 
+/**
+ * Create error mapper middleware for comprehensive error handling and JSON-RPC error conversion.
+ *
+ * The error mapper middleware serves as the outermost safety net in the middleware stack,
+ * catching all unhandled errors and converting them to proper JSON-RPC error responses.
+ * It provides structured logging, debug mode support, and comprehensive error classification.
+ *
+ * @param options - Configuration options for error mapping behavior including logging, debug mode, and custom handlers
+ * @returns Middleware function that handles error mapping
+ *
+ * @example Basic error mapper (recommended as outermost middleware)
+ * ```typescript
+ * const registry = new McpMiddlewareRegistry();
+ *
+ * // Register error mapper FIRST (outermost layer)
+ * registry.registerMiddleware(createErrorMapperMiddleware());
+ * registry.registerMiddleware(authMiddleware);
+ * registry.registerMiddleware(businessLogicMiddleware);
+ * ```
+ *
+ * @example Error mapper with custom configuration
+ * ```typescript
+ * const errorMapper = createErrorMapperMiddleware({
+ *   enableLogging: true,
+ *   logLevel: 'warn',
+ *   logFormat: 'console',
+ *   includeStackTrace: true,
+ *   includeRequestContext: true,
+ *   debugMode: process.env.NODE_ENV === 'development'
+ * });
+ *
+ * registry.registerMiddleware(errorMapper);
+ * ```
+ *
+ * @example Error mapper with custom logger
+ * ```typescript
+ * const customLogger = {
+ *   error: (message, meta) => winston.error(message, meta),
+ *   warn: (message, meta) => winston.warn(message, meta),
+ *   info: (message, meta) => winston.info(message, meta),
+ *   debug: (message, meta) => winston.debug(message, meta),
+ *   log: (level, message, meta) => winston.log(level, message, meta)
+ * };
+ *
+ * const errorMapper = createErrorMapperMiddleware({
+ *   logger: customLogger,
+ *   enableLogging: true,
+ *   logFormat: 'json'
+ * });
+ * ```
+ *
+ * @example Error mapper with custom classification
+ * ```typescript
+ * const customClassifier = (error: Error): ErrorClassificationResult => {
+ *   if (error.message.includes('timeout')) {
+ *     return {
+ *       classification: ErrorClassification.TIMEOUT,
+ *       jsonRpcCode: -32603,
+ *       message: 'Request timeout',
+ *       shouldLog: true,
+ *       logLevel: 'warn'
+ *     };
+ *   }
+ *   return classifyError(error); // Fall back to default
+ * };
+ *
+ * const errorMapper = createErrorMapperMiddleware({
+ *   errorClassifier: customClassifier
+ * });
+ * ```
+ *
+ * @example Debug mode configuration
+ * ```typescript
+ * // Enable debug mode via environment variable
+ * process.env.MCPKIT_DEBUG = '1';
+ *
+ * const errorMapper = createErrorMapperMiddleware({
+ *   debugMode: true, // Or omit to use MCPKIT_DEBUG env var
+ *   includeStackTrace: true,
+ *   logLevel: 'debug'
+ * });
+ *
+ * // In debug mode, errors include additional context:
+ * // - Full stack traces
+ * // - Request details
+ * // - Middleware execution context
+ * // - Performance timing
+ * ```
+ */
 export function createErrorMapperMiddleware(options: ErrorMapperOptions = {}): Middleware {
   validateErrorMapperOptions(options);
 
@@ -476,6 +565,36 @@ export function createErrorMapperMiddleware(options: ErrorMapperOptions = {}): M
   return middleware;
 }
 
+/**
+ * Create error mapper middleware with sensible default configuration.
+ *
+ * This is a convenience function that creates an error mapper middleware with
+ * production-ready defaults. It enables logging, uses error log level, includes
+ * request context, and respects the MCPKIT_DEBUG environment variable for debug mode.
+ *
+ * @returns Middleware function with default error mapping configuration
+ *
+ * @example Using default error mapper
+ * ```typescript
+ * const registry = new McpMiddlewareRegistry();
+ *
+ * // Quick setup with sensible defaults
+ * registry.registerMiddleware(createErrorMapperMiddlewareWithDefaults());
+ * registry.registerMiddleware(otherMiddleware);
+ * ```
+ *
+ * @example Equivalent manual configuration
+ * ```typescript
+ * // This is equivalent to createErrorMapperMiddlewareWithDefaults()
+ * const errorMapper = createErrorMapperMiddleware({
+ *   enableLogging: true,
+ *   logLevel: 'error',
+ *   includeRequestContext: true,
+ *   includeStackTrace: false,
+ *   debugMode: process.env.MCPKIT_DEBUG === '1'
+ * });
+ * ```
+ */
 export function createErrorMapperMiddlewareWithDefaults(): Middleware {
   return createErrorMapperMiddleware({
     enableLogging: true,

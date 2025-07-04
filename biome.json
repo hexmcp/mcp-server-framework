@@ -211,6 +211,12 @@
           }
         }
       }
+    },
+    {
+      "includes": [".api-surface-lock.json"],
+      "formatter": {
+        "enabled": false
+      }
     }
   ]
 }

@@ -81,7 +81,228 @@ export class InMemoryResourceProvider implements ResourceProvider {
 }
 
 /**
- * Registry for managing resource providers
+ * Registry for managing resource providers with comprehensive URI pattern matching and lifecycle management.
+ *
+ * The ResourceRegistry provides a robust system for registering and managing resource providers
+ * that can handle various URI patterns. It supports features like streaming content, caching,
+ * rate limiting, authorization, and lifecycle hooks for comprehensive resource management.
+ *
+ * @example Basic resource registration
+ * ```typescript
+ * const registry = new ResourceRegistry();
+ *
+ * registry.register({
+ *   uriPattern: 'file://**',
+ *   name: 'File System',
+ *   description: 'Access local file system resources',
+ *   mimeType: 'text/plain',
+ *   provider: {
+ *     get: async (uri) => ({
+ *       uri,
+ *       mimeType: 'text/plain',
+ *       text: await fs.readFile(uri.replace('file://', ''), 'utf8')
+ *     }),
+ *     list: async () => ({ resources: [] })
+ *   }
+ * });
+ * ```
+ *
+ * @example Advanced resource with streaming and caching
+ * ```typescript
+ * registry.register({
+ *   uriPattern: 'api://data/**',
+ *   name: 'API Data',
+ *   description: 'Stream data from external API',
+ *   mimeType: 'application/json',
+ *   watchable: true,
+ *   searchable: true,
+ *   cache: {
+ *     enabled: true,
+ *     ttl: 60000, // 1 minute
+ *     key: (uri) => `api-${uri}`
+ *   },
+ *   rateLimit: {
+ *     maxCalls: 100,
+ *     windowMs: 60000
+ *   },
+ *   provider: {
+ *     get: async (uri) => {
+ *       const response = await fetch(uri.replace('api://', 'https://'));
+ *       return {
+ *         uri,
+ *         mimeType: 'application/json',
+ *         text: await response.text()
+ *       };
+ *     },
+ *     list: async (cursor) => ({
+ *       resources: await fetchResourceList(cursor),
+ *       nextCursor: getNextCursor()
+ *     }),
+ *     search: async (query) => ({
+ *       resources: await searchResources(query),
+ *       hasMore: false
+ *     })
+ *   },
+ *   hooks: {
+ *     beforeGet: async (uri, context) => {
+ *       console.log(`Fetching ${uri} for user ${context.user?.id}`);
+ *     },
+ *     afterGet: async (result, context) => {
+ *       console.log(`Successfully fetched resource`);
+ *     }
+ *   }
+ * });
+ * ```
+ *
+ * @example Resource with authorization and validation
+ * ```typescript
+ * registry.register({
+ *   uriPattern: 'secure://private/**',
+ *   name: 'Secure Resources',
+ *   description: 'Access private resources with authorization',
+ *   validateUri: (uri) => {
+ *     if (!uri.startsWith('secure://private/')) {
+ *       return { success: false, errors: [{ path: ['uri'], message: 'Invalid URI format' }] };
+ *     }
+ *     return { success: true };
+ *   },
+ *   provider: {
+ *     get: async (uri, context) => {
+ *       if (!context.user?.permissions?.includes('read:private')) {
+ *         throw new Error('Insufficient permissions');
+ *       }
+ *       return await getSecureResource(uri);
+ *     },
+ *     list: async (cursor, context) => {
+ *       return await listAuthorizedResources(context.user);
+ *     }
+ *   }
+ * });
+ * ```
+ *
+ * @example Advanced resource registry patterns
+ * ```typescript
+ * // 1. Multi-provider resource aggregation
+ * const registry = new ResourceRegistry();
+ *
+ * // Register multiple providers for different URI schemes
+ * registry.register({
+ *   uriPattern: 'file://**',
+ *   name: 'Local Files',
+ *   description: 'Access local file system',
+ *   provider: new FileSystemProvider()
+ * });
+ *
+ * registry.register({
+ *   uriPattern: 'http://**',
+ *   name: 'HTTP Resources',
+ *   description: 'Access HTTP resources',
+ *   provider: new HttpProvider()
+ * });
+ *
+ * registry.register({
+ *   uriPattern: 'db://table/**',
+ *   name: 'Database Tables',
+ *   description: 'Access database tables',
+ *   provider: new DatabaseProvider()
+ * });
+ *
+ * // Register an aggregator resource that combines multiple sources
+ * registry.register({
+ *   uriPattern: 'aggregate://search/**',
+ *   name: 'Aggregated Search',
+ *   description: 'Search across multiple resource types',
+ *   searchable: true,
+ *   provider: {
+ *     get: async (uri, context) => {
+ *       const query = uri.split('/').pop();
+ *       const results = [];
+ *
+ *       // Search across all registered providers
+ *       for (const [pattern, definition] of registry.getRegisteredResources()) {
+ *         if (definition.searchable && definition.provider.search) {
+ *           try {
+ *             const searchResults = await definition.provider.search(query, context);
+ *             results.push(...searchResults.resources);
+ *           } catch (error) {
+ *             console.warn(`Search failed for ${pattern}: ${error.message}`);
+ *           }
+ *         }
+ *       }
+ *
+ *       return {
+ *         uri,
+ *         mimeType: 'application/json',
+ *         text: JSON.stringify({ query, results, totalFound: results.length })
+ *       };
+ *     },
+ *     list: async () => ({ resources: [] }) // Not applicable for aggregator
+ *   }
+ * });
+ *
+ * // 2. Resource with real-time updates and caching
+ * const createRealtimeResourceRegistry = () => {
+ *   const registry = new ResourceRegistry();
+ *   const cache = new Map();
+ *   const watchers = new Map();
+ *
+ *   registry.register({
+ *     uriPattern: 'live://data/**',
+ *     name: 'Live Data Stream',
+ *     description: 'Real-time data with caching and change notifications',
+ *     watchable: true,
+ *     cache: {
+ *       enabled: true,
+ *       ttl: 5000, // 5 seconds
+ *       key: (uri) => `live-${uri}`
+ *     },
+ *     provider: {
+ *       get: async (uri, context) => {
+ *         const cacheKey = `live-${uri}`;
+ *         const cached = cache.get(cacheKey);
+ *
+ *         if (cached && Date.now() - cached.timestamp < 5000) {
+ *           return cached.data;
+ *         }
+ *
+ *         const data = await fetchLiveData(uri);
+ *         cache.set(cacheKey, { data, timestamp: Date.now() });
+ *
+ *         // Notify watchers of data change
+ *         const uriWatchers = watchers.get(uri) || [];
+ *         for (const callback of uriWatchers) {
+ *           callback({
+ *             type: 'updated',
+ *             uri,
+ *             timestamp: new Date(),
+ *             metadata: { source: 'live-data' }
+ *           });
+ *         }
+ *
+ *         return data;
+ *       },
+ *       list: async () => ({ resources: await listLiveDataSources() }),
+ *       watch: async (uri, callback) => {
+ *         if (!watchers.has(uri)) {
+ *           watchers.set(uri, []);
+ *         }
+ *         watchers.get(uri).push(callback);
+ *
+ *         // Return unwatch function
+ *         return () => {
+ *           const uriWatchers = watchers.get(uri) || [];
+ *           const index = uriWatchers.indexOf(callback);
+ *           if (index > -1) {
+ *             uriWatchers.splice(index, 1);
+ *           }
+ *         };
+ *       }
+ *     }
+ *   });
+ *
+ *   return registry;
+ * };
+ * ```
  */
 export class ResourceRegistry implements Registry {
   public readonly kind = REGISTRY_KINDS.RESOURCES;
@@ -94,7 +315,57 @@ export class ResourceRegistry implements Registry {
   };
 
   /**
-   * Register a resource definition with validation
+   * Register a resource definition with comprehensive validation.
+   *
+   * Validates the resource definition and registers it with its provider for URI pattern matching.
+   * The URI pattern must be unique within the registry. Supports glob patterns for flexible
+   * resource matching and comprehensive validation of provider implementations.
+   *
+   * @param definition - The resource definition to register
+   * @throws \{Error\} When the definition is invalid or the URI pattern is already registered
+   *
+   * @example Register a file system resource
+   * ```typescript
+   * registry.register({
+   *   uriPattern: 'file://**',
+   *   name: 'Local Files',
+   *   description: 'Access local file system',
+   *   mimeType: 'text/plain',
+   *   provider: {
+   *     get: async (uri) => ({
+   *       uri,
+   *       mimeType: 'text/plain',
+   *       text: await readFile(uri)
+   *     }),
+   *     list: async () => ({ resources: await listFiles() })
+   *   }
+   * });
+   * ```
+   *
+   * @example Register with validation and hooks
+   * ```typescript
+   * registry.register({
+   *   uriPattern: 'db://table/*',
+   *   name: 'Database Tables',
+   *   description: 'Access database table data',
+   *   validateUri: (uri) => {
+   *     const tableName = uri.split('/').pop();
+   *     if (!isValidTableName(tableName)) {
+   *       return { success: false, errors: [{ path: ['uri'], message: 'Invalid table name' }] };
+   *     }
+   *     return { success: true };
+   *   },
+   *   hooks: {
+   *     beforeGet: async (uri, context) => {
+   *       await logAccess(uri, context.user?.id);
+   *     }
+   *   },
+   *   provider: {
+   *     get: async (uri) => await getTableData(uri),
+   *     list: async () => ({ resources: await listTables() })
+   *   }
+   * });
+   * ```
    */
   register(definition: ResourceDefinition): void {
     const validation = this.validateDefinition(definition);

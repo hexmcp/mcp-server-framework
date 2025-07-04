@@ -22,8 +22,16 @@ export { ToolRegistry } from './tools';
 // Shared types and interfaces
 export type {
   HandlerContext,
+  HandlerExecutionContext,
+  PromptArgument,
+  PromptContent,
   PromptDefinition,
+  ResourceChangeEvent,
   ResourceDefinition,
+  ResourceListResult,
+  ResourceMetadata,
   ResourceProvider,
   ToolDefinition,
+  ToolParameter,
+  ValidationResult,
 } from './types';

@@ -66,16 +66,116 @@ export interface RegistryStats {
 }
 
 /**
- * Base registry interface that all domain-specific registries must implement
+ * Base registry interface that all domain-specific registries must implement.
+ *
+ * The Registry interface defines the contract for all domain-specific registries
+ * (prompts, tools, resources) in the MCP server framework. It provides a unified
+ * API for capability negotiation, metadata introspection, and lifecycle management.
+ *
+ * @example Implementing a custom registry
+ * ```typescript
+ * class CustomRegistry implements Registry {
+ *   readonly kind = 'custom' as const;
+ *   private items = new Map<string, CustomItem>();
+ *   private stats: RegistryStats = {
+ *     totalRegistered: 0,
+ *     successfulOperations: 0,
+ *     failedOperations: 0
+ *   };
+ *
+ *   getCapabilities(): Partial<ServerCapabilities> {
+ *     return this.isEmpty() ? {} : { custom: {} };
+ *   }
+ *
+ *   getMetadata(): RegistryMetadata {
+ *     return {
+ *       name: 'Custom Registry',
+ *       description: 'Registry for custom items',
+ *       debug: {
+ *         registeredCount: this.items.size,
+ *         itemNames: Array.from(this.items.keys())
+ *       }
+ *     };
+ *   }
+ *
+ *   getStats(): RegistryStats {
+ *     return { ...this.stats };
+ *   }
+ *
+ *   isEmpty(): boolean {
+ *     return this.items.size === 0;
+ *   }
+ *
+ *   size(): number {
+ *     return this.items.size;
+ *   }
+ *
+ *   clear(): void {
+ *     this.items.clear();
+ *     this.stats.totalRegistered = 0;
+ *   }
+ * }
+ * ```
+ *
+ * @example Using registry in capability negotiation
+ * ```typescript
+ * const registries: Registry[] = [promptRegistry, toolRegistry, resourceRegistry];
+ *
+ * // Combine capabilities from all registries
+ * const serverCapabilities = registries.reduce((caps, registry) => ({
+ *   ...caps,
+ *   ...registry.getCapabilities()
+ * }), {} as ServerCapabilities);
+ *
+ * // Check if any registries have content
+ * const hasContent = registries.some(registry => !registry.isEmpty());
+ *
+ * // Get combined statistics
+ * const stats = registries.map(registry => ({
+ *   kind: registry.kind,
+ *   ...registry.getStats()
+ * }));
+ * ```
  */
 export interface Registry {
   /**
-   * Registry type identifier for capability negotiation
+   * Registry type identifier for capability negotiation.
+   *
+   * A unique identifier that determines what type of MCP primitives this registry manages.
+   * Used during capability negotiation to determine which server capabilities to advertise.
+   *
+   * @example
+   * ```typescript
+   * class PromptRegistry implements Registry {
+   *   readonly kind = REGISTRY_KINDS.PROMPTS; // 'prompts'
+   * }
+   *
+   * class ToolRegistry implements Registry {
+   *   readonly kind = REGISTRY_KINDS.TOOLS; // 'tools'
+   * }
+   * ```
    */
   readonly kind: RegistryKind;
 
   /**
-   * Get capabilities that this registry provides for MCP handshake
+   * Get capabilities that this registry provides for MCP handshake.
+   *
+   * Returns the server capabilities that should be advertised to clients based on
+   * what primitives are registered in this registry. Empty registries typically
+   * return empty capabilities to avoid advertising unavailable features.
+   *
+   * @returns Partial server capabilities object for MCP protocol negotiation
+   *
+   * @example
+   * ```typescript
+   * // Empty registry returns no capabilities
+   * if (promptRegistry.isEmpty()) {
+   *   return {}; // Don't advertise prompts capability
+   * }
+   *
+   * // Registry with content advertises its capability
+   * return { prompts: {} }; // Advertise prompts capability
+   * ```
    */
   getCapabilities(): Partial<ServerCapabilities>;
 

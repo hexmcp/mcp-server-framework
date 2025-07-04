@@ -43,3 +43,22 @@ jobs:
 
       - name: Run fixture tests
         run: pnpm run test-fixtures
+
+      - name: Check API surface lock
+        run: pnpm run check:types
+
+      - name: Generate documentation
+        run: pnpm run docs:generate
+
+      - name: Quality gate validation
+        run: pnpm run quality:gate:simple
+
+      - name: Upload documentation artifacts
+        uses: actions/upload-artifact@v4
+        if: github.ref == 'refs/heads/main'
+        with:
+          name: documentation
+          path: |
+            docs/api/
+            temp/api-reports/
+          retention-days: 30

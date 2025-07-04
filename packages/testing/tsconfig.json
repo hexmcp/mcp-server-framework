@@ -10,5 +10,5 @@
   },
   "include": ["src/**/*.ts"],
   "exclude": ["dist", "test", "**/*.test.ts", "**/*.spec.ts"],
-  "references": [{ "path": "../codec-jsonrpc" }, { "path": "../core" }, { "path": "../transport" }]
+  "references": [{ "path": "../codec-jsonrpc" }, { "path": "../core" }]
 }

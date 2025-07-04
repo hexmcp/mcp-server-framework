@@ -1,18 +1,6 @@
-# Run linting
-echo "🎨 Running linting..."
-pnpm run lint
-
-# Run TypeScript type checking for main configuration
-echo "🔍 Running TypeScript type checking (main)..."
-pnpm run typecheck
-
-# Run TypeScript type checking for test configuration
-echo "🔍 Running TypeScript type checking (tests)..."
-pnpm run typecheck:test
-
-# Run tests
-echo "🧪 Running tests..."
-pnpm test
+# Run comprehensive quality gate
+echo "🚀 Running MCP Server Framework Quality Gate..."
+pnpm run quality:gate:simple
 
 # Run fixture tests
 echo "🎯 Running fixture tests..."

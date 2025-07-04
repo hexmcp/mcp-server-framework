@@ -28,6 +28,8 @@ interface JsonRpcSuccess<T> {
 
 /**
  * MCP handshake handlers for initialize and shutdown requests
+ *
+ * @internal
  */
 export class McpHandshakeHandlers {
   private _lifecycleManager: LifecycleManager;

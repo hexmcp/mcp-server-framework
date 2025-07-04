@@ -3,6 +3,8 @@ import { AlreadyInitializedError, LifecycleViolationError, NotInitializedError }
 
 /**
  * Request categories for lifecycle validation
+ *
+ * @internal
  */
 enum RequestCategory {
   // biome-ignore lint/style/useNamingConvention: Request categories use SCREAMING_SNAKE_CASE
@@ -47,6 +49,8 @@ const REQUEST_CATEGORIES: Record<string, RequestCategory> = {
 
 /**
  * Implementation of request gating for MCP lifecycle compliance
+ *
+ * @internal
  */
 export class McpRequestGate implements RequestGate {
   private _lifecycleManager: LifecycleManager;
@@ -234,5 +238,7 @@ export class McpRequestGate implements RequestGate {
 
 /**
  * Export request categories for external use
+ *
+ * @internal
  */
 export { RequestCategory };

@@ -1,16 +1,328 @@
 import type { JsonRpcRequest, JsonRpcResponse } from '@hexmcp/codec-jsonrpc';
 
+/**
+ * Request context passed through the middleware stack.
+ *
+ * The RequestContext contains all information about the current request being processed,
+ * including the JSON-RPC request, response, transport details, and mutable state that
+ * can be shared between middleware layers. This context is passed through the entire
+ * middleware stack and can be modified by any middleware.
+ *
+ * @example Basic context usage in middleware
+ * ```typescript
+ * const authMiddleware: Middleware = async (ctx, next) => {
+ *   // Read request information
+ *   const { method, params } = ctx.request;
+ *
+ *   // Check authentication
+ *   const token = params?.token;
+ *   if (!token) {
+ *     ctx.response = createErrorResponse(ctx.request.id, -32001, 'Authentication required');
+ *     return; // Don't call next()
+ *   }
+ *
+ *   // Add user info to state for downstream middleware
+ *   ctx.state.user = await validateToken(token);
+ *   ctx.state.authenticated = true;
+ *
+ *   await next(); // Continue to next middleware
+ * };
+ * ```
+ *
+ * @example State mutation across middleware
+ * ```typescript
+ * const tracingMiddleware: Middleware = async (ctx, next) => {
+ *   // Add tracing information
+ *   ctx.state.traceId = generateTraceId();
+ *   ctx.state.startTime = Date.now();
+ *
+ *   await next();
+ *
+ *   // Calculate duration
+ *   ctx.state.duration = Date.now() - ctx.state.startTime;
+ * };
+ *
+ * const loggingMiddleware: Middleware = async (ctx, next) => {
+ *   await next();
+ *
+ *   // Access state from previous middleware
+ *   console.log(`Request ${ctx.state.traceId} took ${ctx.state.duration}ms`);
+ * };
+ * ```
+ *
+ * @example Transport-specific handling
+ * ```typescript
+ * const transportMiddleware: Middleware = async (ctx, next) => {
+ *   console.log(`Request from ${ctx.transport.name} transport`);
+ *
+ *   if (ctx.transport.name === 'websocket') {
+ *     // WebSocket-specific handling
+ *     ctx.state.supportsStreaming = true;
+ *   } else if (ctx.transport.name === 'stdio') {
+ *     // STDIO-specific handling
+ *     ctx.state.supportsStreaming = false;
+ *   }
+ *
+ *   await next();
+ * };
+ * ```
+ *
+ * @example Response handling
+ * ```typescript
+ * const responseMiddleware: Middleware = async (ctx, next) => {
+ *   await next();
+ *
+ *   // Modify response before sending
+ *   if (ctx.response && 'result' in ctx.response) {
+ *     ctx.response.result = {
+ *       ...ctx.response.result,
+ *       timestamp: new Date().toISOString(),
+ *       requestId: ctx.state.traceId
+ *     };
+ *   }
+ * };
+ * ```
+ */
 export interface RequestContext {
+  /** The incoming JSON-RPC request */
   request: JsonRpcRequest;
+
+  /** The outgoing JSON-RPC response (set by middleware or core handler) */
   response?: JsonRpcResponse;
+
+  /** Function to send messages back to the client (for streaming responses) */
   send: (message: unknown) => Promise<void>;
+
+  /** Information about the transport that received this request */
   transport: {
+    /** Name of the transport (e.g., 'stdio', 'websocket', 'http') */
     name: string;
+    /** Optional peer information (IP address, connection details, etc.) */
     peer?: unknown;
   };
+
+  /** Mutable state object shared between middleware layers */
   state: Record<string, unknown>;
 }
 
+/**
+ * Middleware function type for the onion-style middleware pattern.
+ *
+ * A middleware function receives the request context and a next function. It can perform
+ * operations before calling next() (pre-processing), after calling next() (post-processing),
+ * or both. The middleware can also choose not to call next() to short-circuit the execution.
+ *
+ * @param ctx - The request context containing request, response, transport info, and state
+ * @param next - Function to call the next middleware in the stack
+ * @returns Promise that resolves when the middleware completes
+ *
+ * @example Basic middleware structure
+ * ```typescript
+ * const exampleMiddleware: Middleware = async (ctx, next) => {
+ *   // Pre-processing: runs before inner middleware
+ *   console.log('Before processing request:', ctx.request.method);
+ *
+ *   try {
+ *     await next(); // Call next middleware in stack
+ *
+ *     // Post-processing: runs after inner middleware
+ *     console.log('After processing request:', ctx.response?.id);
+ *   } catch (error) {
+ *     // Error handling
+ *     console.error('Request failed:', error);
+ *     throw error; // Re-throw or handle as needed
+ *   }
+ * };
+ * ```
+ *
+ * @example Authentication middleware
+ * ```typescript
+ * const authMiddleware: Middleware = async (ctx, next) => {
+ *   const authHeader = ctx.request.params?.authorization;
+ *
+ *   if (!authHeader) {
+ *     // Short-circuit: don't call next()
+ *     ctx.response = createErrorResponse(ctx.request.id, -32001, 'Authentication required');
+ *     return;
+ *   }
+ *
+ *   // Add user to context
+ *   ctx.state.user = await validateAuth(authHeader);
+ *
+ *   // Continue to next middleware
+ *   await next();
+ * };
+ * ```
+ *
+ * @example Error handling middleware
+ * ```typescript
+ * const errorHandlerMiddleware: Middleware = async (ctx, next) => {
+ *   try {
+ *     await next();
+ *   } catch (error) {
+ *     // Convert errors to JSON-RPC error responses
+ *     ctx.response = createErrorResponse(
+ *       ctx.request.id,
+ *       -32603,
+ *       'Internal error',
+ *       { message: error.message }
+ *     );
+ *   }
+ * };
+ * ```
+ *
+ * @example State mutation middleware
+ * ```typescript
+ * const tracingMiddleware: Middleware = async (ctx, next) => {
+ *   // Add tracing info
+ *   ctx.state.traceId = generateTraceId();
+ *   ctx.state.startTime = performance.now();
+ *
+ *   await next();
+ *
+ *   // Calculate duration
+ *   ctx.state.duration = performance.now() - ctx.state.startTime;
+ *
+ *   // Log trace info
+ *   console.log(`Trace ${ctx.state.traceId}: ${ctx.state.duration}ms`);
+ * };
+ * ```
+ *
+ * @example Advanced middleware composition patterns
+ * ```typescript
+ * // 1. Error handling with recovery
+ * const resilientMiddleware: Middleware = async (ctx, next) => {
+ *   const maxRetries = 3;
+ *   let attempt = 0;
+ *
+ *   while (attempt < maxRetries) {
+ *     try {
+ *       await next();
+ *       return; // Success, exit retry loop
+ *     } catch (error) {
+ *       attempt++;
+ *       if (attempt >= maxRetries) {
+ *         throw error; // Final attempt failed
+ *       }
+ *
+ *       // Exponential backoff
+ *       const delay = Math.pow(2, attempt) * 100;
+ *       await new Promise(resolve => setTimeout(resolve, delay));
+ *       console.log(`Retry attempt ${attempt} after ${delay}ms`);
+ *     }
+ *   }
+ * };
+ *
+ * // 2. Conditional middleware execution
+ * const conditionalMiddleware: Middleware = async (ctx, next) => {
+ *   const shouldApplyMiddleware = ctx.request.method.startsWith('tools/');
+ *
+ *   if (shouldApplyMiddleware) {
+ *     // Apply middleware logic only for tool requests
+ *     ctx.state.toolRequest = true;
+ *     console.log('Processing tool request:', ctx.request.method);
+ *   }
+ *
+ *   await next();
+ *
+ *   if (shouldApplyMiddleware) {
+ *     console.log('Tool request completed');
+ *   }
+ * };
+ *
+ * // 3. Middleware with cleanup and resource management
+ * const resourceMiddleware: Middleware = async (ctx, next) => {
+ *   const resources: Array<() => Promise<void>> = [];
+ *
+ *   // Provide resource registration function
+ *   ctx.state.addCleanup = (cleanup: () => Promise<void>) => {
+ *     resources.push(cleanup);
+ *   };
+ *
+ *   try {
+ *     await next();
+ *   } finally {
+ *     // Always cleanup resources, even on error
+ *     for (const cleanup of resources.reverse()) {
+ *       try {
+ *         await cleanup();
+ *       } catch (cleanupError) {
+ *         console.error('Cleanup failed:', cleanupError);
+ *       }
+ *     }
+ *   }
+ * };
+ * ```
+ *
+ * @example Production-ready middleware stack composition
+ * ```typescript
+ * // Complete middleware stack for production use
+ * const createProductionMiddlewareStack = (config: ProductionConfig): Middleware[] => {
+ *   return [
+ *     // 1. Error handling (outermost layer)
+ *     createErrorMapperMiddleware({
+ *       enableLogging: true,
+ *       logLevel: 'error',
+ *       includeStackTrace: config.debug,
+ *       debugMode: config.debug
+ *     }),
+ *
+ *     // 2. Request/response logging
+ *     createLoggingMiddleware({
+ *       level: config.logLevel,
+ *       includeRequest: true,
+ *       includeResponse: true,
+ *       logger: config.logger
+ *     }),
+ *
+ *     // 3. Security and authentication
+ *     createAuthMiddleware({
+ *       validateToken: config.auth.validateToken,
+ *       requiredScopes: config.auth.requiredScopes
+ *     }),
+ *
+ *     // 4. Rate limiting
+ *     createRateLimitMiddleware({
+ *       maxRequests: config.rateLimit.maxRequests,
+ *       windowMs: config.rateLimit.windowMs,
+ *       keyGenerator: (ctx) => ctx.state.user?.id || 'anonymous'
+ *     }),
+ *
+ *     // 5. Request validation
+ *     createValidationMiddleware({
+ *       validateSchema: true,
+ *       sanitizeInput: true
+ *     }),
+ *
+ *     // 6. Performance monitoring
+ *     createMetricsMiddleware({
+ *       collectMetrics: config.metrics.enabled,
+ *       metricsEndpoint: config.metrics.endpoint
+ *     }),
+ *
+ *     // 7. Caching (if enabled)
+ *     ...(config.cache.enabled ? [createCacheMiddleware(config.cache)] : []),
+ *
+ *     // 8. Business logic middleware (innermost layer)
+ *     createBusinessLogicMiddleware()
+ *   ];
+ * };
+ *
+ * // Usage with middleware engine
+ * const engine = new McpMiddlewareEngine();
+ * const middlewareStack = createProductionMiddlewareStack(productionConfig);
+ * const composedMiddleware = engine.applyMiddleware(middlewareStack);
+ *
+ * // Execute with request context
+ * await composedMiddleware(requestContext, async () => {
+ *   // Core business logic
+ *   ctx.response = await handleRequest(ctx.request);
+ * });
+ * ```
+ *
+ * @see McpMiddlewareEngine For middleware execution and composition
+ * @see RequestContext For context properties and state management
+ */
 export type Middleware = (ctx: RequestContext, next: () => Promise<void>) => Promise<void>;
 
 export interface MiddlewareRegistry {
@@ -31,6 +343,9 @@ export interface MiddlewareEngine {
   executeMiddleware(ctx: RequestContext, middleware: Middleware[], options?: MiddlewareExecutionOptions): Promise<void>;
 }
 
+/**
+ * @internal
+ */
 export interface MiddlewareExecutionContext {
   readonly isExecuting: boolean;
   readonly currentIndex: number;
@@ -38,6 +353,9 @@ export interface MiddlewareExecutionContext {
   readonly executionId: string;
 }
 
+/**
+ * @internal
+ */
 export class MiddlewareError extends Error {
   constructor(
     message: string,
@@ -49,6 +367,9 @@ export class MiddlewareError extends Error {
   }
 }
 
+/**
+ * @internal
+ */
 export class ReentrantCallError extends Error {
   constructor(public readonly executionId: string) {
     super(`Re-entrant call detected in middleware execution ${executionId}`);
@@ -56,6 +377,9 @@ export class ReentrantCallError extends Error {
   }
 }
 
+/**
+ * @internal
+ */
 export class MiddlewareTimeoutError extends Error {
   constructor(
     public readonly timeout: number,
@@ -66,6 +390,9 @@ export class MiddlewareTimeoutError extends Error {
   }
 }
 
+/**
+ * @internal
+ */
 export enum MiddlewareExecutionState {
   Idle = 'idle',
   Executing = 'executing',
@@ -73,6 +400,9 @@ export enum MiddlewareExecutionState {
   Failed = 'failed',
 }
 
+/**
+ * @internal
+ */
 export interface MiddlewareMetrics {
   executionTime: number;
   middlewareIndex: number;
@@ -81,6 +411,9 @@ export interface MiddlewareMetrics {
   error?: Error;
 }
 
+/**
+ * @internal
+ */
 export interface MiddlewareExecutionResult {
   state: MiddlewareExecutionState;
   metrics: MiddlewareMetrics[];
