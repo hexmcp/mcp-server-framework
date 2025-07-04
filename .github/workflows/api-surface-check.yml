@@ -59,6 +59,8 @@ jobs:
 
       - name: Generate API report diff
         run: |
+          # Create required directories
+          mkdir -p temp/api-reports/@hexmcp temp/api-models/@hexmcp temp/dts-rollups/@hexmcp
           # Generate current API report
           cd packages/core && pnpm exec api-extractor run --local
           
