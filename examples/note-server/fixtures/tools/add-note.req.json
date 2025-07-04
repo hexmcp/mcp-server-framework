@@ -1,0 +1,32 @@
+{
+  "name": "add-note-success",
+  "input": {
+    "jsonrpc": "2.0",
+    "id": 1,
+    "method": "tools/call",
+    "params": {
+      "name": "addNote",
+      "arguments": {
+        "title": "Test Note",
+        "content": "This is a test note created via the addNote tool."
+      }
+    }
+  },
+  "expected": {
+    "jsonrpc": "2.0",
+    "id": 1,
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "Successfully created note with ID: __DYNAMIC_UUID__"
+        }
+      ],
+      "isError": false,
+      "metadata": {
+        "noteId": "__DYNAMIC_UUID__",
+        "createdAt": "__DYNAMIC_TIMESTAMP__"
+      }
+    }
+  }
+}

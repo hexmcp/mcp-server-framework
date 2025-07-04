@@ -1,0 +1,26 @@
+{
+  "name": "summarize-note-invalid-id",
+  "input": {
+    "jsonrpc": "2.0",
+    "id": 6,
+    "method": "prompts/get",
+    "params": {
+      "name": "summarizeNote",
+      "arguments": {
+        "noteId": "invalid-uuid"
+      }
+    }
+  },
+  "expected": {
+    "jsonrpc": "2.0",
+    "id": 6,
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "Validation error: noteId: Note ID must be a valid UUID"
+        }
+      ]
+    }
+  }
+}

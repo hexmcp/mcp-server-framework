@@ -1,0 +1,27 @@
+{
+  "name": "summarize-note-success",
+  "input": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "method": "prompts/get",
+    "params": {
+      "name": "summarizeNote",
+      "arguments": {
+        "noteId": "__SAMPLE_NOTE_ID__",
+        "maxLength": 100
+      }
+    }
+  },
+  "expected": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "__DYNAMIC_SUMMARY_CONTENT__"
+        }
+      ]
+    }
+  }
+}

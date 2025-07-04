@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "NotesDebug": {
+      "command": "npx",
+      "args": ["tsx", "src/note-server.ts"],
+      "cwd": "/path/to/mcp-server-framework/examples/note-server",
+      "transport": "stdio"
+    }
+  }
+}
