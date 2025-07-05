@@ -1,4 +1,4 @@
-import type { ToolDefinition } from '@hexmcp/core';
+import type { StreamingRequestContext, ToolDefinition } from '@hexmcp/core';
 import { z } from 'zod';
 import { createNote } from '../domain/notes.js';
 
@@ -26,10 +26,18 @@ export const addNoteTool: Omit<ToolDefinition, 'name'> = {
   inputSchema: AddNoteInputSchema,
   tags: ['notes', 'create'],
   version: '1.0.0',
-  handler: async (args, _context) => {
+  handler: async (args, context) => {
     try {
+      // Demonstrate streaming info (safe for stdio transport - will be undefined)
+      const streamingCtx = context as StreamingRequestContext;
+
+      streamingCtx.streamInfo?.('Validating note input...');
       const validatedInput = AddNoteInputSchema.parse(args);
+
+      streamingCtx.streamInfo?.('Creating note in storage...');
       const note = createNote(validatedInput);
+
+      streamingCtx.streamInfo?.('Note creation completed successfully');
 
       return {
         content: [
