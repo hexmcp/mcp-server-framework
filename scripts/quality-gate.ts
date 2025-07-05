@@ -27,6 +27,13 @@ interface QualityStep {
 
 const QUALITY_STEPS: QualityStep[] = [
   {
+    name: 'prebuild',
+    description: 'Pre-build cache cleanup and verification',
+    command: 'tsx scripts/pre-build.ts',
+    required: true,
+    timeout: 30000,
+  },
+  {
     name: 'lint',
     description: 'Code linting and formatting',
     command: 'pnpm lint',
@@ -56,10 +63,17 @@ const QUALITY_STEPS: QualityStep[] = [
   },
   {
     name: 'build',
-    description: 'Package builds',
-    command: 'pnpm build',
+    description: 'Package builds with enhanced verification',
+    command: 'pnpm -r build',
     required: true,
     timeout: 180000,
+  },
+  {
+    name: 'postbuild',
+    description: 'Build output verification',
+    command: 'tsx scripts/verify-build.ts',
+    required: true,
+    timeout: 30000,
   },
   {
     name: 'check:types',
@@ -80,15 +94,22 @@ const QUALITY_STEPS: QualityStep[] = [
 class QualityGate {
   private startTime: number;
   private stepResults: Array<{ step: QualityStep; success: boolean; duration: number; error?: string }> = [];
+  private simpleMode: boolean;
 
-  constructor() {
+  constructor(simpleMode = false) {
     this.startTime = performance.now();
+    this.simpleMode = simpleMode;
   }
 
   async run(): Promise<void> {
-    console.log('🚀 Starting MCP Server Framework Quality Gate\n');
+    const mode = this.simpleMode ? 'Simple' : 'Full';
+    console.log(`🚀 Starting MCP Server Framework Quality Gate (${mode} Mode)\n`);
 
-    for (const step of QUALITY_STEPS) {
+    const stepsToRun = this.simpleMode
+      ? QUALITY_STEPS.filter(step => !['check:types', 'docs:generate'].includes(step.name))
+      : QUALITY_STEPS;
+
+    for (const step of stepsToRun) {
       await this.runStep(step);
     }
 
@@ -168,7 +189,8 @@ class QualityGate {
 
 // Run the quality gate
 if (require.main === module) {
-  const gate = new QualityGate();
+  const simpleMode = process.argv.includes('--simple');
+  const gate = new QualityGate(simpleMode);
   gate.run().catch((error) => {
     console.error('💥 Quality gate crashed:', error);
     process.exit(1);

@@ -26,6 +26,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
+      - name: Clean workspace
+        run: pnpm run clean
+
       - name: Build packages
         run: pnpm run build
 
