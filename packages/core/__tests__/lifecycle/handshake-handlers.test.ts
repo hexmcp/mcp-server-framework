@@ -219,6 +219,22 @@ describe('McpHandshakeHandlers', () => {
         result: null,
       });
     });
+
+    it('should handle shutdown request without id field', async () => {
+      await handlers.handleInitialize(VALID_INITIALIZE_REQUEST_WITH_ID);
+
+      const shutdownRequestWithoutId = {
+        params: { reason: 'Test shutdown without ID' },
+      };
+
+      const response = await handlers.handleShutdown(shutdownRequestWithoutId as any);
+
+      expect(response).toMatchObject({
+        jsonrpc: '2.0',
+        id: null,
+        result: null,
+      });
+    });
   });
 
   describe('request validation', () => {
