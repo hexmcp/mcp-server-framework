@@ -41,36 +41,32 @@ export class McpHandshakeHandlers {
   /**
    * Handle initialize request from client
    */
-  async handleInitialize(request: InitializeRequest & { id: string | number }): Promise<JsonRpcSuccess<InitializeResult> | JsonRpcError> {
+  async handleInitialize(request: InitializeRequest & { id?: string | number }): Promise<JsonRpcSuccess<InitializeResult> | JsonRpcError> {
+    const id = request.id ?? null;
+
     try {
-      // Validate request structure
       if (!request.params) {
-        return this._createErrorResponse(request.id, ErrorCode.InvalidParams, 'Missing required params in initialize request');
+        return this._createErrorResponse(id, ErrorCode.InvalidParams, 'Missing required params in initialize request');
       }
 
       if (!request.params.protocolVersion) {
-        return this._createErrorResponse(request.id, ErrorCode.InvalidParams, 'Missing required protocolVersion in initialize request');
+        return this._createErrorResponse(id, ErrorCode.InvalidParams, 'Missing required protocolVersion in initialize request');
       }
 
       if (!request.params.capabilities) {
-        return this._createErrorResponse(request.id, ErrorCode.InvalidParams, 'Missing required capabilities in initialize request');
+        return this._createErrorResponse(id, ErrorCode.InvalidParams, 'Missing required capabilities in initialize request');
       }
 
       const result = await this._lifecycleManager.initialize(request);
 
-      return this._createSuccessResponse(request.id, result);
+      return this._createSuccessResponse(id, result);
     } catch (error) {
       if (error instanceof AlreadyInitializedError) {
-        return this._createErrorResponse(request.id, ErrorCode.InvalidRequest, error.message);
+        return this._createErrorResponse(id, ErrorCode.InvalidRequest, error.message);
       }
 
       const message = error instanceof Error ? error.message : 'Initialization failed';
-      return this._createErrorResponse(
-        request.id,
-        ErrorCode.InternalError,
-        message,
-        error instanceof Error ? { stack: error.stack } : undefined
-      );
+      return this._createErrorResponse(id, ErrorCode.InternalError, message, error instanceof Error ? { stack: error.stack } : undefined);
     }
   }
 
@@ -98,20 +94,17 @@ export class McpHandshakeHandlers {
    * Note: The current MCP specification doesn't define a shutdown request,
    * but this provides a framework for future extension
    */
-  async handleShutdown(request: { id: string | number; params?: { reason?: string } }): Promise<JsonRpcSuccess<null> | JsonRpcError> {
+  async handleShutdown(request: { id?: string | number; params?: { reason?: string } }): Promise<JsonRpcSuccess<null> | JsonRpcError> {
+    const id = request.id ?? null;
+
     try {
       const reason = request.params?.reason || 'Client requested shutdown';
       await this._lifecycleManager.shutdown(reason);
 
-      return this._createSuccessResponse(request.id, null);
+      return this._createSuccessResponse(id, null);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Shutdown failed';
-      return this._createErrorResponse(
-        request.id,
-        ErrorCode.InternalError,
-        message,
-        error instanceof Error ? { stack: error.stack } : undefined
-      );
+      return this._createErrorResponse(id, ErrorCode.InternalError, message, error instanceof Error ? { stack: error.stack } : undefined);
     }
   }
 

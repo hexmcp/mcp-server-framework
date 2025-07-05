@@ -13,6 +13,7 @@ import {
   MISSING_PROTOCOL_VERSION_REQUEST,
   SHUTDOWN_REQUEST,
   SHUTDOWN_REQUEST_NO_REASON,
+  VALID_INITIALIZE_REQUEST,
   VALID_INITIALIZE_REQUEST_WITH_ID,
   VALID_INITIALIZED_NOTIFICATION,
 } from '../fixtures/handshake-fixtures';
@@ -121,6 +122,47 @@ describe('McpHandshakeHandlers', () => {
         error: {
           code: -32600,
           message: 'Server already initialized. Cannot initialize again.',
+        },
+      });
+    });
+
+    it('should handle initialize request without id field', async () => {
+      const response = await handlers.handleInitialize(VALID_INITIALIZE_REQUEST as any);
+
+      expect(response).toMatchObject({
+        jsonrpc: '2.0',
+        id: null,
+        result: {
+          protocolVersion: VALID_INITIALIZE_REQUEST.params.protocolVersion,
+          capabilities: expect.any(Object),
+          serverInfo: {
+            name: 'MCP Server Framework',
+            version: '1.0.0',
+          },
+        },
+      });
+
+      expect(handlers.isInitialized()).toBe(true);
+      expect(handlers.isReady()).toBe(true);
+      expect(handlers.getCurrentState()).toBe(LifecycleState.READY);
+    });
+
+    it('should handle error response without id field', async () => {
+      const requestWithoutId = {
+        method: 'initialize',
+        params: {
+          protocolVersion: '2025-06-18',
+        },
+      };
+
+      const response = await handlers.handleInitialize(requestWithoutId as any);
+
+      expect(response).toMatchObject({
+        jsonrpc: '2.0',
+        id: null,
+        error: {
+          code: -32602,
+          message: 'Missing required capabilities in initialize request',
         },
       });
     });
