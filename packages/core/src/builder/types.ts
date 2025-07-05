@@ -53,6 +53,22 @@ export interface McpServerBuilder {
    * @param name - Unique identifier for the tool
    * @param definition - Tool configuration excluding the name
    * @returns The builder instance for chaining
+   *
+   * @example Simple tool with automatic transport
+   * ```typescript
+   * const server = createMcpKitServer()
+   *   .tool('greet', {
+   *     description: 'Greet a user',
+   *     parameters: {
+   *       type: 'object',
+   *       properties: { name: { type: 'string' } }
+   *     },
+   *     handler: async ({ name }) => ({
+   *       content: [{ type: 'text', text: `Hello, ${name}!` }]
+   *     })
+   *   })
+   *   .listen(); // StdioTransport automatically added
+   * ```
    */
   tool(name: string, definition: Omit<ToolDefinition, 'name'>): McpServerBuilder;
 

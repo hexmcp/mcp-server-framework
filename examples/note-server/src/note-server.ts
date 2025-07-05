@@ -7,7 +7,6 @@ import {
   createStderrLogger,
   createStreamingInfoMiddleware,
 } from '@hexmcp/core';
-import { StdioTransport } from '@hexmcp/transport-stdio';
 import { summarizeNotePrompt } from './handlers/prompts.js';
 import { notesResource } from './handlers/resources.js';
 import { addNoteTool } from './handlers/tools.js';
@@ -30,14 +29,13 @@ const server = createMcpKitServer()
       level: process.env.LOG_LEVEL === 'debug' ? 'debug' : 'info',
       includeRequest: process.env.NODE_ENV === 'dev',
       includeResponse: process.env.NODE_ENV === 'dev',
-      // No custom logger - let the middleware automatically detect stdio transport
-      // and use stderr-only logging to prevent JSON-RPC interference
+      // No custom logger - the default StdioTransport automatically uses stderr
+      // for logging to prevent JSON-RPC interference
     })
   )
   .tool('addNote', addNoteTool)
   .resource('notes://**', notesResource)
   .prompt('summarizeNote', summarizeNotePrompt)
-  .transport(new StdioTransport())
   .listen();
 
 process.on('SIGINT', () => {
