@@ -183,7 +183,17 @@ class SurfaceLockManager {
 
   private async runApiExtractor(): Promise<void> {
     console.log('🔧 Running API Extractor...');
-    
+
+    const requiredDirs = [
+      'temp/api-reports/@hexmcp',
+      'temp/api-models/@hexmcp',
+      'temp/dts-rollups/@hexmcp'
+    ];
+
+    for (const dir of requiredDirs) {
+      execSync(`mkdir -p ${dir}`, { stdio: 'pipe' });
+    }
+
     try {
       execSync(`cd ${this.config.packagePath} && pnpm exec api-extractor run --local`, {
         stdio: 'inherit',

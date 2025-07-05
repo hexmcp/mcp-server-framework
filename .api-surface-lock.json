@@ -1,7 +1,7 @@
 {
   "analysis": {
     "packageName": "@hexmcp/core",
-    "packageVersion": "0.7.0",
+    "packageVersion": "0.8.0",
     "types": {
       "kind": "included"
     },
@@ -34,7 +34,7 @@
                 "File '/node_modules/@hexmcp/core/dist/index.d.ts' exists - use it as a name resolution result.",
                 "'package.json' has a 'peerDependencies' field.",
                 "Failed to find peerDependency 'typescript'.",
-                "======== Module name '@hexmcp/core' was successfully resolved to '/node_modules/@hexmcp/core/dist/index.d.ts' with Package ID '@hexmcp/core/dist/index.d.ts@0.7.0'. ========"
+                "======== Module name '@hexmcp/core' was successfully resolved to '/node_modules/@hexmcp/core/dist/index.d.ts' with Package ID '@hexmcp/core/dist/index.d.ts@0.8.0'. ========"
               ]
             },
             "implementationResolution": {
@@ -86,7 +86,7 @@
                 "File '/node_modules/@hexmcp/core/dist/index.tsx' does not exist.",
                 "Failed to resolve under condition 'import'.",
                 "Exiting conditional exports.",
-                "======== Module name '@hexmcp/core' was successfully resolved to '/node_modules/@hexmcp/core/dist/index.js' with Package ID '@hexmcp/core/dist/index.js@0.7.0'. ========"
+                "======== Module name '@hexmcp/core' was successfully resolved to '/node_modules/@hexmcp/core/dist/index.js' with Package ID '@hexmcp/core/dist/index.js@0.8.0'. ========"
               ]
             },
             "files": [
@@ -143,7 +143,7 @@
                 "Failed to find peerDependency 'typescript'.",
                 "Resolved under condition 'types'.",
                 "Exiting conditional exports.",
-                "======== Module name '@hexmcp/core' was successfully resolved to '/node_modules/@hexmcp/core/dist/index.d.ts' with Package ID '@hexmcp/core/dist/index.d.ts@0.7.0'. ========"
+                "======== Module name '@hexmcp/core' was successfully resolved to '/node_modules/@hexmcp/core/dist/index.d.ts' with Package ID '@hexmcp/core/dist/index.d.ts@0.8.0'. ========"
               ]
             },
             "files": [
@@ -198,7 +198,7 @@
                 "File '/node_modules/@hexmcp/core/dist/index.d.ts' exists - use it as a name resolution result.",
                 "Resolved under condition 'types'.",
                 "Exiting conditional exports.",
-                "======== Module name '@hexmcp/core' was successfully resolved to '/node_modules/@hexmcp/core/dist/index.d.ts' with Package ID '@hexmcp/core/dist/index.d.ts@0.7.0'. ========"
+                "======== Module name '@hexmcp/core' was successfully resolved to '/node_modules/@hexmcp/core/dist/index.d.ts' with Package ID '@hexmcp/core/dist/index.d.ts@0.8.0'. ========"
               ]
             },
             "implementationResolution": {
@@ -251,7 +251,7 @@
                 "File '/node_modules/@hexmcp/core/dist/index.js.ts' does not exist.",
                 "File '/node_modules/@hexmcp/core/dist/index.js.tsx' does not exist.",
                 "Directory '/node_modules/@hexmcp/core/dist/index.js' does not exist, skipping all lookups in it.",
-                "======== Module name '@hexmcp/core' was successfully resolved to '/node_modules/@hexmcp/core/dist/index.js' with Package ID '@hexmcp/core/dist/index.js@0.7.0'. ========"
+                "======== Module name '@hexmcp/core' was successfully resolved to '/node_modules/@hexmcp/core/dist/index.js' with Package ID '@hexmcp/core/dist/index.js@0.8.0'. ========"
               ]
             },
             "files": [
@@ -308,7 +308,7 @@
                 "Failed to find peerDependency 'typescript'.",
                 "Resolved under condition 'types'.",
                 "Exiting conditional exports.",
-                "======== Module name '@hexmcp/core' was successfully resolved to '/node_modules/@hexmcp/core/dist/index.d.ts' with Package ID '@hexmcp/core/dist/index.d.ts@0.7.0'. ========"
+                "======== Module name '@hexmcp/core' was successfully resolved to '/node_modules/@hexmcp/core/dist/index.d.ts' with Package ID '@hexmcp/core/dist/index.d.ts@0.8.0'. ========"
               ]
             },
             "implementationResolution": {
@@ -365,7 +365,7 @@
                 "Directory '/node_modules/@hexmcp/core/dist/index.js' does not exist, skipping all lookups in it.",
                 "File '/node_modules/@hexmcp/core/index.ts' does not exist.",
                 "File '/node_modules/@hexmcp/core/index.tsx' does not exist.",
-                "======== Module name '@hexmcp/core' was successfully resolved to '/node_modules/@hexmcp/core/dist/index.js' with Package ID '@hexmcp/core/dist/index.js@0.7.0'. ========"
+                "======== Module name '@hexmcp/core' was successfully resolved to '/node_modules/@hexmcp/core/dist/index.js' with Package ID '@hexmcp/core/dist/index.js@0.8.0'. ========"
               ]
             },
             "files": [
@@ -447,7 +447,7 @@
                 "Directory '/node_modules/@types' does not exist, skipping all lookups in it.",
                 "Scoped package detected, looking in 'hexmcp__core/package.json'",
                 "File name '/node_modules/@types/hexmcp__core/package.json' has a '.json' extension - stripping it.",
-                "======== Module name '@hexmcp/core/package.json' was successfully resolved to '/node_modules/@hexmcp/core/package.json' with Package ID '@hexmcp/core/package.json@0.7.0'. ========"
+                "======== Module name '@hexmcp/core/package.json' was successfully resolved to '/node_modules/@hexmcp/core/package.json' with Package ID '@hexmcp/core/package.json@0.8.0'. ========"
               ]
             },
             "implementationResolution": {
@@ -479,7 +479,7 @@
                 "Using 'exports' subpath './package.json' with target './package.json'.",
                 "File name '/node_modules/@hexmcp/core/package.json' has a '.json' extension - stripping it.",
                 "Export specifier './package.json' does not exist in package.json scope at path '/node_modules/@hexmcp/core'.",
-                "======== Module name '@hexmcp/core/package.json' was successfully resolved to '/node_modules/@hexmcp/core/package.json' with Package ID '@hexmcp/core/package.json@0.7.0'. ========"
+                "======== Module name '@hexmcp/core/package.json' was successfully resolved to '/node_modules/@hexmcp/core/package.json' with Package ID '@hexmcp/core/package.json@0.8.0'. ========"
               ]
             },
             "files": [
@@ -515,7 +515,7 @@
                 "Using 'exports' subpath './package.json' with target './package.json'.",
                 "File name '/node_modules/@hexmcp/core/package.json' has a '.json' extension - stripping it.",
                 "File '/node_modules/@hexmcp/core/package.json' exists - use it as a name resolution result.",
-                "======== Module name '@hexmcp/core/package.json' was successfully resolved to '/node_modules/@hexmcp/core/package.json' with Package ID '@hexmcp/core/package.json@0.7.0'. ========"
+                "======== Module name '@hexmcp/core/package.json' was successfully resolved to '/node_modules/@hexmcp/core/package.json' with Package ID '@hexmcp/core/package.json@0.8.0'. ========"
               ]
             },
             "implementationResolution": {
@@ -538,7 +538,7 @@
                 "Using 'exports' subpath './package.json' with target './package.json'.",
                 "File name '/node_modules/@hexmcp/core/package.json' has a '.json' extension - stripping it.",
                 "File '/node_modules/@hexmcp/core/package.json' exists - use it as a name resolution result.",
-                "======== Module name '@hexmcp/core/package.json' was successfully resolved to '/node_modules/@hexmcp/core/package.json' with Package ID '@hexmcp/core/package.json@0.7.0'. ========"
+                "======== Module name '@hexmcp/core/package.json' was successfully resolved to '/node_modules/@hexmcp/core/package.json' with Package ID '@hexmcp/core/package.json@0.8.0'. ========"
               ]
             },
             "files": [
@@ -589,7 +589,7 @@
                 "Directory '/node_modules/@types' does not exist, skipping all lookups in it.",
                 "Scoped package detected, looking in 'hexmcp__core/package.json'",
                 "File name '/node_modules/@types/hexmcp__core/package.json' has a '.json' extension - stripping it.",
-                "======== Module name '@hexmcp/core/package.json' was successfully resolved to '/node_modules/@hexmcp/core/package.json' with Package ID '@hexmcp/core/package.json@0.7.0'. ========"
+                "======== Module name '@hexmcp/core/package.json' was successfully resolved to '/node_modules/@hexmcp/core/package.json' with Package ID '@hexmcp/core/package.json@0.8.0'. ========"
               ]
             },
             "implementationResolution": {
@@ -622,7 +622,7 @@
                 "File name '/node_modules/@hexmcp/core/package.json/dist/index.js' has a '.js' extension - stripping it.",
                 "Loading module as file / folder, candidate module location '/node_modules/@hexmcp/core/package.json/dist/index.js', target file types: TypeScript.",
                 "File name '/node_modules/@hexmcp/core/package.json/dist/index.js' has a '.js' extension - stripping it.",
-                "======== Module name '@hexmcp/core/package.json' was successfully resolved to '/node_modules/@hexmcp/core/package.json' with Package ID '@hexmcp/core/package.json@0.7.0'. ========"
+                "======== Module name '@hexmcp/core/package.json' was successfully resolved to '/node_modules/@hexmcp/core/package.json' with Package ID '@hexmcp/core/package.json@0.8.0'. ========"
               ]
             },
             "files": [
@@ -676,7 +676,7 @@
                 "Directory '/node_modules/@types' does not exist, skipping all lookups in it.",
                 "Scoped package detected, looking in 'hexmcp__core/package.json'",
                 "File name '/node_modules/@types/hexmcp__core/package.json' has a '.json' extension - stripping it.",
-                "======== Module name '@hexmcp/core/package.json' was successfully resolved to '/node_modules/@hexmcp/core/package.json' with Package ID '@hexmcp/core/package.json@0.7.0'. ========"
+                "======== Module name '@hexmcp/core/package.json' was successfully resolved to '/node_modules/@hexmcp/core/package.json' with Package ID '@hexmcp/core/package.json@0.8.0'. ========"
               ]
             },
             "implementationResolution": {
@@ -711,7 +711,7 @@
                 "File name '/node_modules/@hexmcp/core/package.json/dist/index.js' has a '.js' extension - stripping it.",
                 "Loading module as file / folder, candidate module location '/node_modules/@hexmcp/core/package.json/dist/index.js', target file types: TypeScript.",
                 "File name '/node_modules/@hexmcp/core/package.json/dist/index.js' has a '.js' extension - stripping it.",
-                "======== Module name '@hexmcp/core/package.json' was successfully resolved to '/node_modules/@hexmcp/core/package.json' with Package ID '@hexmcp/core/package.json@0.7.0'. ========"
+                "======== Module name '@hexmcp/core/package.json' was successfully resolved to '/node_modules/@hexmcp/core/package.json' with Package ID '@hexmcp/core/package.json@0.8.0'. ========"
               ]
             },
             "files": [
