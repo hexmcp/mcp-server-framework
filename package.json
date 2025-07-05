@@ -20,7 +20,6 @@
     "clean": "pnpm -r clean && rm -rf docs/api temp && find . -name '*.tsbuildinfo' -delete",
     "clean:build": "pnpm clean && pnpm build",
     "check:types": "tsx scripts/surface-lock.ts validate",
-    "update:surface": "tsx scripts/surface-lock.ts generate",
     "docs:generate": "tsx scripts/docs-generator.ts",
     "docs:clean": "rm -rf docs/api",
     "quality:gate": "tsx scripts/quality-gate.ts",
@@ -28,7 +27,10 @@
     "changeset": "changeset",
     "version-packages": "changeset version",
     "publish-packages": "changeset publish",
-    "version:dry": "changeset version --snapshot dev && changeset status"
+    "version:dry": "changeset version --snapshot dev && changeset status",
+    "update:surface": "tsx scripts/surface-lock.ts generate",
+    "update:api-reports": "tsx scripts/surface-lock.ts report",
+    "validate:surface": "tsx scripts/surface-lock.ts validate"
   },
   "keywords": [
     "mcp",
@@ -55,7 +57,6 @@
     "@changesets/cli": "^2.29.5",
     "@commitlint/cli": "^19.8.1",
     "@commitlint/config-conventional": "^19.8.1",
-    "@microsoft/api-extractor": "^7.52.8",
     "@types/jest": "^30.0.0",
     "@types/node": "^24.0.7",
     "husky": "^9.1.7",
