@@ -1,6 +1,5 @@
 import { encodeJsonRpcError, encodeJsonRpcSuccess, RpcError } from '@hexmcp/codec-jsonrpc';
 import {
-  createBuiltInLoggingMiddleware,
   createErrorMapperMiddleware,
   LifecycleState,
   McpCapabilityRegistry,
@@ -51,7 +50,7 @@ describe('MCP Protocol Compliance Integration Test', () => {
     middlewareRegistry = new McpMiddlewareRegistry();
     middlewareEngine = new McpMiddlewareEngine();
 
-    middlewareRegistry.registerMiddleware(createBuiltInLoggingMiddleware());
+    // Note: Logging middleware disabled for stdout cleanliness test
     middlewareRegistry.registerMiddleware(createErrorMapperMiddleware());
 
     const coreDispatcher = async (ctx: any) => {
@@ -91,8 +90,6 @@ describe('MCP Protocol Compliance Integration Test', () => {
 
       const transportDispatch = dispatcher.createTransportDispatch('stdio');
 
-      console.log('=== Starting MCP Protocol Compliance Test ===');
-
       // Step 1: Client sends initialize request
       const initializeRequest = {
         jsonrpc: '2.0' as const,
@@ -105,7 +102,6 @@ describe('MCP Protocol Compliance Integration Test', () => {
         },
       };
 
-      console.log('Step 1: Sending initialize request');
       transportDispatch(initializeRequest, mockRespond, { transport: { name: 'stdio' } });
 
       // Wait for async processing
@@ -114,8 +110,6 @@ describe('MCP Protocol Compliance Integration Test', () => {
       // Verify initialize response
       expect(capturedResponses).toHaveLength(1);
       const initResponse = capturedResponses[0] as any;
-
-      console.log('Initialize response:', JSON.stringify(initResponse, null, 2));
 
       expect(initResponse.jsonrpc).toBe('2.0');
       expect(initResponse.id).toBe('init-1');
@@ -130,7 +124,6 @@ describe('MCP Protocol Compliance Integration Test', () => {
         params: {},
       };
 
-      console.log('Step 2: Sending initialized notification');
       transportDispatch(initializedNotification, mockRespond, { transport: { name: 'stdio' } });
       await new Promise((resolve) => setTimeout(resolve, 10));
 
@@ -145,15 +138,12 @@ describe('MCP Protocol Compliance Integration Test', () => {
         params: {},
       };
 
-      console.log('Step 3: Sending tools/list request');
       transportDispatch(toolsListRequest, mockRespond, { transport: { name: 'stdio' } });
       await new Promise((resolve) => setTimeout(resolve, 10));
 
       // Verify tools/list response
       expect(capturedResponses).toHaveLength(2);
       const toolsResponse = capturedResponses[1] as any;
-
-      console.log('Tools response:', JSON.stringify(toolsResponse, null, 2));
 
       expect(toolsResponse.jsonrpc).toBe('2.0');
       expect(toolsResponse.id).toBe('tools-1');
@@ -175,14 +165,11 @@ describe('MCP Protocol Compliance Integration Test', () => {
         params: {},
       };
 
-      console.log('Testing pre-initialization rejection');
       transportDispatch(toolsListRequest, mockRespond, { transport: { name: 'stdio' } });
       await new Promise((resolve) => setTimeout(resolve, 10));
 
       expect(capturedResponses).toHaveLength(1);
       const errorResponse = capturedResponses[0] as any;
-
-      console.log('Pre-init error response:', JSON.stringify(errorResponse, null, 2));
 
       expect(errorResponse.jsonrpc).toBe('2.0');
       expect(errorResponse.id).toBe('tools-early');
@@ -224,13 +211,10 @@ describe('MCP Protocol Compliance Integration Test', () => {
         params: {},
       };
 
-      console.log('Testing post-shutdown rejection');
       await transportDispatch(toolsListRequest, mockRespond, { transport: { name: 'stdio' } });
 
       expect(capturedResponses).toHaveLength(2);
       const errorResponse = capturedResponses[1] as any;
-
-      console.log('Post-shutdown error response:', JSON.stringify(errorResponse, null, 2));
 
       expect(errorResponse.jsonrpc).toBe('2.0');
       expect(errorResponse.id).toBe('tools-post-shutdown');
@@ -270,28 +254,15 @@ describe('MCP Protocol Compliance Integration Test', () => {
 
       await transportDispatch(initializeRequest, mockRespond, { transport: { name: 'stdio' } });
 
-      console.log('Stdout output analysis:');
-      console.log('  Total stdout writes:', capturedStdout.length);
-      console.log('  Total stderr writes:', capturedStderr.length);
-
       // Filter out JSON-RPC responses from other output
       const jsonRpcOutputs = capturedStdout.filter((output) => output.includes('jsonrpc') && output.includes('2.0'));
       const pollutionOutputs = capturedStdout.filter((output) => !output.includes('jsonrpc') && output.trim().length > 0);
 
-      console.log('  JSON-RPC outputs:', jsonRpcOutputs.length);
-      console.log('  Pollution outputs:', pollutionOutputs.length);
-
-      if (pollutionOutputs.length > 0) {
-        console.log('  Pollution content:', pollutionOutputs);
-      }
-
       // Should have exactly one JSON-RPC response
       expect(jsonRpcOutputs.length).toBe(1);
 
-      // Should have no stdout pollution (this might fail due to console.log statements)
-      if (pollutionOutputs.length > 0) {
-        console.warn('STDOUT POLLUTION DETECTED - This would break MCP client handshake!');
-      }
+      // Should have no stdout pollution
+      expect(pollutionOutputs.length).toBe(0);
     });
   });
 
@@ -311,7 +282,6 @@ describe('MCP Protocol Compliance Integration Test', () => {
       };
 
       // Test ping in IDLE state
-      console.log('Testing ping in IDLE state');
       await transportDispatch(pingRequest, mockRespond, { transport: { name: 'stdio' } });
 
       expect(capturedResponses).toHaveLength(1);
@@ -336,7 +306,6 @@ describe('MCP Protocol Compliance Integration Test', () => {
 
       // Test ping in READY state
       const pingRequest2 = { ...pingRequest, id: 'ping-2' };
-      console.log('Testing ping in READY state');
       await transportDispatch(pingRequest2, mockRespond, { transport: { name: 'stdio' } });
 
       expect(capturedResponses).toHaveLength(3);

@@ -48,8 +48,9 @@ class DefaultLogger implements Logger {
       ...meta,
     };
 
-    // biome-ignore lint/suspicious/noConsole: Structured logging output
-    console.log(JSON.stringify(logData, null, 2));
+    // Use stderr to avoid stdout pollution for stdio transport
+    // biome-ignore lint/suspicious/noConsole: Structured logging output to stderr
+    console.error(JSON.stringify(logData, null, 2));
   }
 }
 
@@ -323,8 +324,9 @@ function mapErrorToRpcError(error: unknown, ctx: RequestContext, options?: Error
     try {
       return options.customErrorMapper(error, ctx);
     } catch (mapperError) {
-      // biome-ignore lint/suspicious/noConsole: Error fallback logging
-      console.warn('Custom error mapper failed, falling back to default mapping:', mapperError);
+      // Use stderr to avoid stdout pollution for stdio transport
+      // biome-ignore lint/suspicious/noConsole: Error fallback logging to stderr
+      console.error('Custom error mapper failed, falling back to default mapping:', mapperError);
     }
   }
 
@@ -554,8 +556,9 @@ export function createErrorMapperMiddleware(options: ErrorMapperOptions = {}): M
         try {
           mergedOptions.onError(error, ctx, mappedError);
         } catch (hookError) {
-          // biome-ignore lint/suspicious/noConsole: Error hook failure logging
-          console.warn('Error in onError hook:', hookError);
+          // Use stderr to avoid stdout pollution for stdio transport
+          // biome-ignore lint/suspicious/noConsole: Error hook failure logging to stderr
+          console.error('Error in onError hook:', hookError);
         }
       }
     }

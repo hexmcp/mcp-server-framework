@@ -102,6 +102,71 @@ describe('McpRequestGate', () => {
     it('should reject initialized notification (not ready yet)', () => {
       expect(requestGate.canProcessRequest('notifications/initialized')).toBe(false);
     });
+
+    it('should provide specific error messages for INITIALIZING state violations', () => {
+      // Test initialize request during initialization
+      const initError = requestGate.getValidationError('initialize');
+      expect(initError).toMatchObject({
+        code: -32600,
+        message: 'Server already initialized. Cannot initialize again.',
+      });
+
+      // Test operational request during initialization
+      const operationalError = requestGate.getValidationError('tools/list');
+      expect(operationalError).toMatchObject({
+        code: -32000,
+        message: expect.stringContaining("Operational request 'tools/list' requires server to be in ready state"),
+        data: {
+          currentState: LifecycleState.INITIALIZING,
+          operation: 'tools/list',
+        },
+      });
+
+      // Test initialized notification during initialization
+      const notificationError = requestGate.getValidationError('notifications/initialized');
+      expect(notificationError).toMatchObject({
+        code: -32000,
+        message: expect.stringContaining('Initialized notification can only be sent when server is ready'),
+        data: {
+          currentState: LifecycleState.INITIALIZING,
+          operation: 'notifications/initialized',
+        },
+      });
+    });
+
+    it('should handle rapid request validation during INITIALIZING state', () => {
+      // Simulate rapid requests during initialization
+      const methods = ['tools/list', 'prompts/list', 'resources/list', 'ping', 'initialize'];
+
+      for (let i = 0; i < 100; i++) {
+        for (const method of methods) {
+          const canProcess = requestGate.canProcessRequest(method);
+          const error = requestGate.getValidationError(method);
+
+          if (method === 'ping') {
+            expect(canProcess).toBe(true);
+            expect(error).toBeNull();
+          } else if (method === 'initialize') {
+            expect(canProcess).toBe(false);
+            expect(error).not.toBeNull();
+          } else {
+            expect(canProcess).toBe(false);
+            expect(error).not.toBeNull();
+          }
+        }
+      }
+    });
+
+    it('should provide validation summary for INITIALIZING state', () => {
+      const summary = requestGate.getValidationSummary();
+
+      expect(summary).toMatchObject({
+        currentState: LifecycleState.INITIALIZING,
+        isInitialized: true, // INITIALIZING state means initialized=true
+        isReady: false,
+        allowedCategories: [RequestCategory.ALWAYS_ALLOWED],
+      });
+    });
   });
 
   describe('request validation in READY state', () => {
