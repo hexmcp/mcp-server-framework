@@ -1,4 +1,15 @@
 import type { ServerCapabilities } from '@modelcontextprotocol/sdk/types.js';
+import type { ContextLogger } from '../middleware/logger';
+
+function hasContextLogger(context?: HandlerContext): context is HandlerContext & { state: { logger: ContextLogger } } {
+  return !!(
+    context?.state &&
+    typeof (context.state as Record<string, unknown>).logger === 'object' &&
+    (context.state as Record<string, unknown>).logger !== null &&
+    'warn' in ((context.state as Record<string, unknown>).logger as object)
+  );
+}
+
 import type { Registry, RegistryMetadata, RegistryStats } from './base';
 import { REGISTRY_KINDS } from './base';
 import type { HandlerContext, ResourceDefinition, ResourceProvider } from './types';
@@ -145,10 +156,18 @@ export class InMemoryResourceProvider implements ResourceProvider {
  *   },
  *   hooks: {
  *     beforeGet: async (uri, context) => {
- *       console.log(`Fetching ${uri} for user ${context.user?.id}`);
+ *       context.logger?.info('Resource fetch requested', {
+ *         uri,
+ *         userId: context.user?.id,
+ *         method: context.request.method
+ *       });
  *     },
  *     afterGet: async (result, context) => {
- *       console.log(`Successfully fetched resource`);
+ *       context.logger?.info('Resource fetched successfully', {
+ *         uri: result.uri,
+ *         userId: context.user?.id,
+ *         method: context.request.method
+ *       });
  *     }
  *   }
  * });
@@ -225,7 +244,11 @@ export class InMemoryResourceProvider implements ResourceProvider {
  *             const searchResults = await definition.provider.search(query, context);
  *             results.push(...searchResults.resources);
  *           } catch (error) {
- *             console.warn(`Search failed for ${pattern}: ${error.message}`);
+ *             context.logger?.warn('Resource search failed', {
+ *               pattern,
+ *               error: error.message,
+ *               searchQuery: query
+ *             });
  *           }
  *         }
  *       }
@@ -488,8 +511,17 @@ export class ResourceRegistry implements Registry {
         allResources.push(...result.resources);
       } catch (error) {
         if (typeof process !== 'undefined' && process.env.NODE_ENV !== 'test') {
-          // biome-ignore lint/suspicious/noConsole: Intentional logging for provider errors
-          console.warn(`Failed to list resources from provider '${pattern}':`, error);
+          if (hasContextLogger(context)) {
+            context.state.logger.warn('Resource provider failed during listing', {
+              pattern,
+              errorMessage: error instanceof Error ? error.message : String(error),
+              errorStack: error instanceof Error ? error.stack : undefined,
+            });
+          } else {
+            const { createStderrLogger } = await import('../utils/logger.js');
+            const fallbackLogger = createStderrLogger();
+            fallbackLogger.warn(`Resource provider failed during listing: ${pattern}`, undefined);
+          }
         }
       }
     }

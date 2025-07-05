@@ -59,6 +59,7 @@ import {
   MiddlewareDispatcher,
   type Middleware,
   type RequestContext,
+  type LoggerRequestContext,
 } from '@hexmcp/core';
 
 // Create middleware components
@@ -67,13 +68,24 @@ const middlewareEngine = new McpMiddlewareEngine();
 
 // Define custom middleware
 const loggingMiddleware: Middleware = async (ctx, next) => {
-  console.log(`Request: ${ctx.request.method}`);
+  const loggerCtx = ctx as LoggerRequestContext;
+
+  loggerCtx.log.info('Request started', {
+    method: ctx.request.method,
+    requestId: ctx.request.id,
+    transport: ctx.transport.name
+  });
   const start = Date.now();
-  
+
   await next();
-  
+
   const duration = Date.now() - start;
-  console.log(`Response: ${duration}ms`);
+  loggerCtx.log.info('Request completed', {
+    method: ctx.request.method,
+    requestId: ctx.request.id,
+    durationMs: duration,
+    transport: ctx.transport.name
+  });
 };
 
 const authMiddleware: Middleware = async (ctx, next) => {
@@ -158,8 +170,10 @@ const manager = new McpLifecycleManager(capabilityRegistry);
 await manager.initialize(initializeRequest);
 
 // Check state
-console.log(manager.currentState); // 'ready'
-console.log(manager.isReady); // true
+logger.info('Server state', {
+  currentState: manager.currentState, // 'ready'
+  isReady: manager.isReady // true
+});
 
 // Shutdown
 await manager.shutdown('Server shutdown requested');
@@ -180,7 +194,11 @@ if (gate.canProcessRequest('tools/list')) {
 // Get validation error details
 const error = gate.getValidationError('tools/list');
 if (error) {
-  console.log(`Error ${error.code}: ${error.message}`);
+  logger.warn('Request validation failed', {
+    code: error.code,
+    message: error.message,
+    method: 'tools/list'
+  });
 }
 ```
 
@@ -266,7 +284,11 @@ try {
   await engine.executeMiddleware(ctx, middleware, { timeout: 5000 });
 } catch (error) {
   if (error instanceof MiddlewareTimeoutError) {
-    console.log('Middleware execution timed out');
+    ctx.log.error('Middleware execution timed out', {
+      timeout: 5000,
+      method: ctx.request.method,
+      requestId: ctx.request.id
+    });
   }
 }
 
@@ -275,7 +297,12 @@ try {
   await engine.executeMiddleware(ctx, middleware, { maxDepth: 20 });
 } catch (error) {
   if (error.message.includes('Maximum call depth exceeded')) {
-    console.log('Middleware call stack too deep');
+    ctx.log.error('Middleware call stack too deep', {
+      maxDepth: 20,
+      method: ctx.request.method,
+      requestId: ctx.request.id,
+      error: error.message
+    });
   }
 }
 
@@ -296,8 +323,13 @@ try {
   await engine.executeMiddleware(ctx, middleware);
 } catch (error) {
   if (error instanceof MiddlewareError) {
-    console.log(`Middleware ${error.middlewareIndex} failed: ${error.message}`);
-    console.log('Caused by:', error.cause);
+    ctx.log.error('Middleware execution failed', {
+      middlewareIndex: error.middlewareIndex,
+      message: error.message,
+      cause: error.cause,
+      method: ctx.request.method,
+      requestId: ctx.request.id
+    });
   }
 }
 
@@ -306,7 +338,11 @@ try {
   await engine.executeMiddleware(ctx, [reentrantMiddleware]);
 } catch (error) {
   if (error instanceof ReentrantCallError) {
-    console.log('Re-entrant call detected');
+    ctx.log.error('Re-entrant call detected', {
+      method: ctx.request.method,
+      requestId: ctx.request.id,
+      error: error.message
+    });
   }
 }
 ```

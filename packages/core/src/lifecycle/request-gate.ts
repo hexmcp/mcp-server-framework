@@ -1,5 +1,5 @@
 import type { LifecycleManager, RequestGate } from './types';
-import { AlreadyInitializedError, LifecycleViolationError, NotInitializedError } from './types';
+import { AlreadyInitializedError, LifecycleViolationError, NotInitializedError, PostShutdownError } from './types';
 
 /**
  * Request categories for lifecycle validation
@@ -108,6 +108,13 @@ export class McpRequestGate implements RequestGate {
       return null;
     } catch (error) {
       if (error instanceof NotInitializedError) {
+        return {
+          code: error.code,
+          message: error.message,
+        };
+      }
+
+      if (error instanceof PostShutdownError) {
         return {
           code: error.code,
           message: error.message,
@@ -223,6 +230,9 @@ export class McpRequestGate implements RequestGate {
    */
   private _validateOperationalRequest(method: string): void {
     if (!this._lifecycleManager.isInitialized) {
+      if (this._lifecycleManager.hasBeenInitialized) {
+        throw new PostShutdownError(method);
+      }
       throw new NotInitializedError(method);
     }
 

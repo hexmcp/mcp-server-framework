@@ -13,16 +13,21 @@ import type { RegistryKind } from './base';
  * ```typescript
  * const trackedHandler = async (args: Record<string, unknown>, context: HandlerContext) => {
  *   const execution = context.execution;
+ *   const logger = context.logger; // Logger provided by middleware
+ *
  *   if (!execution) {
- *     console.warn('No execution context available');
+ *     logger.warn('No execution context available');
  *     return { content: [{ type: 'text', text: 'No tracking' }] };
  *   }
  *
- *   console.log(`Execution ID: ${execution.executionId}`);
- *   console.log(`Started at: ${execution.startTime.toISOString()}`);
- *
  *   const elapsed = Date.now() - execution.startTime.getTime();
- *   console.log(`Elapsed time: ${elapsed}ms`);
+ *
+ *   // Use structured logging instead of console
+ *   logger.info('Execution context tracked', {
+ *     executionId: execution.executionId,
+ *     startTime: execution.startTime.toISOString(),
+ *     elapsedMs: elapsed
+ *   });
  *
  *   return { content: [{ type: 'text', text: `Tracked execution ${execution.executionId}` }] };
  * };
@@ -47,7 +52,11 @@ import type { RegistryKind } from './base';
  *     return { content: [{ type: 'text', text: 'Task completed within timeout' }] };
  *   } catch (error) {
  *     if (error.message === 'Handler timeout') {
- *       console.error(`Handler ${execution?.executionId} timed out after ${timeout}ms`);
+ *       context.logger?.error('Handler execution timeout', {
+ *         executionId: execution?.executionId,
+ *         timeoutMs: timeout,
+ *         method: context.request.method
+ *       });
  *     }
  *     throw error;
  *   }
@@ -59,7 +68,10 @@ import type { RegistryKind } from './base';
  * const metadataTrackingHandler = async (args: Record<string, unknown>, context: HandlerContext) => {
  *   const execution = context.execution;
  *   if (!execution?.metadata) {
- *     console.warn('No metadata tracking available');
+ *     context.logger?.warn('No metadata tracking available', {
+ *       execution: execution?.id,
+ *       transport: context.transport.name
+ *     });
  *     return { content: [{ type: 'text', text: 'No metadata' }] };
  *   }
  *
@@ -122,9 +134,16 @@ export interface HandlerExecutionContext {
  *     throw new Error('Insufficient permissions');
  *   }
  *
- *   // Use execution context for tracing
+ *   // Use execution context for tracing with structured logging
  *   const executionId = context.execution?.executionId || 'unknown';
- *   console.log(`Executing tool ${method} with ID ${executionId}`);
+ *   const logger = context.logger; // Logger provided by middleware
+ *
+ *   logger.info('Tool execution started', {
+ *     method,
+ *     executionId,
+ *     userId: context.user?.id,
+ *     permissions: context.user?.permissions
+ *   });
  *
  *   return { content: [{ type: 'text', text: 'Tool executed successfully' }] };
  * };
@@ -173,17 +192,28 @@ export interface HandlerExecutionContext {
  *
  *   if (registryKind === 'tools') {
  *     // Tool-specific logic
- *     console.log('Executing tool with registry metadata:', registryMetadata);
+ *     context.logger?.info('Executing tool handler', {
+ *       registryKind,
+ *       registryMetadata,
+ *       method: context.request.method
+ *     });
  *   } else if (registryKind === 'prompts') {
  *     // Prompt-specific logic
- *     console.log('Executing prompt with registry metadata:', registryMetadata);
+ *     context.logger?.info('Executing prompt handler', {
+ *       registryKind,
+ *       registryMetadata,
+ *       method: context.request.method
+ *     });
  *   }
  *
  *   // Use transport information for protocol-specific handling
  *   const transportName = context.transport.name;
  *   if (transportName === 'stdio') {
  *     // Handle stdio-specific requirements
- *     console.log('Using stdio transport');
+ *     context.logger?.debug('Using stdio transport', {
+ *       transport: transportName,
+ *       method: context.request.method
+ *     });
  *   }
  *
  *   return { content: [{ type: 'text', text: `Handled by ${registryKind} registry` }] };
@@ -426,13 +456,26 @@ export type PromptContent = string | AsyncIterable<string>;
  *   ],
  *   hooks: {
  *     beforeExecution: async (args, context) => {
- *       console.log(`Starting research on ${args.topic} for user ${context.user?.id}`);
+ *       const logger = context.logger; // Logger provided by middleware
+ *       logger.info('Research task started', {
+ *         topic: args.topic,
+ *         userId: context.user?.id,
+ *         depth: args.depth
+ *       });
  *     },
  *     afterExecution: async (result, context) => {
- *       console.log(`Research completed, generated ${result.content.length} content blocks`);
+ *       const logger = context.logger; // Logger provided by middleware
+ *       logger.info('Research task completed', {
+ *         contentBlocks: result.content.length,
+ *         userId: context.user?.id
+ *       });
  *     },
  *     onError: async (error, context) => {
- *       console.error(`Research failed: ${error.message}`);
+ *       const logger = context.logger; // Logger provided by middleware
+ *       logger.error('Research task failed', {
+ *         error: error.message,
+ *         userId: context.user?.id
+ *       });
  *     }
  *   },
  *   handler: async (args) => {
@@ -641,10 +684,17 @@ export interface ToolResult {
  *   },
  *   hooks: {
  *     beforeExecution: async (args, context) => {
- *       console.log(`User ${context.user?.id} attempting to delete ${args.path}`);
+ *       context.logger?.info('File deletion requested', {
+ *         userId: context.user?.id,
+ *         filePath: args.path,
+ *         method: context.request.method
+ *       });
  *     },
  *     afterExecution: async (result, context) => {
- *       console.log('File deletion completed successfully');
+ *       context.logger?.info('File deletion completed successfully', {
+ *         userId: context.user?.id,
+ *         method: context.request.method
+ *       });
  *     }
  *   }
  * };
@@ -1050,16 +1100,28 @@ export interface ResourceChangeEvent {
  *   },
  *   hooks: {
  *     beforeGet: async (uri, context) => {
- *       console.log(`User ${context.user?.id} accessing ${uri}`);
+ *       context.logger?.info('Resource access requested', {
+ *         userId: context.user?.id,
+ *         uri,
+ *         method: context.request.method
+ *       });
  *       if (!context.user?.permissions?.includes('read:private')) {
  *         throw new Error('Insufficient permissions');
  *       }
  *     },
  *     afterGet: async (result, context) => {
- *       console.log(`Successfully retrieved resource: ${result.uri}`);
+ *       context.logger?.info('Resource retrieved successfully', {
+ *         uri: result.uri,
+ *         userId: context.user?.id,
+ *         method: context.request.method
+ *       });
  *     },
  *     onError: async (error, context) => {
- *       console.error(`Resource access failed: ${error.message}`);
+ *       context.logger?.error('Resource access failed', {
+ *         error: error.message,
+ *         userId: context.user?.id,
+ *         method: context.request.method
+ *       });
  *     }
  *   },
  *   provider: {

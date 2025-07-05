@@ -62,13 +62,23 @@ import type { HandlerContext, PromptContent, PromptDefinition } from './types';
  *   },
  *   hooks: {
  *     beforeExecution: async (args, context) => {
- *       console.log(`Starting computation for user ${context.user?.id}`);
+ *       context.logger?.info('Starting computation', {
+ *         userId: context.user?.id,
+ *         method: context.request.method
+ *       });
  *     },
  *     afterExecution: async (result, context) => {
- *       console.log(`Computation completed in ${context.execution?.duration}ms`);
+ *       context.logger?.info('Computation completed', {
+ *         durationMs: context.execution?.duration,
+ *         userId: context.user?.id
+ *       });
  *     },
  *     onError: async (error, context) => {
- *       console.error(`Computation failed: ${error.message}`);
+ *       context.logger?.error('Computation failed', {
+ *         error: error.message,
+ *         userId: context.user?.id,
+ *         method: context.request.method
+ *       });
  *     }
  *   },
  *   handler: async (args) => {
@@ -133,7 +143,11 @@ import type { HandlerContext, PromptContent, PromptDefinition } from './types';
  *         }
  *
  *         // Log request with trace ID from middleware
- *         console.log(`Authenticated request ${context.state.traceId}: ${args.query}`);
+ *         context.logger?.info('Authenticated request received', {
+ *           traceId: context.state.traceId,
+ *           query: args.query,
+ *           userId: context.user?.id
+ *         });
  *       },
  *       afterExecution: async (result, context) => {
  *         // Update metrics in middleware state
@@ -242,7 +256,10 @@ export class PromptRegistry implements Registry {
    *   { name: 'Alice' },
    *   { user: { id: 'user123' }, transport: { name: 'stdio' } }
    * );
-   * console.log(result.content); // [{ type: 'text', text: 'Hello, Alice!' }]
+   * logger.info('Prompt execution result', {
+   *   content: result.content,
+   *   promptName: 'greeting'
+   * });
    * ```
    *
    * @example Execute with timeout and metadata

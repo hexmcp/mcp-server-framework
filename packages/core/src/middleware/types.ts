@@ -45,8 +45,13 @@ import type { JsonRpcRequest, JsonRpcResponse } from '@hexmcp/codec-jsonrpc';
  * const loggingMiddleware: Middleware = async (ctx, next) => {
  *   await next();
  *
- *   // Access state from previous middleware
- *   console.log(`Request ${ctx.state.traceId} took ${ctx.state.duration}ms`);
+ *   // Access state from previous middleware and use structured logging
+ *   const logger = ctx.logger; // Logger provided by middleware
+ *   logger.info('Request completed', {
+ *     traceId: ctx.state.traceId,
+ *     durationMs: ctx.state.duration,
+ *     method: ctx.request.method
+ *   });
  * };
  * ```
  *
@@ -234,8 +239,12 @@ export interface StreamingRequestContext extends RequestContext {
  *   // Calculate duration
  *   ctx.state.duration = performance.now() - ctx.state.startTime;
  *
- *   // Log trace info
- *   console.log(`Trace ${ctx.state.traceId}: ${ctx.state.duration}ms`);
+ *   // Log trace info with structured logging
+ *   const logger = ctx.logger; // Logger provided by middleware
+ *   logger.info('Request trace completed', {
+ *     traceId: ctx.state.traceId,
+ *     durationMs: ctx.state.duration
+ *   });
  * };
  * ```
  *
@@ -259,7 +268,13 @@ export interface StreamingRequestContext extends RequestContext {
  *       // Exponential backoff
  *       const delay = Math.pow(2, attempt) * 100;
  *       await new Promise(resolve => setTimeout(resolve, delay));
- *       console.log(`Retry attempt ${attempt} after ${delay}ms`);
+ *
+ *       const logger = ctx.logger; // Logger provided by middleware
+ *       logger.warn('Request retry attempted', {
+ *         attempt,
+ *         delayMs: delay,
+ *         traceId: ctx.state.traceId
+ *       });
  *     }
  *   }
  * };
@@ -271,13 +286,22 @@ export interface StreamingRequestContext extends RequestContext {
  *   if (shouldApplyMiddleware) {
  *     // Apply middleware logic only for tool requests
  *     ctx.state.toolRequest = true;
- *     console.log('Processing tool request:', ctx.request.method);
+ *
+ *     const logger = ctx.logger; // Logger provided by middleware
+ *     logger.info('Tool request processing started', {
+ *       method: ctx.request.method,
+ *       traceId: ctx.state.traceId
+ *     });
  *   }
  *
  *   await next();
  *
  *   if (shouldApplyMiddleware) {
- *     console.log('Tool request completed');
+ *     const logger = ctx.logger; // Logger provided by middleware
+ *     logger.info('Tool request processing completed', {
+ *       method: ctx.request.method,
+ *       traceId: ctx.state.traceId
+ *     });
  *   }
  * };
  *

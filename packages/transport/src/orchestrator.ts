@@ -60,10 +60,15 @@ export class TransportOrchestrationError extends Error {
  *
  * try {
  *   await startAllTransports(registry, dispatch);
- *   console.log('All transports started successfully');
+ *   logger.info('All transports started successfully', {
+ *     transportCount: registry.size()
+ *   });
  * } catch (error) {
  *   if (error instanceof TransportOrchestrationError) {
- *     console.error('Some transports failed:', error.failures);
+ *     logger.error('Some transports failed to start', {
+ *       failures: error.failures,
+ *       failureCount: error.failures.length
+ *     });
  *   }
  * }
  *
@@ -139,10 +144,15 @@ export async function startAllTransports(registry: TransportRegistry, dispatch: 
  * ```typescript
  * try {
  *   await stopAllTransports(registry);
- *   console.log('All transports stopped successfully');
+ *   logger.info('All transports stopped successfully', {
+ *     transportCount: registry.size()
+ *   });
  * } catch (error) {
  *   if (error instanceof TransportOrchestrationError) {
- *     console.error('Some transports failed to stop:', error.failures);
+ *     logger.error('Some transports failed to stop', {
+ *       failures: error.failures,
+ *       failureCount: error.failures.length
+ *     });
  *   }
  * }
  *

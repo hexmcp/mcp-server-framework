@@ -24,7 +24,7 @@
     "test:coverage": "jest --coverage",
     "test-fixtures": "jest --testNamePattern='Fixture' --runInBand",
     "typecheck": "tsc --noEmit",
-    "clean": "rm -rf dist",
+    "clean": "rm -rf dist && rm -f *.tsbuildinfo",
     "update-snapshots": "tsx scripts/update-snapshots.ts",
     "update-snapshots:force": "UPDATE_SNAPSHOTS=true tsx scripts/update-snapshots.ts"
   },

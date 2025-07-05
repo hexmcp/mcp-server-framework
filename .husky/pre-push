@@ -1,7 +1,15 @@
-# Run comprehensive quality gate
+# Clean workspace to prevent stale cache issues
+echo "🧹 Cleaning workspace..."
+pnpm run clean
+
+# Run comprehensive quality gate with enhanced build system
 echo "🚀 Running MCP Server Framework Quality Gate..."
 pnpm run quality:gate:simple
 
 # Run fixture tests
 echo "🎯 Running fixture tests..."
 pnpm test-fixtures
+
+# Verify build integrity
+echo "🔍 Verifying build outputs..."
+tsx scripts/verify-build.ts

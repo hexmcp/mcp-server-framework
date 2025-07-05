@@ -13,8 +13,7 @@ import { createMockRequestContext, SAMPLE_JSON_RPC_REQUEST } from '../fixtures/m
 
 describe('Error Mapper Middleware', () => {
   let mockLogger: jest.Mocked<Logger>;
-  let consoleLogSpy: jest.SpyInstance;
-  let consoleWarnSpy: jest.SpyInstance;
+  let consoleErrorSpy: jest.SpyInstance;
 
   beforeEach(() => {
     mockLogger = {
@@ -24,8 +23,7 @@ describe('Error Mapper Middleware', () => {
       debug: jest.fn(),
       log: jest.fn(),
     };
-    consoleLogSpy = jest.spyOn(console, 'log').mockImplementation();
-    consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation();
+    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
   });
 
   afterEach(() => {
@@ -282,7 +280,7 @@ describe('Error Mapper Middleware', () => {
 
       await middleware(ctx, next);
 
-      expect(consoleWarnSpy).toHaveBeenCalledWith('Custom error mapper failed, falling back to default mapping:', expect.any(Error));
+      expect(consoleErrorSpy).toHaveBeenCalledWith('Custom error mapper failed, falling back to default mapping:', expect.any(Error));
       const response = ctx.response as any;
       expect(response.error.code).toBe(JSON_RPC_ERROR_CODES.INTERNAL_ERROR);
     });
@@ -301,8 +299,8 @@ describe('Error Mapper Middleware', () => {
 
       await middleware(ctx, next);
 
-      expect(consoleLogSpy).toHaveBeenCalled();
-      const logCall = consoleLogSpy.mock.calls[0][0];
+      expect(consoleErrorSpy).toHaveBeenCalled();
+      const logCall = consoleErrorSpy.mock.calls[0][0];
       const logEntry = JSON.parse(logCall);
       expect(logEntry.level).toBe('error');
       expect(logEntry.message).toBe('Middleware error caught by error mapper');
@@ -318,7 +316,7 @@ describe('Error Mapper Middleware', () => {
 
       await middleware(ctx, next);
 
-      expect(consoleLogSpy).not.toHaveBeenCalled();
+      expect(consoleErrorSpy).not.toHaveBeenCalled();
     });
 
     it('should use custom logger when provided', async () => {
@@ -349,7 +347,7 @@ describe('Error Mapper Middleware', () => {
 
       await middleware(ctx, next);
 
-      const logCall = consoleLogSpy.mock.calls[0][0];
+      const logCall = consoleErrorSpy.mock.calls[0][0];
       const logEntry = JSON.parse(logCall);
       expect(logEntry.context.requestId).toBe('test-123');
       expect(logEntry.context.method).toBe('test/method');
@@ -368,7 +366,7 @@ describe('Error Mapper Middleware', () => {
 
       await middleware(ctx, next);
 
-      const logCall = consoleLogSpy.mock.calls[0][0];
+      const logCall = consoleErrorSpy.mock.calls[0][0];
       const logEntry = JSON.parse(logCall);
       expect(logEntry.message).toContain('[LOW]');
       expect(logEntry.message).toContain('standard_error');
@@ -390,7 +388,7 @@ describe('Error Mapper Middleware', () => {
 
       await middleware(ctx, next);
 
-      const logCall = consoleLogSpy.mock.calls[0][0];
+      const logCall = consoleErrorSpy.mock.calls[0][0];
       const logEntry = JSON.parse(logCall);
       expect(logEntry.metadata.traceId).toBe('trace-123');
       expect(logEntry.metadata.spanId).toBe('span-456');
@@ -430,7 +428,7 @@ describe('Error Mapper Middleware', () => {
 
       await middleware(ctx, next);
 
-      expect(consoleWarnSpy).toHaveBeenCalledWith('Error in onError hook:', expect.any(Error));
+      expect(consoleErrorSpy).toHaveBeenCalledWith('Error in onError hook:', expect.any(Error));
       expect(ctx.response).toBeDefined();
     });
   });

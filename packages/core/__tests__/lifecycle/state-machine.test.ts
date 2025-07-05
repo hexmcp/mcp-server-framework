@@ -41,6 +41,10 @@ describe('McpLifecycleManager', () => {
       expect(lifecycleManager.initializeRequest).toBeNull();
       expect(lifecycleManager.initializeResult).toBeNull();
     });
+
+    it('should not have been initialized initially', () => {
+      expect(lifecycleManager.hasBeenInitialized).toBe(false);
+    });
   });
 
   describe('initialization', () => {
@@ -166,6 +170,18 @@ describe('McpLifecycleManager', () => {
       await Promise.all([shutdownPromise1, shutdownPromise2]);
       expect(lifecycleManager.currentState).toBe(LifecycleState.IDLE);
     });
+
+    it('should maintain hasBeenInitialized flag after shutdown', async () => {
+      expect(lifecycleManager.hasBeenInitialized).toBe(false);
+
+      await lifecycleManager.initialize(VALID_INITIALIZE_REQUEST);
+      expect(lifecycleManager.hasBeenInitialized).toBe(true);
+
+      await lifecycleManager.shutdown('Test shutdown');
+      expect(lifecycleManager.currentState).toBe(LifecycleState.IDLE);
+      expect(lifecycleManager.isInitialized).toBe(false);
+      expect(lifecycleManager.hasBeenInitialized).toBe(true); // Should remain true
+    });
   });
 
   describe('state transitions', () => {
@@ -218,6 +234,105 @@ describe('McpLifecycleManager', () => {
       expect(() => {
         lifecycleManager.validateOperation('prompts/list');
       }).not.toThrow();
+    });
+  });
+
+  describe('INITIALIZING state edge cases', () => {
+    it('should handle concurrent initialization attempts', async () => {
+      const initPromise1 = lifecycleManager.initialize(VALID_INITIALIZE_REQUEST);
+
+      // Second initialization should be rejected immediately
+      await expect(lifecycleManager.initialize(VALID_INITIALIZE_REQUEST)).rejects.toThrow(AlreadyInitializedError);
+
+      // First initialization should still complete successfully
+      const result = await initPromise1;
+      expect(result).toBeDefined();
+      expect(lifecycleManager.currentState).toBe(LifecycleState.READY);
+    });
+
+    it('should maintain INITIALIZING state during async initialization', async () => {
+      const statesDuringInit: LifecycleState[] = [];
+
+      lifecycleManager.on(LifecycleEvent.STATE_CHANGED, (event) => {
+        statesDuringInit.push(event.currentState);
+      });
+
+      const initPromise = lifecycleManager.initialize(VALID_INITIALIZE_REQUEST);
+
+      // Check state immediately after starting initialization
+      expect(lifecycleManager.currentState).toBe(LifecycleState.INITIALIZING);
+      expect(lifecycleManager.isInitialized).toBe(true); // INITIALIZING state means initialized=true
+      expect(lifecycleManager.isReady).toBe(false);
+
+      await initPromise;
+
+      // Verify state progression
+      expect(statesDuringInit).toEqual([LifecycleState.INITIALIZING, LifecycleState.READY]);
+    });
+
+    it('should reject all operational requests during INITIALIZING state', async () => {
+      const initPromise = lifecycleManager.initialize(VALID_INITIALIZE_REQUEST);
+
+      // Test multiple operational requests during initialization
+      const operationalMethods = ['tools/list', 'prompts/list', 'resources/list', 'completion/complete'];
+
+      for (const method of operationalMethods) {
+        expect(() => {
+          lifecycleManager.validateOperation(method);
+        }).toThrow(LifecycleViolationError);
+      }
+
+      await initPromise;
+    });
+
+    it('should handle rapid state queries during initialization', async () => {
+      const initPromise = lifecycleManager.initialize(VALID_INITIALIZE_REQUEST);
+
+      // Rapid state queries should be consistent
+      for (let i = 0; i < 10; i++) {
+        expect(lifecycleManager.currentState).toBe(LifecycleState.INITIALIZING);
+        expect(lifecycleManager.isInitialized).toBe(true); // INITIALIZING state means initialized=true
+        expect(lifecycleManager.isReady).toBe(false);
+      }
+
+      await initPromise;
+
+      // After initialization, state should be consistent
+      for (let i = 0; i < 10; i++) {
+        expect(lifecycleManager.currentState).toBe(LifecycleState.READY);
+        expect(lifecycleManager.isInitialized).toBe(true);
+        expect(lifecycleManager.isReady).toBe(true);
+      }
+    });
+
+    it('should handle initialization failure and proper state reset', async () => {
+      const stateChanges: any[] = [];
+      const failureEvents: any[] = [];
+
+      lifecycleManager.on(LifecycleEvent.STATE_CHANGED, (event) => {
+        stateChanges.push(event);
+      });
+
+      lifecycleManager.on(LifecycleEvent.INITIALIZATION_FAILED, (event) => {
+        failureEvents.push(event);
+      });
+
+      // Attempt initialization with invalid request
+      await expect(lifecycleManager.initialize(INVALID_PROTOCOL_VERSION_REQUEST)).rejects.toThrow();
+
+      // Should be back to IDLE state
+      expect(lifecycleManager.currentState).toBe(LifecycleState.IDLE);
+      expect(lifecycleManager.isInitialized).toBe(false);
+      expect(lifecycleManager.isReady).toBe(false);
+      expect(lifecycleManager.hasBeenInitialized).toBe(false);
+
+      // Should have proper state transitions
+      expect(stateChanges).toHaveLength(2);
+      expect(stateChanges[0].currentState).toBe(LifecycleState.INITIALIZING);
+      expect(stateChanges[1].currentState).toBe(LifecycleState.IDLE);
+
+      // Should have failure event
+      expect(failureEvents).toHaveLength(1);
     });
   });
 });

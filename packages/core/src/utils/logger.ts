@@ -1,48 +1,79 @@
 import type { LogEntry, Logger, LogLevel } from '../middleware/types';
 
-export interface LoggerOptions {
+export interface LoggerUtilOptions {
   debug?: boolean;
   baseLogger?: Logger;
 }
 
 /**
+ * Configuration options for default logger creation.
+ */
+export interface DefaultLoggerOptions {
+  /** Minimum log level to output (default: 'debug' - logs everything) */
+  level?: LogLevel;
+  /** Whether to disable logging entirely in test environments (default: true) */
+  disableInTest?: boolean;
+}
+
+/**
  * Create a default console-based logger implementation.
  *
- * Creates a simple logger that outputs to the console with level prefixes.
- * This is the fallback logger used when no custom logger is provided.
- * Suitable for development and simple deployments.
+ * @internal This is an internal implementation detail used by createLogger().
+ * Use createLogger() instead for public API usage as it provides transport-aware
+ * logger selection and better defaults.
  *
+ * @param options - Configuration options for the logger
  * @returns Logger implementation using console output
- *
- * @example Using default logger
- * ```typescript
- * const logger = createDefaultLogger();
- *
- * logger.info('Server starting');
- * logger.error('Connection failed', { error: 'ECONNREFUSED' });
- * logger.debug('Processing request', { method: 'tools/list' });
- * ```
- *
- * @example In middleware configuration
- * ```typescript
- * const errorMapper = createErrorMapperMiddleware({
- *   logger: createDefaultLogger(),
- *   enableLogging: true
- * });
- * ```
  */
-export function createDefaultLogger(): Logger {
+export function createDefaultLogger(options: DefaultLoggerOptions = {}): Logger {
+  const { level = 'debug', disableInTest = true } = options;
+
+  const shouldLog = (logLevel: LogLevel): boolean => {
+    if (disableInTest && process.env.NODE_ENV === 'test') {
+      return false;
+    }
+
+    const levels: Record<LogLevel, number> = {
+      debug: 0,
+      info: 1,
+      warn: 2,
+      error: 3,
+    };
+
+    return levels[logLevel] >= levels[level];
+  };
+
   return {
-    // biome-ignore lint/suspicious/noConsole: Default logger needs console for fallback
-    error: (message: string, meta?: LogEntry) => console.error('[error]', message, meta),
-    // biome-ignore lint/suspicious/noConsole: Default logger needs console for fallback
-    warn: (message: string, meta?: LogEntry) => console.warn('[warn]', message, meta),
-    // biome-ignore lint/suspicious/noConsole: Default logger needs console for fallback
-    info: (message: string, meta?: LogEntry) => console.log('[info]', message, meta),
-    // biome-ignore lint/suspicious/noConsole: Default logger needs console for fallback
-    debug: (message: string, meta?: LogEntry) => console.log('[debug]', message, meta),
-    log: (level: LogLevel, message: string, meta?: LogEntry) => {
-      switch (level) {
+    error: (message: string, meta?: LogEntry) => {
+      if (shouldLog('error')) {
+        // biome-ignore lint/suspicious/noConsole: Default logger needs console for fallback
+        console.error('[error]', message, meta);
+      }
+    },
+    warn: (message: string, meta?: LogEntry) => {
+      if (shouldLog('warn')) {
+        // biome-ignore lint/suspicious/noConsole: Default logger needs console for fallback
+        console.warn('[warn]', message, meta);
+      }
+    },
+    info: (message: string, meta?: LogEntry) => {
+      if (shouldLog('info')) {
+        // biome-ignore lint/suspicious/noConsole: Default logger needs console for fallback
+        console.log('[info]', message, meta);
+      }
+    },
+    debug: (message: string, meta?: LogEntry) => {
+      if (shouldLog('debug')) {
+        // biome-ignore lint/suspicious/noConsole: Default logger needs console for fallback
+        console.log('[debug]', message, meta);
+      }
+    },
+    log: (logLevel: LogLevel, message: string, meta?: LogEntry) => {
+      if (!shouldLog(logLevel)) {
+        return;
+      }
+
+      switch (logLevel) {
         case 'error':
           // biome-ignore lint/suspicious/noConsole: Default logger needs console for fallback
           console.error('[error]', message, meta);
@@ -65,12 +96,25 @@ export function createDefaultLogger(): Logger {
 }
 
 /**
+ * Configuration options for stderr logger creation.
+ */
+export interface StderrLoggerOptions {
+  /** Minimum log level to output (default: 'debug' - logs everything) */
+  level?: LogLevel;
+  /** Whether to disable logging entirely in test environments (default: true) */
+  disableInTest?: boolean;
+  /** Whether to use compact JSON format (default: false) */
+  compact?: boolean;
+}
+
+/**
  * Create a stderr-only logger that avoids stdout pollution.
  *
  * Creates a logger that writes all output to stderr using structured JSON format.
  * This is safe for stdio transports because MCP clients only read from stdin/stdout,
  * not stderr. Stderr output won't interfere with JSON-RPC message exchange.
  *
+ * @param options - Configuration options for the logger
  * @returns Logger implementation using stderr-only output
  *
  * @example Using stderr logger for stdio transport
@@ -81,27 +125,55 @@ export function createDefaultLogger(): Logger {
  * logger.error('Connection failed', { error: 'ECONNREFUSED' });
  * ```
  *
+ * @example With log level filtering
+ * ```typescript
+ * const logger = createStderrLogger({ level: 'warn', compact: true });
+ * logger.debug('This will be ignored');
+ * logger.warn('This will be logged in compact format');
+ * ```
+ *
  * @example In middleware configuration for stdio transport
  * ```typescript
  * const loggingMiddleware = createBuiltInLoggingMiddleware({
  *   logger: (level, message, data) => {
- *     const stderrLogger = createStderrLogger();
+ *     const stderrLogger = createStderrLogger({ level: 'info' });
  *     stderrLogger.log(level, message, data);
  *   }
  * });
  * ```
  */
-export function createStderrLogger(): Logger {
-  const writeToStderr = (level: LogLevel, message: string, meta?: LogEntry): void => {
+export function createStderrLogger(options: StderrLoggerOptions = {}): Logger {
+  const { level = 'debug', disableInTest = true, compact = false } = options;
+
+  const shouldLog = (logLevel: LogLevel): boolean => {
+    if (disableInTest && process.env.NODE_ENV === 'test') {
+      return false;
+    }
+
+    const levels: Record<LogLevel, number> = {
+      debug: 0,
+      info: 1,
+      warn: 2,
+      error: 3,
+    };
+
+    return levels[logLevel] >= levels[level];
+  };
+
+  const writeToStderr = (logLevel: LogLevel, message: string, meta?: LogEntry): void => {
+    if (!shouldLog(logLevel)) {
+      return;
+    }
+
     const logData = {
-      level,
+      level: logLevel,
       message,
       timestamp: new Date().toISOString(),
       ...(meta ? { meta } : {}),
     };
 
     // biome-ignore lint/suspicious/noConsole: Stderr logger specifically uses console.error for stderr output
-    console.error(JSON.stringify(logData));
+    console.error(compact ? JSON.stringify(logData) : JSON.stringify(logData, null, 2));
   };
 
   return {
@@ -152,6 +224,77 @@ export function createSilentLogger(): Logger {
 }
 
 /**
+ * Configuration options for logger creation and selection.
+ */
+export interface LoggerOptions {
+  /** Transport name for automatic logger selection */
+  transport?: string;
+  /** Minimum log level to output (default: 'info') */
+  level?: LogLevel;
+  /** Whether to disable logging entirely in test environments (default: true) */
+  disableInTest?: boolean;
+  /** Whether to use compact JSON format for stderr logger (default: true) */
+  compact?: boolean;
+  /** Force silent logger regardless of other options (default: false) */
+  silent?: boolean;
+}
+
+/**
+ * Create a logger with automatic implementation selection based on context.
+ *
+ * This function serves as a facade that automatically selects the most appropriate
+ * logger implementation based on:
+ * - Transport type (stdio uses stderr-only logger, others use console logger)
+ * - Environment (test environment can disable logging)
+ * - Configuration preferences (silent mode, log levels, output format)
+ * - Runtime context and requirements
+ *
+ * @param options - Configuration options for logger selection
+ * @returns Logger implementation selected based on provided context
+ *
+ * @example Automatic transport-aware logger selection
+ * ```typescript
+ * const logger = createLogger({ transport: 'stdio', level: 'warn' });
+ * logger.debug('Ignored - below threshold');
+ * logger.warn('Logged to stderr in JSON format');
+ * ```
+ *
+ * @example Environment-aware logger selection
+ * ```typescript
+ * const logger = createLogger({
+ *   level: 'error',
+ *   compact: true,
+ *   disableInTest: true
+ * });
+ * ```
+ *
+ * @example Silent logger selection
+ * ```typescript
+ * const logger = createLogger({ silent: true });
+ * logger.error('This will be discarded');
+ * ```
+ */
+export function createLogger(options: LoggerOptions = {}): Logger {
+  const { transport, level = 'info', disableInTest = true, compact = true, silent = false } = options;
+
+  if (silent) {
+    return createSilentLogger();
+  }
+
+  if (disableInTest && process.env.NODE_ENV === 'test') {
+    return createSilentLogger();
+  }
+
+  const isStdio = transport === 'stdio';
+
+  if (isStdio) {
+    return createStderrLogger({ level, disableInTest, compact });
+  }
+
+  return createDefaultLogger({ level, disableInTest });
+}
+
+/**
  * Generate a unique trace ID for request tracking.
  *
  * Creates a random trace ID with 'req-' prefix for identifying and correlating
@@ -162,11 +305,19 @@ export function createSilentLogger(): Logger {
  * @example
  * ```typescript
  * const traceId = generateTraceId();
- * console.log(traceId); // "req-a7b3c9d2"
+ * // traceId will be something like "req-a7b3c9d2"
  *
- * // Use in middleware
+ * // Use in middleware with structured logging
  * const tracingMiddleware: Middleware = async (ctx, next) => {
  *   ctx.state.traceId = generateTraceId();
+ *
+ *   // Log with structured data instead of console
+ *   const logger = createLogger({ transport: ctx.transport.name });
+ *   logger.info('Request started', {
+ *     traceId: ctx.state.traceId,
+ *     method: ctx.request.method
+ *   });
+ *
  *   await next();
  * };
  * ```
@@ -190,7 +341,12 @@ export function generateTraceId(): string {
  * process.env.MCPKIT_DEBUG = '1';
  *
  * if (isDebugMode()) {
- *   console.log('Debug mode enabled');
+ *   // Use structured logging instead of console
+ *   const logger = createLogger({ level: 'debug' });
+ *   logger.debug('Debug mode enabled', {
+ *     debugMode: true,
+ *     environment: process.env.NODE_ENV
+ *   });
  *   // Enable verbose logging, stack traces, etc.
  * }
  * ```
@@ -244,7 +400,7 @@ export function formatLogMetadata(data: Record<string, unknown>): Record<string,
  *
  * @example Creating child logger with request context
  * ```typescript
- * const baseLogger = createDefaultLogger();
+ * const baseLogger = createLogger({ transport: 'stdio' });
  * const requestLogger = createChildLogger(baseLogger, {
  *   traceId: 'req-123',
  *   userId: 'user-456',

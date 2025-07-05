@@ -1,4 +1,5 @@
 import { encodeJsonRpcError, JSON_RPC_ERROR_CODES, RpcError } from '@hexmcp/codec-jsonrpc';
+import type { ContextLogger } from './logger';
 import type {
   ErrorClassificationResult,
   ErrorLogData,
@@ -48,8 +49,9 @@ class DefaultLogger implements Logger {
       ...meta,
     };
 
-    // biome-ignore lint/suspicious/noConsole: Structured logging output
-    console.log(JSON.stringify(logData, null, 2));
+    // Use stderr to avoid stdout pollution for stdio transport
+    // biome-ignore lint/suspicious/noConsole: Structured logging output to stderr
+    console.error(JSON.stringify(logData, null, 2));
   }
 }
 
@@ -323,8 +325,36 @@ function mapErrorToRpcError(error: unknown, ctx: RequestContext, options?: Error
     try {
       return options.customErrorMapper(error, ctx);
     } catch (mapperError) {
-      // biome-ignore lint/suspicious/noConsole: Error fallback logging
-      console.warn('Custom error mapper failed, falling back to default mapping:', mapperError);
+      const contextLogger = (ctx.state as { logger?: ContextLogger })?.logger;
+      if (contextLogger) {
+        contextLogger.error('Custom error mapper failed, falling back to default mapping', {
+          error: String(mapperError),
+          originalError: String(error),
+          requestId: ctx.request.id,
+          method: ctx.request.method,
+          transport: ctx.transport.name,
+        });
+      } else if (options?.logger) {
+        // Use the options logger with proper LogEntry format
+        const logEntry: LogEntry = {
+          timestamp: Date.now(),
+          level: 'error',
+          message: 'Custom error mapper failed, falling back to default mapping',
+          error: {
+            classification: ErrorClassification.MIDDLEWARE_ERROR,
+            severity: 'high',
+            type: 'CustomErrorMapperFailure',
+            code: -32603,
+            message: String(mapperError),
+            originalMessage: String(error),
+          },
+        };
+        options.logger.error(logEntry.message, logEntry);
+      } else {
+        // Fallback to stderr to avoid stdout pollution for stdio transport
+        // biome-ignore lint/suspicious/noConsole: Final fallback when no logger is available
+        console.error('Custom error mapper failed, falling back to default mapping:', mapperError);
+      }
     }
   }
 
@@ -554,8 +584,36 @@ export function createErrorMapperMiddleware(options: ErrorMapperOptions = {}): M
         try {
           mergedOptions.onError(error, ctx, mappedError);
         } catch (hookError) {
-          // biome-ignore lint/suspicious/noConsole: Error hook failure logging
-          console.warn('Error in onError hook:', hookError);
+          const contextLogger = (ctx.state as { logger?: ContextLogger })?.logger;
+          if (contextLogger) {
+            contextLogger.error('Error in onError hook', {
+              error: String(hookError),
+              originalError: String(error),
+              requestId: ctx.request.id,
+              method: ctx.request.method,
+              transport: ctx.transport.name,
+            });
+          } else if (mergedOptions.logger) {
+            // Use the options logger with proper LogEntry format
+            const logEntry: LogEntry = {
+              timestamp: Date.now(),
+              level: 'error',
+              message: 'Error in onError hook',
+              error: {
+                classification: ErrorClassification.MIDDLEWARE_ERROR,
+                severity: 'high',
+                type: 'OnErrorHookFailure',
+                code: -32603,
+                message: String(hookError),
+                originalMessage: String(error),
+              },
+            };
+            mergedOptions.logger.error(logEntry.message, logEntry);
+          } else {
+            // Fallback to stderr to avoid stdout pollution for stdio transport
+            // biome-ignore lint/suspicious/noConsole: Final fallback when no logger is available
+            console.error('Error in onError hook:', hookError);
+          }
         }
       }
     }

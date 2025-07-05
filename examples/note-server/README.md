@@ -9,8 +9,8 @@ This example showcases:
 - **Tool Handlers**: Create notes with validation
 - **Resource Handlers**: Access notes via URI patterns with list/get operations  
 - **Prompt Handlers**: Generate note summaries with configurable length
-- **Middleware Integration**: Logging and error handling
-- **Transport Layer**: stdio transport for JSON-RPC communication
+- **Middleware Integration**: Transport-aware logging and error handling with stderr-only output for stdio compatibility
+- **Transport Layer**: stdio transport for JSON-RPC communication with automatic logging detection
 - **Testing Infrastructure**: Comprehensive fixture-based testing
 - **Type Safety**: Full TypeScript implementation with Zod validation
 
@@ -88,11 +88,16 @@ This starts the server and provides example JSON-RPC requests you can send via s
 
 #### `addNote`
 
-Creates a new note with title and content.
+Creates a new note with title and content. Demonstrates transport-aware streaming progress updates.
 
 **Parameters:**
 - `title` (string, required): Note title (max 200 chars)
 - `content` (string, required): Note content (max 10,000 chars)
+
+**Streaming Progress**: For non-stdio transports, this tool sends progress updates during execution:
+1. "Validating note input..."
+2. "Creating note in storage..."
+3. "Note creation completed successfully"
 
 **Example Request:**
 ```json
@@ -263,23 +268,76 @@ The test suite covers:
 
 ## 🔧 Implementation Details
 
-### Server Configuration
+### Transport-Aware Logging
 
-The main server uses the fluent DSL pattern:
+This example demonstrates the framework's transport-aware logging capabilities that prevent interference with the MCP stdio protocol:
+
+#### Automatic Transport Detection
+The built-in logging middleware automatically detects when using stdio transport and switches to stderr-only logging:
 
 ```typescript
-import { createMcpKitServer, createBuiltInMiddleware } from '@hexmcp/core';
+.use(builtIn.logging({
+  // No custom logger specified - automatic detection
+  // For stdio transport: uses stderr to avoid JSON-RPC interference
+  // For other transports: uses standard console logging
+}))
+```
+
+#### Manual Stderr Logging
+For explicit control, you can use the `createStderrLogger()` utility:
+
+```typescript
+import { createStderrLogger } from '@hexmcp/core';
+
+.use(createErrorMapperMiddleware({
+  logger: createStderrLogger(), // Explicit stderr logging
+}))
+```
+
+#### Why Stderr for Stdio Transport?
+- **Protocol Safety**: MCP clients communicate via stdin/stdout for JSON-RPC messages
+- **Log Separation**: stderr output doesn't interfere with the JSON-RPC handshake
+- **Debug Visibility**: Logs remain visible for debugging while keeping protocol clean
+- **Transport Awareness**: Other transports (WebSocket, HTTP) can use standard logging
+
+#### Streaming Info Support
+The `createStreamingInfoMiddleware()` provides transport-aware progress updates:
+
+```typescript
+// In tool handlers
+const streamingCtx = ctx as StreamingRequestContext;
+streamingCtx.streamInfo?.('Processing step 1 of 3...');
+// For stdio: streamInfo is undefined (no interference)
+// For other transports: sends progress updates to client
+```
+
+## 🔧 Implementation Details
+
+### Server Configuration
+
+The main server uses the fluent DSL pattern with transport-aware logging:
+
+```typescript
+import {
+  createMcpKitServer,
+  createBuiltInMiddleware,
+  createStreamingInfoMiddleware,
+  createStderrLogger
+} from '@hexmcp/core';
 import { StdioTransport } from '@hexmcp/transport-stdio';
 
 const builtIn = createBuiltInMiddleware();
 
 const server = createMcpKitServer()
-  .use(builtIn.errorMapper({
+  .use(createStreamingInfoMiddleware()) // Transport-aware streaming support
+  .use(createErrorMapperMiddleware({
     enableLogging: true,
-    debugMode: process.env.NODE_ENV === 'development',
+    debugMode: process.env.NODE_ENV === 'dev',
+    logger: createStderrLogger(), // Explicit stderr logging for error mapper
   }))
   .use(builtIn.logging({
     level: process.env.LOG_LEVEL === 'debug' ? 'debug' : 'info',
+    // No custom logger - automatic transport detection uses stderr for stdio
   }))
   .tool('addNote', addNoteTool)
   .resource('notes://**', notesResource)
@@ -409,12 +467,14 @@ NODE_ENV=development LOG_LEVEL=debug ./run.sh
 
 ### Logs
 
-The server logs all requests/responses in development mode:
+The server logs all requests/responses to stderr in development mode (safe for stdio transport):
 
+```json
+{"level":"info","message":"Request started","timestamp":"2024-01-15T10:30:00.000Z","meta":{"traceId":"abc123","method":"tools/call","transport":"stdio"}}
+{"level":"info","message":"Request completed","timestamp":"2024-01-15T10:30:00.001Z","meta":{"traceId":"abc123","method":"tools/call","status":"ok","durationMs":45}}
 ```
-[INFO] Request started {"traceId":"abc123","method":"tools/call","transport":"stdio"}
-[INFO] Request completed {"traceId":"abc123","method":"tools/call","status":"ok","durationMs":45}
-```
+
+**Note**: All logs are written to stderr to prevent interference with the JSON-RPC protocol over stdin/stdout. This ensures clean communication between the MCP client and server while maintaining full observability.
 
 ## 📚 Further Reading
 

@@ -1,1 +1,7 @@
+# Clean any stale build cache before linting
+echo "🧹 Cleaning stale TypeScript cache..."
+find . -name "*.tsbuildinfo" -delete 2>/dev/null || true
+
+# Run lint-staged on changed files
+echo "🎨 Running lint-staged..."
 npx lint-staged

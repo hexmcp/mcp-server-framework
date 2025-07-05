@@ -68,7 +68,10 @@ export class TransportRegistry {
    * @example
    * ```typescript
    * const transports = registry.getTransports();
-   * console.log(`Registered ${transports.length} transports`);
+   * logger.info('Transport registry status', {
+   *   registeredCount: transports.length,
+   *   transportNames: transports.map(t => t.name)
+   * });
    *
    * // Used by orchestrator:
    * await startAllTransports(registry, dispatch);
@@ -113,7 +116,10 @@ export class TransportRegistry {
    * ```typescript
    * const removed = registry.unregisterTransport(transport);
    * if (removed) {
-   *   console.log('Transport removed successfully');
+   *   logger.info('Transport removed successfully', {
+   *     transportName: transport.name,
+   *     remainingCount: registry.size
+   *   });
    * }
    * ```
    */
@@ -131,7 +137,9 @@ export class TransportRegistry {
    *
    * @example
    * ```typescript
-   * console.log(`Registry contains ${registry.size} transports`);
+   * logger.info('Transport registry size', {
+   *   transportCount: registry.size
+   * });
    *
    * // Future server validation:
    * if (registry.size === 0) {
@@ -152,7 +160,9 @@ export class TransportRegistry {
    * @example
    * ```typescript
    * registry.clear();
-   * console.log(`Registry now contains ${registry.size} transports`); // 0
+   * logger.info('Transport registry cleared', {
+   *   transportCount: registry.size // 0
+   * });
    * ```
    */
   clear(): void {
@@ -171,7 +181,9 @@ export class TransportRegistry {
    * @example
    * ```typescript
    * for (const transport of registry) {
-   *   console.log(`Transport: ${transport.name}`);
+   *   logger.debug('Iterating transport', {
+   *     transportName: transport.name
+   *   });
    * }
    *
    * // Functional style:

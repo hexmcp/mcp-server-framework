@@ -1,4 +1,5 @@
 import type { ServerCapabilities } from '@modelcontextprotocol/sdk/types.js';
+
 import type { Registry, RegistryMetadata, RegistryStats } from './base';
 import { REGISTRY_KINDS } from './base';
 import type { HandlerContext, ToolDefinition } from './types';
@@ -107,12 +108,23 @@ import type { HandlerContext, ToolDefinition } from './types';
  *           throw new Error(`Insufficient permissions. Required: ${requiredScopes.join(' or ')}`);
  *         }
  *
- *         // Log security-sensitive operation
- *         console.log(`Admin operation ${args.action} initiated by user ${context.user?.id}`);
+ *         // Log security-sensitive operation with structured logging
+ *         const logger = context.logger; // Logger provided by middleware
+ *         logger.info('Admin operation initiated', {
+ *           action: args.action,
+ *           userId: context.user?.id,
+ *           userRoles: context.user?.roles,
+ *           securityLevel: 'admin'
+ *         });
  *       },
  *       afterExecution: async (result, context) => {
- *         // Audit log
- *         console.log(`Admin operation completed by user ${context.user?.id}`);
+ *         // Audit log with structured data
+ *         const logger = context.logger; // Logger provided by middleware
+ *         logger.info('Admin operation completed', {
+ *           userId: context.user?.id,
+ *           success: true,
+ *           securityLevel: 'admin'
+ *         });
  *       }
  *     },
  *     handler: async (args, context) => {
