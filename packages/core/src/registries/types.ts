@@ -13,16 +13,21 @@ import type { RegistryKind } from './base';
  * ```typescript
  * const trackedHandler = async (args: Record<string, unknown>, context: HandlerContext) => {
  *   const execution = context.execution;
+ *   const logger = context.logger; // Logger provided by middleware
+ *
  *   if (!execution) {
- *     console.warn('No execution context available');
+ *     logger.warn('No execution context available');
  *     return { content: [{ type: 'text', text: 'No tracking' }] };
  *   }
  *
- *   console.log(`Execution ID: ${execution.executionId}`);
- *   console.log(`Started at: ${execution.startTime.toISOString()}`);
- *
  *   const elapsed = Date.now() - execution.startTime.getTime();
- *   console.log(`Elapsed time: ${elapsed}ms`);
+ *
+ *   // Use structured logging instead of console
+ *   logger.info('Execution context tracked', {
+ *     executionId: execution.executionId,
+ *     startTime: execution.startTime.toISOString(),
+ *     elapsedMs: elapsed
+ *   });
  *
  *   return { content: [{ type: 'text', text: `Tracked execution ${execution.executionId}` }] };
  * };
@@ -122,9 +127,16 @@ export interface HandlerExecutionContext {
  *     throw new Error('Insufficient permissions');
  *   }
  *
- *   // Use execution context for tracing
+ *   // Use execution context for tracing with structured logging
  *   const executionId = context.execution?.executionId || 'unknown';
- *   console.log(`Executing tool ${method} with ID ${executionId}`);
+ *   const logger = context.logger; // Logger provided by middleware
+ *
+ *   logger.info('Tool execution started', {
+ *     method,
+ *     executionId,
+ *     userId: context.user?.id,
+ *     permissions: context.user?.permissions
+ *   });
  *
  *   return { content: [{ type: 'text', text: 'Tool executed successfully' }] };
  * };
@@ -426,13 +438,26 @@ export type PromptContent = string | AsyncIterable<string>;
  *   ],
  *   hooks: {
  *     beforeExecution: async (args, context) => {
- *       console.log(`Starting research on ${args.topic} for user ${context.user?.id}`);
+ *       const logger = context.logger; // Logger provided by middleware
+ *       logger.info('Research task started', {
+ *         topic: args.topic,
+ *         userId: context.user?.id,
+ *         depth: args.depth
+ *       });
  *     },
  *     afterExecution: async (result, context) => {
- *       console.log(`Research completed, generated ${result.content.length} content blocks`);
+ *       const logger = context.logger; // Logger provided by middleware
+ *       logger.info('Research task completed', {
+ *         contentBlocks: result.content.length,
+ *         userId: context.user?.id
+ *       });
  *     },
  *     onError: async (error, context) => {
- *       console.error(`Research failed: ${error.message}`);
+ *       const logger = context.logger; // Logger provided by middleware
+ *       logger.error('Research task failed', {
+ *         error: error.message,
+ *         userId: context.user?.id
+ *       });
  *     }
  *   },
  *   handler: async (args) => {

@@ -2,6 +2,7 @@ import type { LogEntry, Logger } from '../../src/middleware/types';
 import {
   createChildLogger,
   createDefaultLogger,
+  createOptimizedLogger,
   createSilentLogger,
   createStderrLogger,
   formatLogMetadata,
@@ -107,7 +108,7 @@ describe('Logger Utilities', () => {
       const logSpy = jest.spyOn(console, 'log').mockImplementation();
 
       try {
-        const logger = createDefaultLogger();
+        const logger = createDefaultLogger({ disableInTest: false });
         const testEntry: LogEntry = {
           timestamp: Date.now(),
           level: 'info',
@@ -141,7 +142,7 @@ describe('Logger Utilities', () => {
       const logSpy = jest.spyOn(console, 'log').mockImplementation();
 
       try {
-        const logger = createDefaultLogger();
+        const logger = createDefaultLogger({ disableInTest: false });
         const testEntry: LogEntry = {
           timestamp: Date.now(),
           level: 'info',
@@ -248,7 +249,7 @@ describe('Logger Utilities', () => {
       const stderrSpy = jest.spyOn(console, 'error').mockImplementation();
 
       try {
-        const logger = createStderrLogger();
+        const logger = createStderrLogger({ disableInTest: false });
         const testEntry: LogEntry = {
           timestamp: Date.now(),
           level: 'info',
@@ -286,7 +287,7 @@ describe('Logger Utilities', () => {
       const stderrSpy = jest.spyOn(console, 'error').mockImplementation();
 
       try {
-        const logger = createStderrLogger();
+        const logger = createStderrLogger({ disableInTest: false });
 
         logger.log('error', 'error via log');
         logger.log('warn', 'warn via log');
@@ -313,7 +314,7 @@ describe('Logger Utilities', () => {
       const stderrSpy = jest.spyOn(console, 'error').mockImplementation();
 
       try {
-        const logger = createStderrLogger();
+        const logger = createStderrLogger({ disableInTest: false });
         logger.info('test message');
 
         expect(stdoutSpy).not.toHaveBeenCalled();
@@ -381,6 +382,99 @@ describe('Logger Utilities', () => {
         logger.debug('debug');
         logger.log('info', 'log');
       }).not.toThrow();
+    });
+  });
+
+  describe('createOptimizedLogger', () => {
+    it('should return silent logger when silent option is true', () => {
+      const logger = createOptimizedLogger({ silent: true });
+
+      const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
+      const errorSpy = jest.spyOn(console, 'error').mockImplementation();
+
+      try {
+        logger.info('test');
+        logger.error('test');
+
+        expect(consoleSpy).not.toHaveBeenCalled();
+        expect(errorSpy).not.toHaveBeenCalled();
+      } finally {
+        consoleSpy.mockRestore();
+        errorSpy.mockRestore();
+      }
+    });
+
+    it('should return stderr logger for stdio transport', () => {
+      const stderrSpy = jest.spyOn(console, 'error').mockImplementation();
+
+      try {
+        const logger = createOptimizedLogger({
+          transport: 'stdio',
+          disableInTest: false,
+        });
+
+        logger.info('test');
+
+        expect(stderrSpy).toHaveBeenCalledTimes(1);
+        expect(stderrSpy.mock.calls[0]).toBeDefined();
+        expect(stderrSpy.mock.calls[0]).toHaveLength(1);
+
+        const options = stderrSpy.mock.calls[0] as [string];
+        const logEntry = options[0];
+        const logData = JSON.parse(logEntry);
+        expect(logData).toMatchObject({
+          level: 'info',
+          message: 'test',
+          timestamp: expect.any(String),
+        });
+      } finally {
+        stderrSpy.mockRestore();
+      }
+    });
+
+    it('should return default logger for non-stdio transport', () => {
+      const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
+
+      try {
+        const logger = createOptimizedLogger({
+          transport: 'websocket',
+          disableInTest: false,
+        });
+
+        logger.info('test');
+
+        expect(consoleSpy).toHaveBeenCalledWith('[info]', 'test', undefined);
+      } finally {
+        consoleSpy.mockRestore();
+      }
+    });
+
+    it('should respect log level filtering', () => {
+      const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
+      const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
+      const errorSpy = jest.spyOn(console, 'error').mockImplementation();
+
+      try {
+        const logger = createOptimizedLogger({
+          level: 'warn',
+          disableInTest: false,
+        });
+
+        logger.debug('debug - should be ignored');
+        logger.info('info - should be ignored');
+        logger.warn('warn - should be logged');
+        logger.error('error - should be logged');
+
+        expect(consoleSpy).not.toHaveBeenCalled(); // debug and info should be ignored
+        expect(warnSpy).toHaveBeenCalledTimes(1);
+        expect(errorSpy).toHaveBeenCalledTimes(1);
+        expect(warnSpy).toHaveBeenCalledWith('[warn]', 'warn - should be logged', undefined);
+        expect(errorSpy).toHaveBeenCalledWith('[error]', 'error - should be logged', undefined);
+      } finally {
+        consoleSpy.mockRestore();
+        warnSpy.mockRestore();
+        errorSpy.mockRestore();
+      }
     });
   });
 });
