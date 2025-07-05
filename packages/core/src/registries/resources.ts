@@ -156,10 +156,18 @@ export class InMemoryResourceProvider implements ResourceProvider {
  *   },
  *   hooks: {
  *     beforeGet: async (uri, context) => {
- *       console.log(`Fetching ${uri} for user ${context.user?.id}`);
+ *       context.logger?.info('Resource fetch requested', {
+ *         uri,
+ *         userId: context.user?.id,
+ *         method: context.request.method
+ *       });
  *     },
  *     afterGet: async (result, context) => {
- *       console.log(`Successfully fetched resource`);
+ *       context.logger?.info('Resource fetched successfully', {
+ *         uri: result.uri,
+ *         userId: context.user?.id,
+ *         method: context.request.method
+ *       });
  *     }
  *   }
  * });
@@ -236,7 +244,11 @@ export class InMemoryResourceProvider implements ResourceProvider {
  *             const searchResults = await definition.provider.search(query, context);
  *             results.push(...searchResults.resources);
  *           } catch (error) {
- *             console.warn(`Search failed for ${pattern}: ${error.message}`);
+ *             context.logger?.warn('Resource search failed', {
+ *               pattern,
+ *               error: error.message,
+ *               searchQuery: query
+ *             });
  *           }
  *         }
  *       }

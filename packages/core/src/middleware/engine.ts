@@ -15,13 +15,21 @@ import { MiddlewareError, MiddlewareTimeoutError, ReentrantCallError } from './t
  * const engine = new McpMiddlewareEngine();
  *
  * const loggingMiddleware: Middleware = async (ctx, next) => {
- *   console.log(`Request: ${ctx.request.method}`);
+ *   const loggerCtx = ctx as LoggerRequestContext;
+ *   loggerCtx.log.info('Request started', {
+ *     method: ctx.request.method,
+ *     requestId: ctx.request.id
+ *   });
  *   const start = Date.now();
  *
  *   await next(); // Execute next middleware
  *
  *   const duration = Date.now() - start;
- *   console.log(`Response: ${duration}ms`);
+ *   loggerCtx.log.info('Request completed', {
+ *     method: ctx.request.method,
+ *     requestId: ctx.request.id,
+ *     durationMs: duration
+ *   });
  * };
  *
  * const authMiddleware: Middleware = async (ctx, next) => {

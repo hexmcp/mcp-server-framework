@@ -25,13 +25,20 @@ npm install @hexmcp/transport-stdio
 ```typescript
 import { StdioTransport } from '@hexmcp/transport-stdio';
 import type { TransportDispatch } from '@hexmcp/transport';
+import { createStderrLogger } from '@hexmcp/core';
 
 const transport = new StdioTransport();
 
 const dispatch: TransportDispatch = (message, respond, metadata) => {
-  console.log('Received message:', message);
-  console.log('Transport metadata:', metadata);
-  
+  // Use stderr logger for stdio transport safety
+  const logger = createStderrLogger();
+  logger.info('Message received', {
+    method: (message as any).method,
+    id: (message as any).id,
+    transport: 'stdio'
+  });
+  logger.debug('Transport metadata', { metadata });
+
   // Echo the method back as result
   respond({
     jsonrpc: "2.0",

@@ -180,7 +180,10 @@ export function createBuiltInErrorMapperMiddleware(options?: ErrorMapperMiddlewa
  * try {
  *   registry.registerMiddleware(builtIn.auth({ strategy: 'bearer' }));
  * } catch (error) {
- *   console.log('Auth middleware not yet implemented');
+ *   logger.warn('Middleware not yet implemented', {
+ *     middleware: 'auth',
+ *     error: error.message
+ *   });
  * }
  * ```
  *
