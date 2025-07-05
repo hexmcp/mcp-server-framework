@@ -1,6 +1,6 @@
 import type { LogEntry, Logger, LogLevel } from '../middleware/types';
 
-export interface LoggerOptions {
+export interface LoggerUtilOptions {
   debug?: boolean;
   baseLogger?: Logger;
 }
@@ -18,36 +18,12 @@ export interface DefaultLoggerOptions {
 /**
  * Create a default console-based logger implementation.
  *
- * Creates a simple logger that outputs to the console with level prefixes.
- * This is the fallback logger used when no custom logger is provided.
- * Suitable for development and simple deployments.
+ * @internal This is an internal implementation detail used by createLogger().
+ * Use createLogger() instead for public API usage as it provides transport-aware
+ * logger selection and better defaults.
  *
  * @param options - Configuration options for the logger
  * @returns Logger implementation using console output
- *
- * @example Using default logger
- * ```typescript
- * const logger = createDefaultLogger();
- *
- * logger.info('Server starting');
- * logger.error('Connection failed', { error: 'ECONNREFUSED' });
- * logger.debug('Processing request', { method: 'tools/list' });
- * ```
- *
- * @example With log level filtering
- * ```typescript
- * const logger = createDefaultLogger({ level: 'warn' });
- * logger.debug('This will be ignored');
- * logger.warn('This will be logged');
- * ```
- *
- * @example In middleware configuration
- * ```typescript
- * const errorMapper = createErrorMapperMiddleware({
- *   logger: createDefaultLogger({ level: 'error' }),
- *   enableLogging: true
- * });
- * ```
  */
 export function createDefaultLogger(options: DefaultLoggerOptions = {}): Logger {
   const { level = 'debug', disableInTest = true } = options;
@@ -248,9 +224,9 @@ export function createSilentLogger(): Logger {
 }
 
 /**
- * Configuration options for optimized logger creation.
+ * Configuration options for logger creation and selection.
  */
-export interface OptimizedLoggerOptions {
+export interface LoggerOptions {
   /** Transport name for automatic logger selection */
   transport?: string;
   /** Minimum log level to output (default: 'info') */
@@ -264,40 +240,41 @@ export interface OptimizedLoggerOptions {
 }
 
 /**
- * Create an optimized logger with automatic transport detection and performance optimizations.
+ * Create a logger with automatic implementation selection based on context.
  *
- * This function automatically selects the most appropriate logger implementation based on:
+ * This function serves as a facade that automatically selects the most appropriate
+ * logger implementation based on:
  * - Transport type (stdio uses stderr-only logger, others use console logger)
  * - Environment (test environment can disable logging)
- * - Log level filtering to reduce unnecessary console output
- * - Performance optimizations for JSON serialization
+ * - Configuration preferences (silent mode, log levels, output format)
+ * - Runtime context and requirements
  *
- * @param options - Configuration options for logger optimization
- * @returns Optimized logger implementation
+ * @param options - Configuration options for logger selection
+ * @returns Logger implementation selected based on provided context
  *
- * @example Automatic transport-aware logger
+ * @example Automatic transport-aware logger selection
  * ```typescript
- * const logger = createOptimizedLogger({ transport: 'stdio', level: 'warn' });
+ * const logger = createLogger({ transport: 'stdio', level: 'warn' });
  * logger.debug('Ignored - below threshold');
  * logger.warn('Logged to stderr in JSON format');
  * ```
  *
- * @example Production-optimized logger
+ * @example Environment-aware logger selection
  * ```typescript
- * const logger = createOptimizedLogger({
+ * const logger = createLogger({
  *   level: 'error',
  *   compact: true,
  *   disableInTest: true
  * });
  * ```
  *
- * @example Silent logger for maximum performance
+ * @example Silent logger selection
  * ```typescript
- * const logger = createOptimizedLogger({ silent: true });
- * logger.error('This will be discarded with zero overhead');
+ * const logger = createLogger({ silent: true });
+ * logger.error('This will be discarded');
  * ```
  */
-export function createOptimizedLogger(options: OptimizedLoggerOptions = {}): Logger {
+export function createLogger(options: LoggerOptions = {}): Logger {
   const { transport, level = 'info', disableInTest = true, compact = true, silent = false } = options;
 
   if (silent) {
@@ -335,7 +312,7 @@ export function createOptimizedLogger(options: OptimizedLoggerOptions = {}): Log
  *   ctx.state.traceId = generateTraceId();
  *
  *   // Log with structured data instead of console
- *   const logger = createOptimizedLogger({ transport: ctx.transport.name });
+ *   const logger = createLogger({ transport: ctx.transport.name });
  *   logger.info('Request started', {
  *     traceId: ctx.state.traceId,
  *     method: ctx.request.method
@@ -365,7 +342,7 @@ export function generateTraceId(): string {
  *
  * if (isDebugMode()) {
  *   // Use structured logging instead of console
- *   const logger = createOptimizedLogger({ level: 'debug' });
+ *   const logger = createLogger({ level: 'debug' });
  *   logger.debug('Debug mode enabled', {
  *     debugMode: true,
  *     environment: process.env.NODE_ENV
@@ -423,7 +400,7 @@ export function formatLogMetadata(data: Record<string, unknown>): Record<string,
  *
  * @example Creating child logger with request context
  * ```typescript
- * const baseLogger = createDefaultLogger();
+ * const baseLogger = createLogger({ transport: 'stdio' });
  * const requestLogger = createChildLogger(baseLogger, {
  *   traceId: 'req-123',
  *   userId: 'user-456',

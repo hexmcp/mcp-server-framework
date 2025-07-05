@@ -1,11 +1,12 @@
 export {
   calculateDuration,
   createChildLogger,
-  createDefaultLogger,
+  createLogger,
   createSilentLogger,
   createStderrLogger,
   formatLogMetadata,
   generateTraceId,
   isDebugMode,
   type LoggerOptions,
+  type LoggerUtilOptions,
 } from './logger';

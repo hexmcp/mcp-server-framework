@@ -2,7 +2,7 @@ import type { LogEntry, Logger } from '../../src/middleware/types';
 import {
   createChildLogger,
   createDefaultLogger,
-  createOptimizedLogger,
+  createLogger,
   createSilentLogger,
   createStderrLogger,
   formatLogMetadata,
@@ -385,9 +385,9 @@ describe('Logger Utilities', () => {
     });
   });
 
-  describe('createOptimizedLogger', () => {
+  describe('createLogger', () => {
     it('should return silent logger when silent option is true', () => {
-      const logger = createOptimizedLogger({ silent: true });
+      const logger = createLogger({ silent: true });
 
       const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
       const errorSpy = jest.spyOn(console, 'error').mockImplementation();
@@ -408,7 +408,7 @@ describe('Logger Utilities', () => {
       const stderrSpy = jest.spyOn(console, 'error').mockImplementation();
 
       try {
-        const logger = createOptimizedLogger({
+        const logger = createLogger({
           transport: 'stdio',
           disableInTest: false,
         });
@@ -436,7 +436,7 @@ describe('Logger Utilities', () => {
       const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
 
       try {
-        const logger = createOptimizedLogger({
+        const logger = createLogger({
           transport: 'websocket',
           disableInTest: false,
         });
@@ -455,7 +455,7 @@ describe('Logger Utilities', () => {
       const errorSpy = jest.spyOn(console, 'error').mockImplementation();
 
       try {
-        const logger = createOptimizedLogger({
+        const logger = createLogger({
           level: 'warn',
           disableInTest: false,
         });

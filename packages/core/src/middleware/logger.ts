@@ -1,5 +1,5 @@
 import { RpcError } from '@hexmcp/codec-jsonrpc';
-import { calculateDuration, createDefaultLogger, createOptimizedLogger, generateTraceId, isDebugMode } from '../utils/logger';
+import { calculateDuration, createLogger, generateTraceId, isDebugMode } from '../utils/logger';
 import type { Logger, Middleware, RequestContext, StreamingRequestContext } from './types';
 
 export interface ContextLogger {
@@ -58,12 +58,19 @@ interface StructuredLogData extends Record<string, unknown> {
 }
 
 export function loggerMiddleware(options: LoggerMiddlewareOptions = {}): Middleware {
-  const baseLogger = options.baseLogger || createDefaultLogger({ disableInTest: false });
   const debugMode = options.debug !== undefined ? options.debug : isDebugMode();
 
   return async (ctx: RequestContext, next: () => Promise<void>) => {
     const traceId = (ctx.state.traceId as string) || generateTraceId();
     const startTime = Date.now();
+
+    const baseLogger =
+      options.baseLogger ||
+      createLogger({
+        transport: ctx.transport.name,
+        level: debugMode ? 'debug' : 'info',
+        disableInTest: false,
+      });
 
     const contextLogger = createContextLogger(baseLogger, traceId);
 
@@ -213,7 +220,7 @@ export function createBuiltInLoggingMiddleware(options: LoggingMiddlewareOptions
         },
       };
     } else {
-      baseLogger = createOptimizedLogger({
+      baseLogger = createLogger({
         transport: ctx.transport.name,
         level: options.level || 'info',
         disableInTest: process.env.NODE_ENV !== 'test',
