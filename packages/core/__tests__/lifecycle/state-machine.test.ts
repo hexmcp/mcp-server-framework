@@ -41,6 +41,10 @@ describe('McpLifecycleManager', () => {
       expect(lifecycleManager.initializeRequest).toBeNull();
       expect(lifecycleManager.initializeResult).toBeNull();
     });
+
+    it('should not have been initialized initially', () => {
+      expect(lifecycleManager.hasBeenInitialized).toBe(false);
+    });
   });
 
   describe('initialization', () => {
@@ -165,6 +169,18 @@ describe('McpLifecycleManager', () => {
 
       await Promise.all([shutdownPromise1, shutdownPromise2]);
       expect(lifecycleManager.currentState).toBe(LifecycleState.IDLE);
+    });
+
+    it('should maintain hasBeenInitialized flag after shutdown', async () => {
+      expect(lifecycleManager.hasBeenInitialized).toBe(false);
+
+      await lifecycleManager.initialize(VALID_INITIALIZE_REQUEST);
+      expect(lifecycleManager.hasBeenInitialized).toBe(true);
+
+      await lifecycleManager.shutdown('Test shutdown');
+      expect(lifecycleManager.currentState).toBe(LifecycleState.IDLE);
+      expect(lifecycleManager.isInitialized).toBe(false);
+      expect(lifecycleManager.hasBeenInitialized).toBe(true); // Should remain true
     });
   });
 

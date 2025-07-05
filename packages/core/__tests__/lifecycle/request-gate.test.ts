@@ -176,6 +176,18 @@ describe('McpRequestGate', () => {
         },
       });
     });
+
+    it('should provide validation errors for post-shutdown requests', async () => {
+      await lifecycleManager.initialize(VALID_INITIALIZE_REQUEST);
+      await lifecycleManager.shutdown('Test shutdown');
+
+      const error = requestGate.getValidationError('prompts/list');
+
+      expect(error).toMatchObject({
+        code: -32003,
+        message: "Server has been shut down. Cannot process 'prompts/list' request after shutdown.",
+      });
+    });
   });
 
   describe('validation summary', () => {

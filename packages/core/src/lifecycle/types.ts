@@ -249,6 +249,7 @@ export interface PrimitiveRegistry {
 export interface LifecycleManager {
   readonly currentState: LifecycleState;
   readonly isInitialized: boolean;
+  readonly hasBeenInitialized: boolean;
   readonly isReady: boolean;
 
   initialize(request: InitializeRequest): Promise<InitializeResult>;

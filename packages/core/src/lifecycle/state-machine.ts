@@ -27,6 +27,7 @@ export class McpLifecycleManager extends EventEmitter implements LifecycleManage
   private _initializeRequest: InitializeRequest | null = null;
   private _initializeResult: InitializeResult | null = null;
   private _capabilityRegistry: CapabilityRegistry;
+  private _hasBeenInitialized = false;
 
   constructor(capabilityRegistry: CapabilityRegistry) {
     super();
@@ -45,6 +46,13 @@ export class McpLifecycleManager extends EventEmitter implements LifecycleManage
    */
   get isInitialized(): boolean {
     return this._currentState !== LifecycleState.IDLE;
+  }
+
+  /**
+   * Whether the server has ever been initialized (tracks initialization history)
+   */
+  get hasBeenInitialized(): boolean {
+    return this._hasBeenInitialized;
   }
 
   /**
@@ -89,6 +97,7 @@ export class McpLifecycleManager extends EventEmitter implements LifecycleManage
     try {
       const result = await this._performInitialization(request);
       this._initializeResult = result;
+      this._hasBeenInitialized = true;
 
       this._transitionTo(LifecycleState.READY);
 
@@ -110,7 +119,6 @@ export class McpLifecycleManager extends EventEmitter implements LifecycleManage
       };
       this.emit(LifecycleEvent.INITIALIZATION_FAILED, failedEvent);
 
-      // Reset to idle state on initialization failure
       this._transitionTo(LifecycleState.IDLE);
       this._initializeRequest = null;
 
