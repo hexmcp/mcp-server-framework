@@ -18,21 +18,18 @@ jest.mock('@hexmcp/transport-stdio', () => ({
 describe('McpServerBuilder', () => {
   let originalEnv: string | undefined;
 
-  beforeAll(() => {
+  beforeEach(() => {
     originalEnv = process.env.MCPKIT_NO_DEFAULT_TRANSPORT;
     process.env.MCPKIT_NO_DEFAULT_TRANSPORT = 'true';
+    jest.clearAllMocks();
   });
 
-  afterAll(() => {
+  afterEach(() => {
     if (originalEnv !== undefined) {
       process.env.MCPKIT_NO_DEFAULT_TRANSPORT = originalEnv;
     } else {
       delete process.env.MCPKIT_NO_DEFAULT_TRANSPORT;
     }
-  });
-
-  beforeEach(() => {
-    jest.clearAllMocks();
   });
 
   describe('factory function', () => {

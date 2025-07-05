@@ -12,6 +12,7 @@ const config: Config = {
     '^(\\.{1,2}/.*)\\.js$': '$1',
     '^@hexmcp/codec-jsonrpc$': '<rootDir>/../codec-jsonrpc/src/index.ts',
     '^@hexmcp/transport$': '<rootDir>/../transport/src/index.ts',
+    '^@hexmcp/transport-stdio$': '<rootDir>/../transport-stdio/src/index.ts',
     '^@hexmcp/core$': '<rootDir>/../core/src/index.ts',
   },
   collectCoverageFrom: ['src/**/*.{ts,tsx}', '!src/**/*.d.ts'],

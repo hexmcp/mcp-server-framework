@@ -44,6 +44,7 @@
     "@hexmcp/codec-jsonrpc": "workspace:*",
     "@hexmcp/core": "workspace:*",
     "@hexmcp/transport": "workspace:*",
+    "@hexmcp/transport-stdio": "workspace:*",
     "@modelcontextprotocol/sdk": "^1.13.2"
   },
   "peerDependencies": {

@@ -1,5 +1,4 @@
-import { createMcpKitServer } from '../../src/builder';
-
+// Mock the @hexmcp/transport-stdio module
 const mockStdioTransport = {
   name: 'stdio',
   start: jest.fn(async () => {
@@ -10,20 +9,29 @@ const mockStdioTransport = {
   }),
 };
 
+const MockStdioTransportClass = jest.fn().mockImplementation(() => mockStdioTransport);
+
+// Mock the module
 jest.mock(
   '@hexmcp/transport-stdio',
   () => ({
-    StdioTransport: jest.fn(() => mockStdioTransport),
+    StdioTransport: MockStdioTransportClass,
   }),
   { virtual: true }
 );
+
+import { createMcpKitServer } from '../../src/builder';
 
 describe('Environment Variable Behavior', () => {
   let originalEnv: string | undefined;
 
   beforeEach(() => {
+    jest.resetModules();
     originalEnv = process.env.MCPKIT_NO_DEFAULT_TRANSPORT;
     jest.clearAllMocks();
+    MockStdioTransportClass.mockClear();
+    mockStdioTransport.start.mockClear();
+    mockStdioTransport.stop.mockClear();
   });
 
   afterEach(() => {
@@ -32,6 +40,7 @@ describe('Environment Variable Behavior', () => {
     } else {
       delete process.env.MCPKIT_NO_DEFAULT_TRANSPORT;
     }
+    jest.resetModules();
   });
 
   describe('MCPKIT_NO_DEFAULT_TRANSPORT environment variable', () => {
