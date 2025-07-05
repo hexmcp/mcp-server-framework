@@ -1,6 +1,5 @@
 ---
 "@hexmcp/core": minor
-"@hexmcp/examples-note-server": patch
 ---
 
 # Transport-Aware Logging and Enhanced Lifecycle Management
@@ -95,7 +94,6 @@ None. This release maintains full backward compatibility while adding new capabi
 ## 📦 Package Updates
 
 - **@hexmcp/core**: Enhanced with new logging utilities and lifecycle improvements
-- **@hexmcp/examples-note-server**: Updated to demonstrate new logging patterns
 
 ## 🛠️ Migration Guide
 
