@@ -27,7 +27,7 @@ describe('Error Mapper Integration Tests', () => {
   let requestGate: McpRequestGate;
   let dispatcher: MiddlewareDispatcher;
   let mockCoreDispatcher: jest.Mock;
-  let consoleLogSpy: jest.SpyInstance;
+  let consoleErrorSpy: jest.SpyInstance;
 
   beforeEach(() => {
     middlewareRegistry = new McpMiddlewareRegistry();
@@ -50,7 +50,7 @@ describe('Error Mapper Integration Tests', () => {
       coreDispatcher: mockCoreDispatcher,
     });
 
-    consoleLogSpy = jest.spyOn(console, 'log').mockImplementation();
+    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
   });
 
   afterEach(() => {
@@ -326,8 +326,8 @@ describe('Error Mapper Integration Tests', () => {
       await new Promise((resolve) => setTimeout(resolve, 0));
 
       // Verify structured logging output
-      expect(consoleLogSpy).toHaveBeenCalled();
-      const logCall = consoleLogSpy.mock.calls[0][0];
+      expect(consoleErrorSpy).toHaveBeenCalled();
+      const logCall = consoleErrorSpy.mock.calls[0][0];
       const logEntry = JSON.parse(logCall);
 
       // The error classification depends on the error type - could be STANDARD_ERROR or MIDDLEWARE_ERROR

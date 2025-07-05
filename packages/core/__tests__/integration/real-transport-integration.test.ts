@@ -163,7 +163,8 @@ describe('Real Transport Integration Tests', () => {
       expect(capturedStdout.length).toBeGreaterThan(0);
 
       const responseJson = capturedStdout[0];
-      const response = JSON.parse(responseJson);
+      expect(responseJson).toBeDefined();
+      const response = JSON.parse(responseJson as string);
 
       expect(response).toMatchObject({
         jsonrpc: '2.0',
@@ -218,7 +219,9 @@ describe('Real Transport Integration Tests', () => {
 
       // Verify tools response
       expect(capturedStdout.length).toBeGreaterThan(0);
-      const toolsResponse = JSON.parse(capturedStdout[0]);
+      const toolsResponseJson = capturedStdout[0];
+      expect(toolsResponseJson).toBeDefined();
+      const toolsResponse = JSON.parse(toolsResponseJson as string);
 
       expect(toolsResponse).toMatchObject({
         jsonrpc: '2.0',
@@ -247,7 +250,9 @@ describe('Real Transport Integration Tests', () => {
 
       // Verify error response
       expect(capturedStdout.length).toBeGreaterThan(0);
-      const errorResponse = JSON.parse(capturedStdout[0]);
+      const errorResponseJson = capturedStdout[0];
+      expect(errorResponseJson).toBeDefined();
+      const errorResponse = JSON.parse(errorResponseJson as string);
 
       expect(errorResponse).toMatchObject({
         jsonrpc: '2.0',
@@ -272,7 +277,9 @@ describe('Real Transport Integration Tests', () => {
 
       // Verify parse error response
       expect(capturedStdout.length).toBeGreaterThan(0);
-      const errorResponse = JSON.parse(capturedStdout[0]);
+      const parseErrorResponseJson = capturedStdout[0];
+      expect(parseErrorResponseJson).toBeDefined();
+      const errorResponse = JSON.parse(parseErrorResponseJson as string);
 
       expect(errorResponse).toMatchObject({
         jsonrpc: '2.0',

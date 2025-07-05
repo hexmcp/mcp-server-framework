@@ -10,10 +10,10 @@ import {
 import { createMockRequestContext } from '../fixtures/middleware-fixtures';
 
 describe('Error Mapper Environment Variable Integration', () => {
-  let consoleLogSpy: jest.SpyInstance;
+  let consoleErrorSpy: jest.SpyInstance;
 
   beforeEach(() => {
-    consoleLogSpy = jest.spyOn(console, 'log').mockImplementation();
+    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
   });
 
   afterEach(() => {
@@ -140,8 +140,8 @@ describe('Error Mapper Environment Variable Integration', () => {
       expect(response.error.data.stack).toContain('Stack trace test error');
 
       // Verify logging also includes stack trace
-      expect(consoleLogSpy).toHaveBeenCalled();
-      const logCall = consoleLogSpy.mock.calls[0][0];
+      expect(consoleErrorSpy).toHaveBeenCalled();
+      const logCall = consoleErrorSpy.mock.calls[0][0];
       const logEntry = JSON.parse(logCall);
       expect(logEntry.stack).toBeDefined();
     });
@@ -163,8 +163,8 @@ describe('Error Mapper Environment Variable Integration', () => {
       expect(response.error.data.stack).toBeUndefined();
 
       // Verify logging also excludes stack trace
-      expect(consoleLogSpy).toHaveBeenCalled();
-      const logCall = consoleLogSpy.mock.calls[0][0];
+      expect(consoleErrorSpy).toHaveBeenCalled();
+      const logCall = consoleErrorSpy.mock.calls[0][0];
       const logEntry = JSON.parse(logCall);
       expect(logEntry.stack).toBeUndefined();
     });
@@ -186,8 +186,8 @@ describe('Error Mapper Environment Variable Integration', () => {
       expect(response.error.data).toBeUndefined();
 
       // Verify logging behavior in production
-      expect(consoleLogSpy).toHaveBeenCalled();
-      const logCall = consoleLogSpy.mock.calls[0][0];
+      expect(consoleErrorSpy).toHaveBeenCalled();
+      const logCall = consoleErrorSpy.mock.calls[0][0];
       const logEntry = JSON.parse(logCall);
       expect(logEntry.stack).toBeUndefined();
     });
@@ -314,8 +314,8 @@ describe('Error Mapper Environment Variable Integration', () => {
 
       await middleware(ctx, next);
 
-      expect(consoleLogSpy).toHaveBeenCalled();
-      const logCall = consoleLogSpy.mock.calls[0][0];
+      expect(consoleErrorSpy).toHaveBeenCalled();
+      const logCall = consoleErrorSpy.mock.calls[0][0];
       const logEntry = JSON.parse(logCall);
 
       expect(logEntry.metadata.environment).toBe('test');
@@ -336,8 +336,8 @@ describe('Error Mapper Environment Variable Integration', () => {
 
       await middleware(ctx, next);
 
-      expect(consoleLogSpy).toHaveBeenCalled();
-      const logCall = consoleLogSpy.mock.calls[0][0];
+      expect(consoleErrorSpy).toHaveBeenCalled();
+      const logCall = consoleErrorSpy.mock.calls[0][0];
       const logEntry = JSON.parse(logCall);
 
       expect(logEntry.metadata.environment).toBe('development');

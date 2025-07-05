@@ -4,7 +4,6 @@ import { TransportRegistry } from '../../../transport/src/registry';
 import { StdioTransport } from '../../../transport-stdio/src/stdio-transport';
 import {
   createErrorMapperMiddleware,
-  LifecycleState,
   McpCapabilityRegistry,
   McpHandshakeHandlers,
   McpLifecycleManager,
@@ -19,7 +18,6 @@ import {
   createLoggingMiddleware,
   createRateLimitMiddleware,
   createStateMutationMiddleware,
-  createTracingMiddleware,
 } from '../fixtures/middleware-fixtures';
 
 describe('Real Transport with Middleware Integration', () => {
@@ -190,7 +188,9 @@ describe('Real Transport with Middleware Integration', () => {
 
       // Verify response includes middleware state
       expect(capturedStdout.length).toBeGreaterThan(0);
-      const response = JSON.parse(capturedStdout[0]);
+      const responseJson = capturedStdout[0];
+      expect(responseJson).toBeDefined();
+      const response = JSON.parse(responseJson as string);
 
       expect(response.result.middlewareState).toEqual({
         authenticated: true,
@@ -253,7 +253,9 @@ describe('Real Transport with Middleware Integration', () => {
 
       // Should receive error response
       expect(capturedStdout.length).toBeGreaterThan(0);
-      const errorResponse = JSON.parse(capturedStdout[0]);
+      const errorResponseJson = capturedStdout[0];
+      expect(errorResponseJson).toBeDefined();
+      const errorResponse = JSON.parse(errorResponseJson as string);
 
       expect(errorResponse).toMatchObject({
         jsonrpc: '2.0',
