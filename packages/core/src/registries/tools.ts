@@ -1,8 +1,9 @@
-import type { ServerCapabilities } from '@modelcontextprotocol/sdk/types.js';
+import type { ServerCapabilities, Tool } from '@modelcontextprotocol/sdk/types.js';
 
 import type { Registry, RegistryMetadata, RegistryStats } from './base';
 import { REGISTRY_KINDS } from './base';
 import type { HandlerContext, ToolDefinition } from './types';
+import { convertToMcpTool } from './types';
 
 /**
  * Registry for managing tool handlers in the MCP Server Framework.
@@ -295,7 +296,25 @@ export class ToolRegistry implements Registry {
   }
 
   /**
-   * List all registered tools with optional filtering
+   * List all registered tools in MCP-compliant format
+   */
+  listMcpTools(options?: { tags?: string[]; dangerous?: boolean }): Tool[] {
+    let tools = Array.from(this._tools.values());
+
+    if (options?.tags && options.tags.length > 0) {
+      const filterTags = options.tags;
+      tools = tools.filter((t) => t.tags && filterTags.some((tag) => t.tags?.includes(tag)));
+    }
+
+    if (options?.dangerous !== undefined) {
+      tools = tools.filter((t) => Boolean(t.dangerous) === options.dangerous);
+    }
+
+    return tools.map((tool) => convertToMcpTool(tool));
+  }
+
+  /**
+   * List all registered tools with optional filtering (legacy format for internal use)
    */
   list(options?: { tags?: string[]; dangerous?: boolean; withScope?: boolean; withSchema?: boolean }): Array<{
     name: string;

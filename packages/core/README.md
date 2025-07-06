@@ -10,6 +10,7 @@ Core functionality for MCP Server Framework with lifecycle state machine, handsh
 - 🔌 **Transport Integration**: Seamless integration with transport adapters
 - 📝 **TypeScript First**: Full type safety with comprehensive interfaces
 - ✅ **Well Tested**: 80%+ test coverage with comprehensive edge case testing
+- 🛠️ **MCP Protocol Compliance**: Full compliance with MCP protocol including proper `tools/list` responses with JSON Schema
 
 ## Installation
 
