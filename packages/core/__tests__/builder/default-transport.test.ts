@@ -1,4 +1,6 @@
-// Mock the @hexmcp/transport-stdio module
+import { createMcpKitServer } from '../../src/builder';
+import type { McpServerBuilder } from '../../src/builder/types';
+
 const mockStdioTransport = {
   name: 'stdio',
   start: jest.fn(async () => {
@@ -9,31 +11,19 @@ const mockStdioTransport = {
   }),
 };
 
-const MockStdioTransportClass = jest.fn().mockImplementation(() => mockStdioTransport);
-
-// Mock the module
-jest.mock(
-  '@hexmcp/transport-stdio',
-  () => ({
-    StdioTransport: MockStdioTransportClass,
-  }),
-  { virtual: true }
-);
-
-import { createMcpKitServer } from '../../src/builder';
-import type { McpServerBuilder } from '../../src/builder/types';
+jest.mock('@hexmcp/transport-stdio', () => ({
+  StdioTransport: jest.fn(() => mockStdioTransport),
+}));
 
 describe('Default Transport Behavior', () => {
   let builder: McpServerBuilder;
   let originalEnv: string | undefined;
 
   beforeEach(() => {
-    jest.resetModules();
     builder = createMcpKitServer();
     originalEnv = process.env.MCPKIT_NO_DEFAULT_TRANSPORT;
     delete process.env.MCPKIT_NO_DEFAULT_TRANSPORT;
     jest.clearAllMocks();
-    MockStdioTransportClass.mockClear();
     mockStdioTransport.start.mockClear();
     mockStdioTransport.stop.mockClear();
   });
@@ -44,7 +34,6 @@ describe('Default Transport Behavior', () => {
     } else {
       delete process.env.MCPKIT_NO_DEFAULT_TRANSPORT;
     }
-    jest.resetModules();
   });
 
   describe('automatic StdioTransport behavior', () => {

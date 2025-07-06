@@ -13,13 +13,9 @@ const mockStdioTransport = {
   dispatch: null as TransportDispatch | null,
 };
 
-jest.mock(
-  '@hexmcp/transport-stdio',
-  () => ({
-    StdioTransport: jest.fn(() => mockStdioTransport),
-  }),
-  { virtual: true }
-);
+jest.mock('@hexmcp/transport-stdio', () => ({
+  StdioTransport: jest.fn(() => mockStdioTransport),
+}));
 
 describe('Default Transport Integration Tests', () => {
   let originalEnv: string | undefined;
