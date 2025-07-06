@@ -1,13 +1,17 @@
-const config = {
+import type { Config } from 'jest';
+
+const config: Config = {
   preset: 'ts-jest',
   testEnvironment: 'node',
+  extensionsToTreatAsEsm: ['.ts'],
   transform: {
-    '^.+\\.ts$': 'ts-jest',
+    '^.+\\.ts$': ['ts-jest', { useESM: true }],
   },
-  testMatch: ['<rootDir>/tests/**/*.test.ts', '<rootDir>/src/**/*.test.ts'],
-  collectCoverageFrom: ['src/**/*.ts', '!src/**/*.test.ts', '!src/**/*.spec.ts', '!src/**/*.d.ts'],
+  testMatch: ['<rootDir>/tests/**/*.test.ts', '<rootDir>/src/**/*.test.ts', '<rootDir>/fixtures/**/*.test.ts'],
+  testPathIgnorePatterns: ['/node_modules/', '/dist/', '/coverage/'],
+  collectCoverageFrom: ['src/**/*.ts', '!src/**/*.test.ts', '!src/**/*.spec.ts', '!src/**/*.d.ts', '!src/**/index.ts'],
   coverageDirectory: 'coverage',
-  coverageReporters: ['text', 'lcov', 'html'],
+  coverageReporters: ['text', 'lcov', 'html', 'json-summary'],
   coverageThreshold: {
     global: {
       branches: 80,
@@ -19,6 +23,10 @@ const config = {
   setupFilesAfterEnv: [],
   testTimeout: 10000,
   verbose: true,
+  moduleNameMapper: {
+    '^(\\.{1,2}/.*)\\.js$': '$1',
+  },
+  transformIgnorePatterns: ['node_modules/(?!(@hexmcp)/)'],
 };
 
-module.exports = config;
+export default config;

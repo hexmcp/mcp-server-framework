@@ -69,16 +69,26 @@ pnpm test:coverage
 # Type checking
 pnpm typecheck
 
-# Linting
-pnpm lint
+# Linting (use root-level command)
+cd ../.. && pnpm lint
 ```
 
 ### Manual Testing
 
-Use the provided script for interactive testing:
+Use the provided test wrapper for different testing modes:
 
 ```bash
-./run.sh
+# Complete test suite (recommended)
+./test.sh
+
+# Quick verification (30 seconds)
+./test.sh quick
+
+# Interactive testing with examples
+./test.sh manual
+
+# Development server with debug output
+./test.sh dev
 ```
 
 This starts the server and provides example JSON-RPC requests you can send via stdin.
@@ -227,10 +237,10 @@ Generates a summary of a note by ID.
 
 ## 🧪 Testing
 
-### Running Tests
+### Unit Tests (Jest)
 
 ```bash
-# Run all tests
+# Run all Jest tests
 pnpm test
 
 # Run tests in watch mode
@@ -238,6 +248,38 @@ pnpm test:watch
 
 # Run with coverage report
 pnpm test:coverage
+```
+
+### Integration Tests (MCP Protocol)
+
+```bash
+# Complete MCP server test suite
+./test.sh
+
+# Quick verification test
+./test.sh quick
+
+# Interactive manual testing
+./test.sh manual
+```
+
+### Test Scripts Organization
+
+```
+scripts/
+├── tests/          # Automated MCP protocol tests
+│   ├── run-debug-tests.sh      # Main test runner
+│   ├── test-handshake.sh       # MCP handshake validation
+│   ├── test-silent-mode.sh     # Silent operation testing
+│   ├── test-capabilities.sh    # Component registration
+│   ├── test-runtime.sh         # Full functionality
+│   └── test-shutdown.sh        # Graceful shutdown
+├── debug/          # Quick debugging tools
+│   └── quick-test.sh           # Fast verification
+├── manual/         # Interactive testing
+│   └── manual-test.sh          # Manual JSON-RPC testing
+└── dev/            # Development utilities
+    └── start-server-dev-debug.sh
 ```
 
 ### Fixture-Based Testing
@@ -479,6 +521,11 @@ The server logs all requests/responses to stderr in development mode (safe for s
 
 ## 📚 Further Reading
 
+### Project Documentation
+- [Debug Reports & Analysis](./docs/README.md) - Comprehensive testing and debugging documentation
+- [Script Organization](./docs/SCRIPT_ORGANIZATION.md) - Testing script structure and usage
+
+### Framework Documentation
 - [MCP Server Framework Documentation](../../docs/README.md)
 - [Core Package Reference](../../packages/core/README.md)
 - [Testing Package Guide](../../packages/testing/README.md)
