@@ -1,5 +1,12 @@
 # @hexmcp/testing
 
+## 0.0.6
+
+### Patch Changes
+
+- Updated dependencies [fed253d]
+  - @hexmcp/core@0.9.0
+
 ## 0.0.5
 
 ### Patch Changes
