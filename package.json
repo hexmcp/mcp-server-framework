@@ -12,6 +12,7 @@
     "build": "pnpm -r build",
     "postbuild": "tsx scripts/verify-build.ts",
     "test": "jest --passWithNoTests",
+    "test:coverage": "jest --coverage --passWithNoTests",
     "test-fixtures": "pnpm -r test-fixtures",
     "typecheck": "tsc --noEmit",
     "typecheck:test": "tsc --project tsconfig.test.json --noEmit",

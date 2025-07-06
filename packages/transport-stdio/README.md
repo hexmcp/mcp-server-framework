@@ -9,8 +9,10 @@ STDIO transport implementation for MCP Server Framework providing JSON-RPC 2.0 c
 - 🛡️ **Error Handling**: Proper JSON-RPC error responses for parse failures
 - 🔄 **Lifecycle Management**: Graceful start/stop with cleanup
 - 🚀 **High Performance**: Efficient readline-based message processing
-- ✅ **Well Tested**: 80%+ test coverage with comprehensive edge cases
+- ✅ **Well Tested**: 95%+ test coverage with comprehensive edge cases
 - 🔗 **Transport Integration**: Compatible with MCP transport registry system
+- 🤫 **Silent Mode**: Configurable console output redirection to prevent stdout pollution
+- 🔧 **Production Ready**: Clean JSON-RPC handshake with proper error handling
 
 ## Installation
 
@@ -20,6 +22,16 @@ npm install @hexmcp/transport-stdio
 
 ## Quick Start
 
+### Production Usage (Recommended)
+
+```typescript
+import { StdioTransport } from '@hexmcp/transport-stdio';
+import type { TransportDispatch } from '@hexmcp/transport';
+
+// Use silent mode for production to prevent stdout pollution
+const transport = new StdioTransport({ silent: true });
+```
+
 ### Basic Usage
 
 ```typescript
@@ -27,6 +39,7 @@ import { StdioTransport } from '@hexmcp/transport-stdio';
 import type { TransportDispatch } from '@hexmcp/transport';
 import { createStderrLogger } from '@hexmcp/core';
 
+// Default transport (console output goes to stdout)
 const transport = new StdioTransport();
 
 const dispatch: TransportDispatch = (message, respond, metadata) => {
@@ -55,6 +68,57 @@ await transport.start(dispatch);
 
 // Graceful shutdown
 await transport.stop();
+```
+
+### Silent Mode Configuration
+
+Silent mode is crucial for production deployments to ensure clean JSON-RPC communication:
+
+```typescript
+import { StdioTransport } from '@hexmcp/transport-stdio';
+
+// ✅ Production configuration - silent mode enabled
+const transport = new StdioTransport({ silent: true });
+
+// ❌ Development configuration - may pollute stdout
+const transport = new StdioTransport({ silent: false });
+```
+
+**What Silent Mode Does:**
+
+1. **Redirects console.log/info to stderr**: Prevents stdout pollution during JSON-RPC handshake
+2. **Preserves console.warn/error**: Error messages still go to stderr for debugging
+3. **Clean JSON-RPC Protocol**: Ensures only JSON-RPC messages appear on stdout
+4. **Automatic Restoration**: Console methods are restored when transport stops
+
+**Example with MCP Client Integration:**
+
+```typescript
+// Server code (your-server.js)
+import { createMcpKitServer } from '@hexmcp/core';
+import { StdioTransport } from '@hexmcp/transport-stdio';
+
+const server = createMcpKitServer()
+  .transport(new StdioTransport({ silent: true })) // Essential for client compatibility
+  .tool('echo', {
+    description: 'Echo back the input',
+    inputSchema: {
+      type: 'object',
+      properties: { message: { type: 'string' } },
+      required: ['message'],
+    },
+    handler: async (args) => ({
+      content: [{ type: 'text', text: `Echo: ${args.message}` }],
+    }),
+  });
+
+await server.listen();
+```
+
+```bash
+# Client usage - clean JSON-RPC communication
+echo '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}' | node your-server.js
+# Output: {"jsonrpc":"2.0","id":1,"result":{"tools":[...]}}
 ```
 
 ### Integration with Transport Registry

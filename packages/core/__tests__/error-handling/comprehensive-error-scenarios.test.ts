@@ -131,7 +131,7 @@ describe('Comprehensive Error Handling Tests', () => {
               required: false,
             },
           ],
-          handler: async (args: { scenario?: string }, context) => {
+          handler: async (args: { scenario?: string }) => {
             if (args.scenario === 'template-error') {
               throw new Error('Template generation failed');
             }
@@ -173,7 +173,7 @@ describe('Comprehensive Error Handling Tests', () => {
               required: false,
             },
           ],
-          handler: async (args: { topic?: string; length?: number }, context) => {
+          handler: async (args: { topic?: string; length?: number }) => {
             if (!args.topic || (typeof args.topic === 'string' && args.topic.trim().length === 0)) {
               throw new Error('Topic cannot be empty');
             }

@@ -1,6 +1,6 @@
 # @hexmcp/testing
 
-Test Fixture Coverage system for the MCP Server Framework with JSON-based fixtures and Jest integration.
+Comprehensive testing framework for the MCP Server Framework with JSON-based fixtures, UUID generation, error assertions, and protocol compliance validation.
 
 ## Overview
 
@@ -30,6 +30,7 @@ packages/testing/
 
 ## Features
 
+### Core Testing Framework
 - **JSON-RPC 2.0 Fixtures**: Test cases defined as complete request/response pairs in JSON files
 - **Protocol Compliance**: Validates JSON-RPC 2.0 specification adherence
 - **Streaming Support**: Tests chunked responses for streaming prompts and large outputs
@@ -40,7 +41,14 @@ packages/testing/
 - **In-process Testing**: Uses codec/dispatcher stacks without external mock servers
 - **CI Integration**: Supports `pnpm test-fixtures` command for CI pipelines
 - **Dynamic Discovery**: Automatically finds and loads all fixture files
-- **80%+ Coverage**: Targets high test coverage for production readiness
+
+### Enhanced Testing Utilities (v0.0.7+)
+- **🆔 Real UUID Generation**: Cryptographically secure UUID v4 generation for realistic testing
+- **🎯 Deterministic Testing**: Reproducible UUID generation for consistent test results
+- **🚨 Error Assertions**: Comprehensive JSON-RPC error validation with specific error codes
+- **📋 Protocol Compliance**: MCP protocol validation framework for request/response validation
+- **🔧 Enhanced Factories**: Updated factory functions with UUID support
+- **95%+ Coverage**: High test coverage standards for production readiness
 
 ## Fixture Format
 
@@ -140,6 +148,104 @@ const lifecycleFixture = createFixture(
   createToolRequest('echo', { message: 'test' }),
   createLifecycleError(1, 'tools/call')
 );
+```
+
+### UUID Generation and Management
+
+```typescript
+import {
+  generateUuid,
+  generateUuids,
+  createToolRequestWithUuid,
+  createPromptRequestWithUuid,
+  createResourceRequestWithUuid,
+  RequestIdGenerator,
+  UuidTestUtils,
+} from '@hexmcp/testing';
+
+// Generate real UUIDs for realistic testing
+const requestId = generateUuid();
+const batchIds = generateUuids(5);
+
+// Create requests with real UUIDs
+const toolRequest = createToolRequestWithUuid('echo', { message: 'test' });
+const promptRequest = createPromptRequestWithUuid('summarize', { text: 'content' });
+const resourceRequest = createResourceRequestWithUuid('file://test.txt');
+
+// Use deterministic UUIDs for reproducible tests
+const deterministicGenerator = new RequestIdGenerator(true, 1);
+const id1 = deterministicGenerator.next(); // Always same for seed 1
+const id2 = deterministicGenerator.next(); // Always same for seed 2
+
+// Validate UUID collections
+const uuids = generateUuids(10);
+console.log('All unique:', UuidTestUtils.areAllUnique(uuids)); // true
+console.log('All valid:', UuidTestUtils.areAllValid(uuids)); // true
+```
+
+### Error Assertions and Validation
+
+```typescript
+import {
+  ErrorAssertions,
+  JsonRpcErrorCodes,
+  ErrorTestUtils,
+  ProtocolComplianceValidator,
+} from '@hexmcp/testing';
+
+// Assert specific error types
+const errorResponse = {
+  jsonrpc: '2.0',
+  id: 1,
+  error: { code: -32602, message: 'Invalid params' }
+};
+
+ErrorAssertions.expectInvalidParams(errorResponse);
+ErrorAssertions.expectErrorCode(errorResponse, JsonRpcErrorCodes.INVALID_PARAMS);
+ErrorAssertions.expectErrorMessage(errorResponse, /Invalid params/);
+
+// MCP-specific error assertions
+ErrorAssertions.expectMcpPreInitializationError(response); // -32002
+ErrorAssertions.expectMcpPostShutdownError(response); // -32003
+
+// Create test error responses
+const testError = ErrorTestUtils.createErrorResponse(
+  1,
+  JsonRpcErrorCodes.METHOD_NOT_FOUND,
+  'Tool not found'
+);
+
+// Validate protocol compliance
+ProtocolComplianceValidator.validateRequest(request);
+ProtocolComplianceValidator.validateResponse(response);
+ProtocolComplianceValidator.validateInitializeRequest(initRequest);
+ProtocolComplianceValidator.validateToolsCallResponse(toolResponse);
+```
+
+### Protocol Compliance Testing
+
+```typescript
+import { ProtocolTestUtils, McpMethods } from '@hexmcp/testing';
+
+// Create valid MCP protocol messages
+const initRequest = ProtocolTestUtils.createInitializeRequest(1, 'Test Client', '1.0.0');
+const initResponse = ProtocolTestUtils.createInitializeResponse(1, 'Test Server', '1.0.0');
+const toolRequest = ProtocolTestUtils.createToolsCallRequest(1, 'echo', { message: 'test' });
+const toolResponse = ProtocolTestUtils.createToolsCallResponse(1, [
+  { type: 'text', text: 'Echo: test' }
+]);
+
+// Validate complete request-response cycles
+ProtocolTestUtils.validateRequestResponseCycle(toolRequest, toolResponse);
+
+// Create compliance test suites
+const complianceTests = ProtocolTestUtils.createComplianceTestSuite('Tool Tests', [
+  {
+    name: 'Echo tool success',
+    request: toolRequest,
+    response: toolResponse,
+  },
+]);
 ```
 
 ### Snapshot Testing

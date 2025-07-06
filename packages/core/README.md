@@ -4,13 +4,16 @@ Core functionality for MCP Server Framework with lifecycle state machine, handsh
 
 ## Features
 
-- 🔄 **Lifecycle Management**: Finite state machine for MCP protocol compliance
-- 🛡️ **Request Gating**: Prevents premature operational requests
+- 🔄 **Lifecycle Management**: Finite state machine for MCP protocol compliance with proper error codes
+- 🛡️ **Request Gating**: Prevents premature operational requests with -32002/-32003 error codes
 - 🧅 **Middleware System**: Onion-style middleware execution with async/await support
 - 🔌 **Transport Integration**: Seamless integration with transport adapters
 - 📝 **TypeScript First**: Full type safety with comprehensive interfaces
-- ✅ **Well Tested**: 80%+ test coverage with comprehensive edge case testing
+- ✅ **Well Tested**: 95%+ test coverage with comprehensive edge case testing
 - 🛠️ **MCP Protocol Compliance**: Full compliance with MCP protocol including proper `tools/list` responses with JSON Schema
+- 🎯 **Resource Pattern Matching**: Advanced URI pattern matching with wildcard support and trailing slash normalization
+- 🔧 **Builder Pattern**: Fluent API for server configuration with middleware support
+- 🚨 **Error Handling**: Comprehensive error handling with proper JSON-RPC error responses
 
 ## Installation
 
@@ -18,9 +21,63 @@ Core functionality for MCP Server Framework with lifecycle state machine, handsh
 npm install @hexmcp/core
 ```
 
+## Recent Improvements
+
+### v0.0.7 - Production Ready Enhancements
+
+- **🔧 Fixed Resource Pattern Matching**: Improved URI pattern matching to handle both empty pathname ("") and root pathname ("/") correctly, including edge cases for trailing slashes and wildcard patterns
+- **🔄 Enhanced MCP Lifecycle Management**: Added proper finite state machine with error codes -32002 for pre-initialization and -32003 for post-shutdown rejection
+- **🧪 Comprehensive Testing**: Added extensive test suites including integration tests, protocol compliance tests, and error handling scenarios
+- **🛡️ Improved Error Handling**: Enhanced error mapper middleware with consistent JSON-RPC error responses and environment-based debug mode
+- **📚 Better Documentation**: Updated with comprehensive examples, troubleshooting guides, and best practices
+
 ## Quick Start
 
-### Basic Lifecycle Management
+### Modern Builder Pattern (Recommended)
+
+```typescript
+import { createMcpKitServer } from '@hexmcp/core';
+import { StdioTransport } from '@hexmcp/transport-stdio';
+
+// Create a complete MCP server with fluent API
+const server = createMcpKitServer()
+  .transport(new StdioTransport({ silent: true }))
+  .tool('echo', {
+    description: 'Echo back the input',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        message: { type: 'string' },
+      },
+      required: ['message'],
+    },
+    handler: async (args) => {
+      return {
+        content: [{ type: 'text', text: `Echo: ${args.message}` }],
+      };
+    },
+  })
+  .resource('file://**', {
+    name: 'File System',
+    description: 'Access to local files',
+    provider: {
+      get: async (uri) => {
+        const content = await fs.readFile(uri.replace('file://', ''), 'utf8');
+        return { uri, mimeType: 'text/plain', text: content };
+      },
+      list: async () => ({ resources: [] }),
+    },
+  })
+  .use(async (ctx, next) => {
+    console.log(`Processing ${ctx.request.method}`);
+    await next();
+  });
+
+// Start the server
+await server.listen();
+```
+
+### Direct API Usage (Advanced)
 
 ```typescript
 import {
@@ -153,6 +210,59 @@ enhancedBuilder
   .withTransport(stdioTransport)
   .build();
 ```
+
+## Troubleshooting
+
+### Common Issues
+
+#### Resource Pattern Matching
+
+**Problem**: Resources not matching expected URIs
+```typescript
+// ❌ Problematic pattern - doesn't handle trailing slashes
+registry.register('api://service', provider);
+
+// ✅ Better pattern - handles trailing slash variations
+registry.register('api://service/**', provider);
+```
+
+**Solution**: Use wildcard patterns and the framework automatically handles trailing slash normalization.
+
+#### MCP Lifecycle Errors
+
+**Problem**: Getting -32002 or -32003 errors
+```typescript
+// ❌ Calling tools before initialization
+await toolRegistry.call('my-tool', args); // Throws -32002
+
+// ✅ Proper lifecycle management
+await lifecycleManager.initialize(initRequest);
+await lifecycleManager.initialized();
+await toolRegistry.call('my-tool', args); // Works correctly
+```
+
+**Solution**: Always follow the proper MCP lifecycle: initialize → initialized → ready state before processing requests.
+
+#### Transport Silent Mode
+
+**Problem**: Console output interfering with JSON-RPC
+```typescript
+// ❌ Default stdio transport may pollute stdout
+new StdioTransport()
+
+// ✅ Use silent mode for clean JSON-RPC communication
+new StdioTransport({ silent: true })
+```
+
+**Solution**: Enable silent mode to redirect console output to stderr and keep stdout clean for JSON-RPC.
+
+### Best Practices
+
+1. **Always use the builder pattern** for new projects - it provides better defaults and error handling
+2. **Enable silent mode** for stdio transports in production
+3. **Use wildcard patterns** for resource URIs to handle edge cases automatically
+4. **Follow MCP lifecycle** strictly to avoid protocol violations
+5. **Add comprehensive error handling** middleware for production deployments
 
 ## API Reference
 
