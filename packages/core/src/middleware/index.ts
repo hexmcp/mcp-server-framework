@@ -1,4 +1,9 @@
 export {
+  AlreadyInitializedError,
+  NotInitializedError,
+  PostShutdownError,
+} from '../lifecycle/types';
+export {
   type AuthMiddlewareOptions,
   addBuiltInMiddlewareSupport,
   addMiddlewareSupport,

@@ -9,7 +9,11 @@ import {
   MiddlewareDispatcher,
   type RequestContext,
 } from '../../src/middleware/index';
-import { OPERATIONAL_REQUESTS, VALID_INITIALIZE_REQUEST_WITH_ID } from '../fixtures/handshake-fixtures';
+import {
+  OPERATIONAL_REQUESTS,
+  performCompleteLifecycleInitialization,
+  VALID_INITIALIZE_REQUEST_WITH_ID,
+} from '../fixtures/handshake-fixtures';
 import {
   createAuthMiddleware,
   createLoggingMiddleware,
@@ -60,7 +64,7 @@ describe('Error Mapper Integration Tests', () => {
 
   describe('middleware stack ordering', () => {
     it('should execute error mapper as outermost layer', async () => {
-      await lifecycleManager.initialize(VALID_INITIALIZE_REQUEST_WITH_ID);
+      await performCompleteLifecycleInitialization(lifecycleManager);
 
       const logs: string[] = [];
       const errorMapper = createErrorMapperMiddleware({ enableLogging: false });
@@ -122,7 +126,7 @@ describe('Error Mapper Integration Tests', () => {
     });
 
     it('should catch errors from core dispatcher', async () => {
-      await lifecycleManager.initialize(VALID_INITIALIZE_REQUEST_WITH_ID);
+      await performCompleteLifecycleInitialization(lifecycleManager);
 
       const errorMapper = createErrorMapperMiddleware({ enableLogging: false });
       middlewareRegistry.registerMiddleware(errorMapper);
@@ -142,7 +146,7 @@ describe('Error Mapper Integration Tests', () => {
       await new Promise((resolve) => setTimeout(resolve, 0));
 
       const response = mockRespond.mock.calls[0][0] as any;
-      expect(response.error.code).toBe(JSON_RPC_ERROR_CODES.INTERNAL_ERROR);
+      expect(response.error.code).toBe(-32603);
       // The error message might be preserved from the original error in some cases
       expect(response.error.message).toMatch(/Internal error|Core dispatcher failure/);
     });
@@ -228,7 +232,7 @@ describe('Error Mapper Integration Tests', () => {
 
   describe('complex middleware interactions', () => {
     it('should handle multiple middleware with state mutations and error recovery', async () => {
-      await lifecycleManager.initialize(VALID_INITIALIZE_REQUEST_WITH_ID);
+      await performCompleteLifecycleInitialization(lifecycleManager);
 
       const logs: string[] = [];
       const errorMapper = createErrorMapperMiddleware({

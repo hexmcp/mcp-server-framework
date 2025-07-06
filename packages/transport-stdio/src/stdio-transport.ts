@@ -2,6 +2,10 @@ import * as readline from 'node:readline';
 import { decodeJsonRpcMessage, encodeJsonRpcParseError, type JsonRpcMessage } from '@hexmcp/codec-jsonrpc';
 import type { ServerTransport, TransportDispatch, TransportMetadata } from '@hexmcp/transport';
 
+export interface StdioTransportOptions {
+  silent?: boolean;
+}
+
 export class StdioTransport implements ServerTransport {
   readonly name = 'stdio';
 
@@ -9,10 +13,27 @@ export class StdioTransport implements ServerTransport {
   private readlineInterface?: readline.Interface | undefined;
   private isStarted = false;
   private isStopping = false;
+  private options: StdioTransportOptions;
+  private originalConsole:
+    | {
+        log: typeof console.log;
+        info: typeof console.info;
+        warn: typeof console.warn;
+        error: typeof console.error;
+      }
+    | undefined;
+
+  constructor(options: StdioTransportOptions = {}) {
+    this.options = { silent: true, ...options };
+  }
 
   async start(dispatch: TransportDispatch): Promise<void> {
     if (this.isStarted) {
       throw new Error('StdioTransport is already started');
+    }
+
+    if (this.options.silent) {
+      this.configureSilentMode();
     }
 
     this.dispatch = dispatch;
@@ -48,6 +69,7 @@ export class StdioTransport implements ServerTransport {
 
     this.isStopping = true;
     this.cleanup();
+    this.restoreConsole();
   }
 
   private cleanup(): void {
@@ -109,6 +131,42 @@ export class StdioTransport implements ServerTransport {
       process.stdout.write(`${jsonString}\n`);
     } catch (_error) {
       // Silently ignore JSON serialization errors
+    }
+  }
+
+  private configureSilentMode(): void {
+    if (this.originalConsole) {
+      return;
+    }
+
+    this.originalConsole = {
+      // biome-ignore lint/suspicious/noConsole: Need to capture original console methods for silent mode
+      log: console.log,
+      // biome-ignore lint/suspicious/noConsole: Need to capture original console methods for silent mode
+      info: console.info,
+      // biome-ignore lint/suspicious/noConsole: Need to capture original console methods for silent mode
+      warn: console.warn,
+      // biome-ignore lint/suspicious/noConsole: Need to capture original console methods for silent mode
+      error: console.error,
+    };
+
+    console.log = () => {
+      // Suppress stdout output to prevent JSON-RPC pollution
+    };
+    console.info = () => {
+      // Suppress stdout output to prevent JSON-RPC pollution
+    };
+    console.warn = (...args: unknown[]) => this.originalConsole?.error(...args);
+    console.error = (...args: unknown[]) => this.originalConsole?.error(...args);
+  }
+
+  private restoreConsole(): void {
+    if (this.originalConsole) {
+      console.log = this.originalConsole.log;
+      console.info = this.originalConsole.info;
+      console.warn = this.originalConsole.warn;
+      console.error = this.originalConsole.error;
+      this.originalConsole = undefined;
     }
   }
 }

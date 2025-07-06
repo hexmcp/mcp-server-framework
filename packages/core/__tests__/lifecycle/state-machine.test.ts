@@ -72,21 +72,17 @@ describe('McpLifecycleManager', () => {
         serverInfo: expect.any(Object),
       });
 
-      expect(lifecycleManager.currentState).toBe(LifecycleState.READY);
+      expect(lifecycleManager.currentState).toBe(LifecycleState.INITIALIZING);
       expect(lifecycleManager.isInitialized).toBe(true);
-      expect(lifecycleManager.isReady).toBe(true);
+      expect(lifecycleManager.isReady).toBe(false);
       expect(lifecycleManager.initializeRequest).toBe(VALID_INITIALIZE_REQUEST);
       expect(lifecycleManager.initializeResult).toBe(result);
 
-      // Check state transitions
-      expect(stateChanges).toHaveLength(2);
+      // Check state transitions - initialize() only goes to INITIALIZING
+      expect(stateChanges).toHaveLength(1);
       expect(stateChanges[0]).toMatchObject({
         previousState: LifecycleState.IDLE,
         currentState: LifecycleState.INITIALIZING,
-      });
-      expect(stateChanges[1]).toMatchObject({
-        previousState: LifecycleState.INITIALIZING,
-        currentState: LifecycleState.READY,
       });
 
       // Check initialization events
@@ -230,6 +226,7 @@ describe('McpLifecycleManager', () => {
 
     it('should allow operational requests in READY state', async () => {
       await lifecycleManager.initialize(VALID_INITIALIZE_REQUEST);
+      await lifecycleManager.initialized();
 
       expect(() => {
         lifecycleManager.validateOperation('prompts/list');
@@ -247,7 +244,7 @@ describe('McpLifecycleManager', () => {
       // First initialization should still complete successfully
       const result = await initPromise1;
       expect(result).toBeDefined();
-      expect(lifecycleManager.currentState).toBe(LifecycleState.READY);
+      expect(lifecycleManager.currentState).toBe(LifecycleState.INITIALIZING);
     });
 
     it('should maintain INITIALIZING state during async initialization', async () => {
@@ -266,8 +263,58 @@ describe('McpLifecycleManager', () => {
 
       await initPromise;
 
-      // Verify state progression
-      expect(statesDuringInit).toEqual([LifecycleState.INITIALIZING, LifecycleState.READY]);
+      // Verify state progression - initialize should only go to INITIALIZING
+      expect(statesDuringInit).toEqual([LifecycleState.INITIALIZING]);
+    });
+
+    it('should require initialized() call to reach READY state', async () => {
+      const stateChanges: LifecycleState[] = [];
+
+      lifecycleManager.on(LifecycleEvent.STATE_CHANGED, (event) => {
+        stateChanges.push(event.currentState);
+      });
+
+      await lifecycleManager.initialize(VALID_INITIALIZE_REQUEST);
+
+      expect(lifecycleManager.currentState).toBe(LifecycleState.INITIALIZING);
+      expect(lifecycleManager.isReady).toBe(false);
+
+      await lifecycleManager.initialized();
+
+      expect(lifecycleManager.currentState).toBe(LifecycleState.READY);
+      expect(lifecycleManager.isReady).toBe(true);
+
+      expect(stateChanges).toEqual([LifecycleState.INITIALIZING, LifecycleState.READY]);
+    });
+
+    it('should emit READY event when initialized() is called', async () => {
+      const readyEvents: any[] = [];
+
+      lifecycleManager.on(LifecycleEvent.READY, (event) => {
+        readyEvents.push(event);
+      });
+
+      await lifecycleManager.initialize(VALID_INITIALIZE_REQUEST);
+      await lifecycleManager.initialized();
+
+      expect(readyEvents).toHaveLength(1);
+      expect(readyEvents[0]).toMatchObject({
+        state: LifecycleState.READY,
+        timestamp: expect.any(Date),
+      });
+    });
+
+    it('should throw error if initialized() called in wrong state', async () => {
+      await expect(lifecycleManager.initialized()).rejects.toThrow(
+        'Initialized notification can only be sent when server is in initializing state'
+      );
+
+      await lifecycleManager.initialize(VALID_INITIALIZE_REQUEST);
+      await lifecycleManager.initialized();
+
+      await expect(lifecycleManager.initialized()).rejects.toThrow(
+        'Initialized notification can only be sent when server is in initializing state'
+      );
     });
 
     it('should reject all operational requests during INITIALIZING state', async () => {
@@ -297,7 +344,17 @@ describe('McpLifecycleManager', () => {
 
       await initPromise;
 
-      // After initialization, state should be consistent
+      // After initialization, state should be INITIALIZING (not READY yet)
+      for (let i = 0; i < 10; i++) {
+        expect(lifecycleManager.currentState).toBe(LifecycleState.INITIALIZING);
+        expect(lifecycleManager.isInitialized).toBe(true);
+        expect(lifecycleManager.isReady).toBe(false);
+      }
+
+      // Call initialized() to transition to READY
+      await lifecycleManager.initialized();
+
+      // Now state should be READY
       for (let i = 0; i < 10; i++) {
         expect(lifecycleManager.currentState).toBe(LifecycleState.READY);
         expect(lifecycleManager.isInitialized).toBe(true);

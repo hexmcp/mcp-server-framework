@@ -279,6 +279,15 @@ describe('Builder MCP Protocol Integration', () => {
 
       await capturedDispatcher(initializeRequest, jest.fn());
 
+      // Send initialized notification to complete the handshake
+      const initializedNotification = {
+        jsonrpc: '2.0' as const,
+        method: 'notifications/initialized',
+        params: {},
+      };
+
+      await capturedDispatcher(initializedNotification, jest.fn());
+
       const operationalRequest = {
         jsonrpc: '2.0' as const,
         id: 2,

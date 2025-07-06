@@ -795,7 +795,7 @@ export class ResourceRegistry implements Registry {
 
     let bestMatch: string | null = null;
     for (const pattern of this._resources.keys()) {
-      if (uri.startsWith(pattern) && (bestMatch === null || pattern.length > bestMatch.length)) {
+      if (this._matchPattern(pattern, uri) && (bestMatch === null || pattern.length > bestMatch.length)) {
         bestMatch = pattern;
       }
     }
@@ -819,7 +819,7 @@ export class ResourceRegistry implements Registry {
 
     let bestMatch: string | null = null;
     for (const pattern of this._providers.keys()) {
-      if (uri.startsWith(pattern) && (bestMatch === null || pattern.length > bestMatch.length)) {
+      if (this._matchPattern(pattern, uri) && (bestMatch === null || pattern.length > bestMatch.length)) {
         bestMatch = pattern;
       }
     }
@@ -830,5 +830,29 @@ export class ResourceRegistry implements Registry {
     }
 
     return null;
+  }
+
+  /**
+   * Match a URI pattern against a URI with proper wildcard support
+   */
+  private _matchPattern(pattern: string, uri: string): boolean {
+    // Handle simple prefix matching for patterns without wildcards
+    if (!pattern.includes('*')) {
+      return uri.startsWith(pattern);
+    }
+
+    // For wildcard patterns, use simple string-based matching
+    // Convert pattern to regex, treating the entire URI as a string
+    const regexPattern = pattern
+      .replace(/[.*+?^${}()|[\]\\]/g, '\\$&') // Escape regex special chars
+      .replace(/\\\*\\\*/g, '.*') // Replace \*\* with .*
+      .replace(/\\\*/g, '[^/]*'); // Replace \* with [^/]*
+
+    try {
+      return new RegExp(`^${regexPattern}$`).test(uri);
+    } catch {
+      // Fallback to simple prefix matching
+      return uri.startsWith(pattern);
+    }
   }
 }

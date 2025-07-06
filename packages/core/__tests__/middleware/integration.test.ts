@@ -2,7 +2,11 @@ import { encodeJsonRpcError, encodeJsonRpcSuccess, RpcError } from '@hexmcp/code
 
 import { McpCapabilityRegistry, McpLifecycleManager, McpRequestGate, MockPrimitiveRegistry } from '../../src/lifecycle/index';
 import { McpMiddlewareEngine, McpMiddlewareRegistry } from '../../src/middleware/index';
-import { OPERATIONAL_REQUESTS, VALID_INITIALIZE_REQUEST_WITH_ID } from '../fixtures/handshake-fixtures';
+import {
+  OPERATIONAL_REQUESTS,
+  performCompleteLifecycleInitialization,
+  VALID_INITIALIZE_REQUEST_WITH_ID,
+} from '../fixtures/handshake-fixtures';
 import {
   createAuthMiddleware,
   createLoggingMiddleware,
@@ -61,7 +65,7 @@ describe('Middleware Integration', () => {
     });
 
     it('should allow middleware to process requests after initialization', async () => {
-      await lifecycleManager.initialize(VALID_INITIALIZE_REQUEST_WITH_ID);
+      await performCompleteLifecycleInitialization(lifecycleManager);
 
       const logs: string[] = [];
       middlewareRegistry.registerMiddleware(createTracingMiddleware('tracing'));
@@ -90,7 +94,7 @@ describe('Middleware Integration', () => {
 
   describe('transport integration simulation', () => {
     it('should simulate full request processing pipeline', async () => {
-      await lifecycleManager.initialize(VALID_INITIALIZE_REQUEST_WITH_ID);
+      await performCompleteLifecycleInitialization(lifecycleManager);
 
       middlewareRegistry.registerMiddleware(createTracingMiddleware('tracing'));
       middlewareRegistry.registerMiddleware(createAuthMiddleware('auth', true));

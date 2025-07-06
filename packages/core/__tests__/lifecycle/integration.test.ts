@@ -52,12 +52,16 @@ describe('MCP Lifecycle Integration', () => {
         result: expect.any(Object),
       });
 
-      // Step 2: Server is now ready
-      expect(lifecycleManager.currentState).toBe(LifecycleState.READY);
-      expect(handshakeHandlers.isReady()).toBe(true);
+      // Step 2: Server is now in initializing state
+      expect(lifecycleManager.currentState).toBe(LifecycleState.INITIALIZING);
+      expect(handshakeHandlers.isReady()).toBe(false);
 
       // Step 3: Client sends initialized notification
       await expect(handshakeHandlers.handleInitialized(VALID_INITIALIZED_NOTIFICATION)).resolves.toBeUndefined();
+
+      // Step 4: Server is now ready
+      expect(lifecycleManager.currentState).toBe(LifecycleState.READY);
+      expect(handshakeHandlers.isReady()).toBe(true);
 
       // Step 4: Operational requests are now allowed
       for (const request of OPERATIONAL_REQUESTS) {
@@ -69,8 +73,8 @@ describe('MCP Lifecycle Integration', () => {
       expect(events.map((e) => e.type)).toEqual([
         'state-changed', // idle -> initializing
         'init-started',
-        'state-changed', // initializing -> ready
         'init-completed',
+        'state-changed', // initializing -> ready (from initialized() call)
       ]);
     });
 
@@ -140,6 +144,7 @@ describe('MCP Lifecycle Integration', () => {
     it('should handle complete shutdown sequence', async () => {
       // Initialize first
       await handshakeHandlers.handleInitialize(VALID_INITIALIZE_REQUEST_WITH_ID);
+      await handshakeHandlers.handleInitialized(VALID_INITIALIZED_NOTIFICATION);
       expect(lifecycleManager.currentState).toBe(LifecycleState.READY);
 
       const shutdownEvents: any[] = [];
@@ -196,7 +201,7 @@ describe('MCP Lifecycle Integration', () => {
 
     it('should handle initialized notification before ready state', async () => {
       await expect(handshakeHandlers.handleInitialized(VALID_INITIALIZED_NOTIFICATION)).rejects.toThrow(
-        'Received initialized notification but server is not in ready state'
+        'Initialized notification can only be sent when server is in initializing state'
       );
     });
 
@@ -207,6 +212,7 @@ describe('MCP Lifecycle Integration', () => {
       expect(requestGate.getCurrentState()).toBe(LifecycleState.IDLE);
 
       await handshakeHandlers.handleInitialize(VALID_INITIALIZE_REQUEST_WITH_ID);
+      await handshakeHandlers.handleInitialized(VALID_INITIALIZED_NOTIFICATION);
 
       expect(lifecycleManager.currentState).toBe(LifecycleState.READY);
       expect(handshakeHandlers.getCurrentState()).toBe(LifecycleState.READY);

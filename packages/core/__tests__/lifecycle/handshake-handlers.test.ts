@@ -11,6 +11,7 @@ import {
   MISSING_CAPABILITIES_REQUEST,
   MISSING_PARAMS_REQUEST,
   MISSING_PROTOCOL_VERSION_REQUEST,
+  performCompleteInitialization,
   SHUTDOWN_REQUEST,
   SHUTDOWN_REQUEST_NO_REASON,
   VALID_INITIALIZE_REQUEST,
@@ -50,8 +51,8 @@ describe('McpHandshakeHandlers', () => {
       });
 
       expect(handlers.isInitialized()).toBe(true);
-      expect(handlers.isReady()).toBe(true);
-      expect(handlers.getCurrentState()).toBe(LifecycleState.READY);
+      expect(handlers.isReady()).toBe(false);
+      expect(handlers.getCurrentState()).toBe(LifecycleState.INITIALIZING);
     });
 
     it('should reject initialize request with missing params', async () => {
@@ -143,8 +144,8 @@ describe('McpHandshakeHandlers', () => {
       });
 
       expect(handlers.isInitialized()).toBe(true);
-      expect(handlers.isReady()).toBe(true);
-      expect(handlers.getCurrentState()).toBe(LifecycleState.READY);
+      expect(handlers.isReady()).toBe(false);
+      expect(handlers.getCurrentState()).toBe(LifecycleState.INITIALIZING);
     });
 
     it('should handle error response without id field', async () => {
@@ -169,15 +170,18 @@ describe('McpHandshakeHandlers', () => {
   });
 
   describe('handleInitialized', () => {
-    it('should successfully handle initialized notification when ready', async () => {
+    it('should successfully handle initialized notification when in initializing state', async () => {
       await handlers.handleInitialize(VALID_INITIALIZE_REQUEST_WITH_ID);
 
       await expect(handlers.handleInitialized(VALID_INITIALIZED_NOTIFICATION)).resolves.toBeUndefined();
+
+      expect(handlers.isReady()).toBe(true);
+      expect(handlers.getCurrentState()).toBe(LifecycleState.READY);
     });
 
-    it('should reject initialized notification when not ready', async () => {
+    it('should reject initialized notification when not in initializing state', async () => {
       await expect(handlers.handleInitialized(VALID_INITIALIZED_NOTIFICATION)).rejects.toThrow(
-        'Received initialized notification but server is not in ready state'
+        'Initialized notification can only be sent when server is in initializing state'
       );
     });
   });
@@ -246,7 +250,7 @@ describe('McpHandshakeHandlers', () => {
     });
 
     it('should allow operational requests after initialization', async () => {
-      await handlers.handleInitialize(VALID_INITIALIZE_REQUEST_WITH_ID);
+      await performCompleteInitialization(handlers);
 
       expect(() => handlers.validateRequest('prompts/list')).not.toThrow();
       expect(() => handlers.validateRequest('tools/call')).not.toThrow();
@@ -288,7 +292,7 @@ describe('McpHandshakeHandlers', () => {
       expect(handlers.isReady()).toBe(false);
       expect(handlers.getCurrentState()).toBe(LifecycleState.IDLE);
 
-      await handlers.handleInitialize(VALID_INITIALIZE_REQUEST_WITH_ID);
+      await performCompleteInitialization(handlers);
 
       expect(handlers.isInitialized()).toBe(true);
       expect(handlers.isReady()).toBe(true);

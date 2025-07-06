@@ -215,11 +215,11 @@ export class McpRequestGate implements RequestGate {
         throw new AlreadyInitializedError();
       }
     } else if (method === 'notifications/initialized') {
-      if (!this._lifecycleManager.isReady) {
+      if (this._lifecycleManager.currentState !== 'initializing') {
         throw new LifecycleViolationError(
           this._lifecycleManager.currentState,
           method,
-          'Initialized notification can only be sent when server is ready'
+          'Initialized notification can only be sent when server is in initializing state'
         );
       }
     }

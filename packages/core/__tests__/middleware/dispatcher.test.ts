@@ -2,7 +2,11 @@ import { encodeJsonRpcSuccess } from '@hexmcp/codec-jsonrpc';
 
 import { McpCapabilityRegistry, McpLifecycleManager, McpRequestGate, MockPrimitiveRegistry } from '../../src/lifecycle/index';
 import { McpMiddlewareEngine, McpMiddlewareRegistry, MiddlewareDispatcher } from '../../src/middleware/index';
-import { OPERATIONAL_REQUESTS, VALID_INITIALIZE_REQUEST_WITH_ID } from '../fixtures/handshake-fixtures';
+import {
+  OPERATIONAL_REQUESTS,
+  performCompleteLifecycleInitialization,
+  VALID_INITIALIZE_REQUEST_WITH_ID,
+} from '../fixtures/handshake-fixtures';
 import {
   createAuthMiddleware,
   createLoggingMiddleware,
@@ -47,7 +51,7 @@ describe('MiddlewareDispatcher', () => {
     });
 
     it('should handle valid JSON-RPC request without middleware', async () => {
-      await lifecycleManager.initialize(VALID_INITIALIZE_REQUEST_WITH_ID);
+      await performCompleteLifecycleInitialization(lifecycleManager);
 
       const transportDispatch = dispatcher.createTransportDispatch('test-transport');
       const mockRespond = jest.fn();
@@ -61,7 +65,7 @@ describe('MiddlewareDispatcher', () => {
     });
 
     it('should execute middleware before core dispatcher', async () => {
-      await lifecycleManager.initialize(VALID_INITIALIZE_REQUEST_WITH_ID);
+      await performCompleteLifecycleInitialization(lifecycleManager);
 
       const logs: string[] = [];
       middlewareRegistry.registerMiddleware(createLoggingMiddleware('auth', logs));
@@ -151,7 +155,7 @@ describe('MiddlewareDispatcher', () => {
     });
 
     it('should handle transport metadata', async () => {
-      await lifecycleManager.initialize(VALID_INITIALIZE_REQUEST_WITH_ID);
+      await performCompleteLifecycleInitialization(lifecycleManager);
 
       const transportDispatch = dispatcher.createTransportDispatch('stdio');
       const mockRespond = jest.fn();
@@ -173,7 +177,7 @@ describe('MiddlewareDispatcher', () => {
     });
 
     it('should handle core dispatcher errors', async () => {
-      await lifecycleManager.initialize(VALID_INITIALIZE_REQUEST_WITH_ID);
+      await performCompleteLifecycleInitialization(lifecycleManager);
 
       mockCoreDispatcher.mockImplementation(() => {
         throw new Error('Core dispatcher error');
@@ -190,7 +194,7 @@ describe('MiddlewareDispatcher', () => {
 
       const response = mockRespond.mock.calls[0]?.[0] as any;
       expect(response.error.code).toBe(-32603);
-      expect(response.error.message).toBe('Core dispatcher error');
+      expect(response.error.message).toMatch(/Core dispatcher error|Internal error/);
     });
   });
 

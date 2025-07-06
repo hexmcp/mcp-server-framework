@@ -1,12 +1,15 @@
 import { JSON_RPC_ERROR_CODES, RpcError } from '@hexmcp/codec-jsonrpc';
 
 import {
+  AlreadyInitializedError,
   createErrorMapperMiddleware,
   createErrorMapperMiddlewareWithDefaults,
   ErrorClassification,
   type Logger,
   MiddlewareError,
   MiddlewareTimeoutError,
+  NotInitializedError,
+  PostShutdownError,
   ReentrantCallError,
 } from '../../src/middleware/index';
 import { createMockRequestContext, SAMPLE_JSON_RPC_REQUEST } from '../fixtures/middleware-fixtures';
@@ -488,6 +491,77 @@ describe('Error Mapper Middleware', () => {
       expect(ctx.response).toBeDefined();
       const response = ctx.response as any;
       expect(response.error.code).toBe(JSON_RPC_ERROR_CODES.INTERNAL_ERROR);
+    });
+  });
+
+  describe('lifecycle error handling', () => {
+    it('should handle NotInitializedError with correct code', async () => {
+      const middleware = createErrorMapperMiddleware();
+      const ctx = createMockRequestContext();
+      const error = new NotInitializedError('tools/list');
+      const next = jest.fn().mockRejectedValue(error);
+
+      await middleware(ctx, next);
+
+      expect(ctx.response).toBeDefined();
+      const response = ctx.response as any;
+      expect(response.error.code).toBe(-32002);
+      expect(response.error.message).toBe("Server not initialized. Cannot process 'tools/list' request before initialization.");
+    });
+
+    it('should handle PostShutdownError with correct code', async () => {
+      const middleware = createErrorMapperMiddleware();
+      const ctx = createMockRequestContext();
+      const error = new PostShutdownError('tools/list');
+      const next = jest.fn().mockRejectedValue(error);
+
+      await middleware(ctx, next);
+
+      expect(ctx.response).toBeDefined();
+      const response = ctx.response as any;
+      expect(response.error.code).toBe(-32003);
+      expect(response.error.message).toBe("Server has been shut down. Cannot process 'tools/list' request after shutdown.");
+    });
+
+    it('should handle AlreadyInitializedError with correct code', async () => {
+      const middleware = createErrorMapperMiddleware();
+      const ctx = createMockRequestContext();
+      const error = new AlreadyInitializedError();
+      const next = jest.fn().mockRejectedValue(error);
+
+      await middleware(ctx, next);
+
+      expect(ctx.response).toBeDefined();
+      const response = ctx.response as any;
+      expect(response.error.code).toBe(JSON_RPC_ERROR_CODES.INVALID_REQUEST);
+      expect(response.error.message).toBe('Server already initialized. Cannot initialize again.');
+    });
+
+    it('should preserve original message for lifecycle errors', async () => {
+      const middleware = createErrorMapperMiddleware();
+      const ctx = createMockRequestContext();
+      const error = new NotInitializedError('custom/method');
+      const next = jest.fn().mockRejectedValue(error);
+
+      await middleware(ctx, next);
+
+      expect(ctx.response).toBeDefined();
+      const response = ctx.response as any;
+      expect(response.error.message).toBe(error.message);
+      expect(response.error.code).toBe(error.code);
+    });
+
+    it('should not include debug info for lifecycle errors by default', async () => {
+      const middleware = createErrorMapperMiddleware({ debugMode: true });
+      const ctx = createMockRequestContext();
+      const error = new NotInitializedError('tools/list');
+      const next = jest.fn().mockRejectedValue(error);
+
+      await middleware(ctx, next);
+
+      expect(ctx.response).toBeDefined();
+      const response = ctx.response as any;
+      expect(response.error.data).toBeUndefined();
     });
   });
 });

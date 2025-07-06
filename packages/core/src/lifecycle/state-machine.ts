@@ -99,8 +99,6 @@ export class McpLifecycleManager extends EventEmitter implements LifecycleManage
       this._initializeResult = result;
       this._hasBeenInitialized = true;
 
-      this._transitionTo(LifecycleState.READY);
-
       const completedEvent: InitializationEvent = {
         state: this._currentState,
         timestamp: new Date(),
@@ -124,6 +122,29 @@ export class McpLifecycleManager extends EventEmitter implements LifecycleManage
 
       throw error;
     }
+  }
+
+  /**
+   * Handle the initialized notification to transition to ready state
+   */
+  async initialized(): Promise<void> {
+    if (this._currentState !== LifecycleState.INITIALIZING) {
+      throw new LifecycleViolationError(
+        this._currentState,
+        'initialized',
+        'Initialized notification can only be sent when server is in initializing state'
+      );
+    }
+
+    this._transitionTo(LifecycleState.READY);
+
+    const readyEvent: InitializationEvent = {
+      state: this._currentState,
+      timestamp: new Date(),
+      ...(this._initializeRequest && { initializeRequest: this._initializeRequest }),
+      ...(this._initializeResult && { initializeResult: this._initializeResult }),
+    };
+    this.emit(LifecycleEvent.READY, readyEvent);
   }
 
   /**

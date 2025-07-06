@@ -1,4 +1,5 @@
 import { encodeJsonRpcError, JSON_RPC_ERROR_CODES, RpcError } from '@hexmcp/codec-jsonrpc';
+import { AlreadyInitializedError, NotInitializedError, PostShutdownError } from '../lifecycle/types';
 import type { ContextLogger } from './logger';
 import type {
   ErrorClassificationResult,
@@ -154,6 +155,39 @@ function classifyError(error: unknown): ErrorClassificationResult {
     };
   }
 
+  if (error instanceof NotInitializedError) {
+    return {
+      classification: ErrorClassification.VALIDATION_ERROR,
+      code: error.code,
+      message: error.message,
+      preserveOriginalMessage: true,
+      includeDebugInfo: false,
+      severity: 'medium',
+    };
+  }
+
+  if (error instanceof PostShutdownError) {
+    return {
+      classification: ErrorClassification.VALIDATION_ERROR,
+      code: error.code,
+      message: error.message,
+      preserveOriginalMessage: true,
+      includeDebugInfo: false,
+      severity: 'medium',
+    };
+  }
+
+  if (error instanceof AlreadyInitializedError) {
+    return {
+      classification: ErrorClassification.VALIDATION_ERROR,
+      code: error.code,
+      message: error.message,
+      preserveOriginalMessage: true,
+      includeDebugInfo: false,
+      severity: 'medium',
+    };
+  }
+
   if (error instanceof Error) {
     const classification = classifyStandardError(error);
     return {
@@ -235,11 +269,11 @@ function getCodeForClassification(classification: ErrorClassification): number {
     case ErrorClassification.AUTHORIZATION_ERROR:
       return -32001;
     case ErrorClassification.RATE_LIMIT_ERROR:
-      return -32002;
-    case ErrorClassification.TIMEOUT_ERROR:
-      return -32003;
-    case ErrorClassification.NETWORK_ERROR:
       return -32004;
+    case ErrorClassification.TIMEOUT_ERROR:
+      return -32005;
+    case ErrorClassification.NETWORK_ERROR:
+      return -32006;
     case ErrorClassification.PARSE_ERROR:
       return JSON_RPC_ERROR_CODES.PARSE_ERROR;
     default:

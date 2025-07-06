@@ -40,6 +40,8 @@ export enum LifecycleEvent {
   // biome-ignore lint/style/useNamingConvention: Event names use SCREAMING_SNAKE_CASE
   INITIALIZATION_FAILED = 'initialization-failed',
   // biome-ignore lint/style/useNamingConvention: Event names use SCREAMING_SNAKE_CASE
+  READY = 'ready',
+  // biome-ignore lint/style/useNamingConvention: Event names use SCREAMING_SNAKE_CASE
   SHUTDOWN_STARTED = 'shutdown-started',
   // biome-ignore lint/style/useNamingConvention: Event names use SCREAMING_SNAKE_CASE
   SHUTDOWN_COMPLETED = 'shutdown-completed',
@@ -253,6 +255,7 @@ export interface LifecycleManager {
   readonly isReady: boolean;
 
   initialize(request: InitializeRequest): Promise<InitializeResult>;
+  initialized(): Promise<void>;
   shutdown(reason?: string): Promise<void>;
 
   canTransitionTo(state: LifecycleState): boolean;
@@ -260,7 +263,11 @@ export interface LifecycleManager {
 
   on(event: LifecycleEvent.STATE_CHANGED, listener: (event: StateChangeEvent) => void): void;
   on(
-    event: LifecycleEvent.INITIALIZATION_STARTED | LifecycleEvent.INITIALIZATION_COMPLETED | LifecycleEvent.INITIALIZATION_FAILED,
+    event:
+      | LifecycleEvent.INITIALIZATION_STARTED
+      | LifecycleEvent.INITIALIZATION_COMPLETED
+      | LifecycleEvent.INITIALIZATION_FAILED
+      | LifecycleEvent.READY,
     listener: (event: InitializationEvent) => void
   ): void;
   on(event: LifecycleEvent.SHUTDOWN_STARTED | LifecycleEvent.SHUTDOWN_COMPLETED, listener: (event: ShutdownEvent) => void): void;

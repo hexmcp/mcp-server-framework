@@ -7,7 +7,12 @@ import {
   RequestCategory,
 } from '../../src/lifecycle/index';
 
-import { ALWAYS_ALLOWED_REQUESTS, OPERATIONAL_REQUESTS, VALID_INITIALIZE_REQUEST } from '../fixtures/handshake-fixtures';
+import {
+  ALWAYS_ALLOWED_REQUESTS,
+  OPERATIONAL_REQUESTS,
+  performCompleteLifecycleInitialization,
+  VALID_INITIALIZE_REQUEST,
+} from '../fixtures/handshake-fixtures';
 
 describe('McpRequestGate', () => {
   let requestGate: McpRequestGate;
@@ -99,8 +104,8 @@ describe('McpRequestGate', () => {
       }
     });
 
-    it('should reject initialized notification (not ready yet)', () => {
-      expect(requestGate.canProcessRequest('notifications/initialized')).toBe(false);
+    it('should allow initialized notification in INITIALIZING state', () => {
+      expect(requestGate.canProcessRequest('notifications/initialized')).toBe(true);
     });
 
     it('should provide specific error messages for INITIALIZING state violations', () => {
@@ -122,28 +127,21 @@ describe('McpRequestGate', () => {
         },
       });
 
-      // Test initialized notification during initialization
+      // Test initialized notification during initialization - should be allowed
       const notificationError = requestGate.getValidationError('notifications/initialized');
-      expect(notificationError).toMatchObject({
-        code: -32000,
-        message: expect.stringContaining('Initialized notification can only be sent when server is ready'),
-        data: {
-          currentState: LifecycleState.INITIALIZING,
-          operation: 'notifications/initialized',
-        },
-      });
+      expect(notificationError).toBeNull();
     });
 
     it('should handle rapid request validation during INITIALIZING state', () => {
       // Simulate rapid requests during initialization
-      const methods = ['tools/list', 'prompts/list', 'resources/list', 'ping', 'initialize'];
+      const methods = ['tools/list', 'prompts/list', 'resources/list', 'ping', 'initialize', 'notifications/initialized'];
 
       for (let i = 0; i < 100; i++) {
         for (const method of methods) {
           const canProcess = requestGate.canProcessRequest(method);
           const error = requestGate.getValidationError(method);
 
-          if (method === 'ping') {
+          if (method === 'ping' || method === 'notifications/initialized') {
             expect(canProcess).toBe(true);
             expect(error).toBeNull();
           } else if (method === 'initialize') {
@@ -172,6 +170,7 @@ describe('McpRequestGate', () => {
   describe('request validation in READY state', () => {
     beforeEach(async () => {
       await lifecycleManager.initialize(VALID_INITIALIZE_REQUEST);
+      await lifecycleManager.initialized();
     });
 
     it('should allow always allowed requests', () => {
@@ -187,9 +186,11 @@ describe('McpRequestGate', () => {
       }
     });
 
-    it('should allow initialized notification', () => {
-      expect(requestGate.canProcessRequest('notifications/initialized')).toBe(true);
-      expect(() => requestGate.validateRequest('notifications/initialized')).not.toThrow();
+    it('should reject initialized notification in READY state', () => {
+      expect(requestGate.canProcessRequest('notifications/initialized')).toBe(false);
+      expect(() => requestGate.validateRequest('notifications/initialized')).toThrow(
+        'Initialized notification can only be sent when server is in initializing state'
+      );
     });
 
     it('should reject duplicate initialize request', () => {
@@ -220,7 +221,7 @@ describe('McpRequestGate', () => {
     });
 
     it('should return null for valid requests', async () => {
-      await lifecycleManager.initialize(VALID_INITIALIZE_REQUEST);
+      await performCompleteLifecycleInitialization(lifecycleManager);
 
       const error = requestGate.getValidationError('prompts/list');
       expect(error).toBeNull();
@@ -268,7 +269,7 @@ describe('McpRequestGate', () => {
     });
 
     it('should provide validation summary for READY state', async () => {
-      await lifecycleManager.initialize(VALID_INITIALIZE_REQUEST);
+      await performCompleteLifecycleInitialization(lifecycleManager);
 
       const summary = requestGate.getValidationSummary();
 
@@ -285,7 +286,7 @@ describe('McpRequestGate', () => {
     it('should report current state correctly', async () => {
       expect(requestGate.getCurrentState()).toBe(LifecycleState.IDLE);
 
-      await lifecycleManager.initialize(VALID_INITIALIZE_REQUEST);
+      await performCompleteLifecycleInitialization(lifecycleManager);
       expect(requestGate.getCurrentState()).toBe(LifecycleState.READY);
     });
   });

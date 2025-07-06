@@ -106,6 +106,25 @@ export const VALID_INITIALIZED_NOTIFICATION: InitializedNotification = {
   params: {},
 };
 
+/**
+ * Helper function to perform complete MCP initialization sequence
+ * This includes both initialize() and initialized() calls for the new lifecycle flow
+ */
+// biome-ignore lint/suspicious/noExplicitAny: Test helper function needs flexibility
+export async function performCompleteInitialization(handlers: any): Promise<void> {
+  await handlers.handleInitialize(VALID_INITIALIZE_REQUEST_WITH_ID);
+  await handlers.handleInitialized(VALID_INITIALIZED_NOTIFICATION);
+}
+
+/**
+ * Helper function to perform complete MCP initialization sequence for lifecycle manager
+ */
+// biome-ignore lint/suspicious/noExplicitAny: Test helper function needs flexibility
+export async function performCompleteLifecycleInitialization(lifecycleManager: any): Promise<void> {
+  await lifecycleManager.initialize(VALID_INITIALIZE_REQUEST);
+  await lifecycleManager.initialized();
+}
+
 export const EXPECTED_INITIALIZE_RESULT: InitializeResult = {
   protocolVersion: '2025-06-18',
   capabilities: MINIMAL_SERVER_CAPABILITIES,

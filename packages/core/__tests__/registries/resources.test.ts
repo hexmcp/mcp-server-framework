@@ -212,6 +212,86 @@ describe('ResourceRegistry', () => {
       expect(generalResult).toEqual({ type: 'general' });
     });
 
+    describe('wildcard pattern matching', () => {
+      it('should match single wildcard patterns', async () => {
+        const provider = new InMemoryResourceProvider();
+        provider.addResource('notes://123', { id: '123', content: 'note 123' });
+        provider.addResource('notes://456', { id: '456', content: 'note 456' });
+
+        registry.register({ uriPattern: 'notes://*', provider });
+
+        const result1 = await registry.get('notes://123', mockContext);
+        expect(result1).toEqual({ id: '123', content: 'note 123' });
+
+        const result2 = await registry.get('notes://456', mockContext);
+        expect(result2).toEqual({ id: '456', content: 'note 456' });
+      });
+
+      it('should match double wildcard patterns', async () => {
+        const provider = new InMemoryResourceProvider();
+        provider.addResource('notes://123/comments/456', { type: 'comment', id: '456' });
+        provider.addResource('notes://789/attachments/file.txt', { type: 'file', name: 'file.txt' });
+
+        registry.register({ uriPattern: 'notes://**', provider });
+
+        const commentResult = await registry.get('notes://123/comments/456', mockContext);
+        expect(commentResult).toEqual({ type: 'comment', id: '456' });
+
+        const fileResult = await registry.get('notes://789/attachments/file.txt', mockContext);
+        expect(fileResult).toEqual({ type: 'file', name: 'file.txt' });
+      });
+
+      it('should handle empty pathname correctly', async () => {
+        const provider = new InMemoryResourceProvider();
+        provider.addResource('notes://', { type: 'root' });
+        provider.addResource('notes://123', { type: 'note', id: '123' });
+
+        registry.register({ uriPattern: 'notes://**', provider });
+
+        const rootResult = await registry.get('notes://', mockContext);
+        expect(rootResult).toEqual({ type: 'root' });
+
+        const noteResult = await registry.get('notes://123', mockContext);
+        expect(noteResult).toEqual({ type: 'note', id: '123' });
+      });
+
+      it('should handle trailing slash patterns', async () => {
+        const provider = new InMemoryResourceProvider();
+        provider.addResource('api://data/users', { type: 'users' });
+        provider.addResource('api://data/posts', { type: 'posts' });
+
+        registry.register({ uriPattern: 'api://data/*', provider });
+
+        const usersResult = await registry.get('api://data/users', mockContext);
+        expect(usersResult).toEqual({ type: 'users' });
+
+        const postsResult = await registry.get('api://data/posts', mockContext);
+        expect(postsResult).toEqual({ type: 'posts' });
+      });
+
+      it('should not match across different protocols', async () => {
+        const provider = new InMemoryResourceProvider();
+        provider.addResource('http://example.com/data', { type: 'http' });
+
+        registry.register({ uriPattern: 'http://**', provider });
+
+        await expect(registry.get('https://example.com/data', mockContext)).rejects.toThrow(
+          "No provider found for resource 'https://example.com/data'"
+        );
+      });
+
+      it('should not match across different hostnames', async () => {
+        const provider = new InMemoryResourceProvider();
+        provider.addResource('http://api.example.com/data', { type: 'api' });
+
+        registry.register({ uriPattern: 'http://api.example.com/**', provider });
+
+        await expect(registry.get('http://other.example.com/data', mockContext)).rejects.toThrow(
+          "No provider found for resource 'http://other.example.com/data'"
+        );
+      });
+    });
+
     it('should list resources from all providers', async () => {
       const provider1 = new InMemoryResourceProvider();
       provider1.addResource('test1://resource1', { data: 'content1' });

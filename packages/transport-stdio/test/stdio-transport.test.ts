@@ -416,6 +416,105 @@ describe('StdioTransport Integration', () => {
     await transport.stop();
   });
 
+  describe('silent mode configuration', () => {
+    let originalConsole: {
+      log: typeof console.log;
+      info: typeof console.info;
+      warn: typeof console.warn;
+      error: typeof console.error;
+    };
+
+    beforeEach(() => {
+      originalConsole = {
+        log: console.log,
+        info: console.info,
+        warn: console.warn,
+        error: console.error,
+      };
+    });
+
+    afterEach(() => {
+      console.log = originalConsole.log;
+      console.info = originalConsole.info;
+      console.warn = originalConsole.warn;
+      console.error = originalConsole.error;
+    });
+
+    it('should enable silent mode by default', async () => {
+      const transport = new StdioTransport();
+      const dispatch = jest.fn();
+
+      await transport.start(dispatch);
+
+      // Test that calling the console functions doesn't throw
+      expect(() => console.log('This should be suppressed')).not.toThrow();
+      expect(() => console.info('This should also be suppressed')).not.toThrow();
+
+      await transport.stop();
+    });
+
+    it('should allow disabling silent mode', async () => {
+      const transport = new StdioTransport({ silent: false });
+      const dispatch = jest.fn();
+
+      const logSpy = jest.spyOn(console, 'log');
+      const infoSpy = jest.spyOn(console, 'info');
+
+      await transport.start(dispatch);
+
+      console.log('This should not be suppressed');
+      console.info('This should also not be suppressed');
+
+      expect(logSpy).toHaveBeenCalledWith('This should not be suppressed');
+      expect(infoSpy).toHaveBeenCalledWith('This should also not be suppressed');
+
+      await transport.stop();
+    });
+
+    it('should redirect warn and error to stderr in silent mode', async () => {
+      const transport = new StdioTransport({ silent: true });
+      const dispatch = jest.fn();
+
+      await transport.start(dispatch);
+
+      // Test that warn and error functions can be called without throwing
+      expect(() => console.warn('Warning message')).not.toThrow();
+      expect(() => console.error('Error message')).not.toThrow();
+
+      await transport.stop();
+    });
+
+    it('should restore console methods after stop', async () => {
+      const transport = new StdioTransport({ silent: true });
+      const dispatch = jest.fn();
+
+      await transport.start(dispatch);
+      await transport.stop();
+
+      // Test that console methods work normally after stop
+      expect(() => console.log('Normal log')).not.toThrow();
+      expect(() => console.info('Normal info')).not.toThrow();
+      expect(() => console.warn('Normal warn')).not.toThrow();
+      expect(() => console.error('Normal error')).not.toThrow();
+    });
+
+    it('should handle multiple start/stop cycles correctly', async () => {
+      const transport = new StdioTransport({ silent: true });
+      const dispatch = jest.fn();
+
+      await transport.start(dispatch);
+      await transport.stop();
+
+      await transport.start(dispatch);
+      await transport.stop();
+
+      expect(console.log).toBe(originalConsole.log);
+      expect(console.info).toBe(originalConsole.info);
+      expect(console.warn).toBe(originalConsole.warn);
+      expect(console.error).toBe(originalConsole.error);
+    });
+  });
+
   it('should handle concurrent message processing', async () => {
     const dispatch = jest.fn();
     await transport.start(dispatch);

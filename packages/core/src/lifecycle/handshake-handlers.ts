@@ -76,17 +76,18 @@ export class McpHandshakeHandlers {
   async handleInitialized(_notification: InitializedNotification): Promise<void> {
     // The initialized notification confirms that the client has received
     // the initialize response and is ready to proceed
-    // This is primarily for logging/debugging purposes
+    // This transitions the server from INITIALIZING to READY state
 
-    if (!this._lifecycleManager.isReady) {
+    if (this._lifecycleManager.currentState !== 'initializing') {
       throw new LifecycleViolationError(
         this._lifecycleManager.currentState,
         'initialized notification',
-        'Received initialized notification but server is not in ready state'
+        'Initialized notification can only be sent when server is in initializing state'
       );
     }
 
-    // Notification processed successfully - no response needed
+    // Transition to READY state
+    await this._lifecycleManager.initialized();
   }
 
   /**
