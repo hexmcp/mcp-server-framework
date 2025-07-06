@@ -98,6 +98,42 @@ jobs:
           # NPM_TOKEN not needed since we're not publishing yet
           # Will be added when ready for public releases after MVP completion
 
+      # Update API surface after version changes to ensure consistency
+      - name: Update API Surface After Version Changes
+        if: steps.changesets.outputs.hasChangesets == 'true'
+        run: |
+          echo "🔄 Updating API surface after version changes..."
+
+          # Rebuild packages with new versions
+          pnpm run build
+
+          # Update API surface lock and reports
+          pnpm run update:surface
+          pnpm run update:api-reports
+
+          # Check if there are changes to commit
+          if ! git diff --quiet .api-surface-lock.json || ([ -d "temp/api-reports" ] && ! git diff --quiet temp/api-reports/); then
+            echo "📝 Committing API surface updates..."
+
+            git config --local user.email "action@github.com"
+            git config --local user.name "GitHub Action"
+
+            # Add changed files
+            git add .api-surface-lock.json
+            if [ -d "temp/api-reports" ]; then
+              git add temp/api-reports/
+            fi
+
+            git commit -m "chore: update API surface lock after version bump" \
+                       -m "Auto-generated API surface updates following version changes." \
+                       -m "- Updated .api-surface-lock.json with new package versions" \
+                       -m "- Regenerated API reports in temp/api-reports/" \
+                       -m "[skip ci]"
+            git push
+          else
+            echo "✅ No API surface changes detected"
+          fi
+
       # Log information about the changesets action results
       - name: Log Changesets Results
         run: |

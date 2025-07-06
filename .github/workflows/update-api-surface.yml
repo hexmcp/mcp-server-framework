@@ -4,9 +4,10 @@ on:
   push:
     branches: [main]
     paths:
-      - 'packages/core/src/**'
-      - 'packages/core/package.json'
-      - 'packages/core/tsconfig.json'
+      # Monitor all packages dynamically for flexibility
+      - 'packages/*/src/**'
+      - 'packages/*/tsconfig.json'
+      # Remove package.json files to avoid conflicts with release workflow
 
 permissions:
   contents: write
@@ -20,29 +21,89 @@ jobs:
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 2  # Need previous commit for comparison
+
+      - name: Check if version-only change
+        id: version_check
+        run: |
+          echo "🔍 Checking if this is a version-only change..."
+
+          # Get list of changed files
+          CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD)
+          echo "Changed files: $CHANGED_FILES"
+
+          # Check if any package.json files changed
+          PACKAGE_JSON_CHANGED=false
+          if echo "$CHANGED_FILES" | grep -q "packages/.*/package.json"; then
+            PACKAGE_JSON_CHANGED=true
+          fi
+
+          # Check if only version fields changed in package.json files
+          VERSION_ONLY=false
+          if [ "$PACKAGE_JSON_CHANGED" = true ]; then
+            echo "📦 Package.json files changed, checking if version-only..."
+            # Check each changed package.json to see if only version changed
+            for file in $(echo "$CHANGED_FILES" | grep "packages/.*/package.json" || true); do
+              if [ -f "$file" ]; then
+                echo "Checking $file for version-only changes..."
+                # Check if version field changed
+                if git diff HEAD~1 HEAD "$file" | grep -E '^\+.*"version":|^\-.*"version":' > /dev/null; then
+                  # Count non-version related changes (excluding CHANGELOG references)
+                  NON_VERSION_CHANGES=$(git diff HEAD~1 HEAD "$file" | grep -E '^\+|^\-' | grep -v -E '"version":|"CHANGELOG.md"' | wc -l)
+                  echo "Non-version changes in $file: $NON_VERSION_CHANGES"
+                  if [ "$NON_VERSION_CHANGES" -eq 0 ]; then
+                    VERSION_ONLY=true
+                    echo "✅ $file appears to be version-only change"
+                  else
+                    VERSION_ONLY=false
+                    echo "❌ $file has non-version changes"
+                    break
+                  fi
+                fi
+              fi
+            done
+          fi
+
+          echo "version_only=$VERSION_ONLY" >> $GITHUB_OUTPUT
+          echo "📊 Final result - Version-only change: $VERSION_ONLY"
+
+      - name: Skip if version-only change
+        if: steps.version_check.outputs.version_only == 'true'
+        run: |
+          echo "⏭️ Skipping API surface update - this appears to be a version-only change"
+          echo "API surface updates for version changes are handled by the release workflow"
+          echo "This prevents duplicate commits and race conditions"
+          exit 0
 
       - name: Setup PNPM
+        if: steps.version_check.outputs.version_only != 'true'
         uses: pnpm/action-setup@v4
 
       - name: Setup Node.js
+        if: steps.version_check.outputs.version_only != 'true'
         uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: 'pnpm'
 
       - name: Install dependencies
+        if: steps.version_check.outputs.version_only != 'true'
         run: pnpm install
 
       - name: Build packages
+        if: steps.version_check.outputs.version_only != 'true'
         run: pnpm run build
 
       - name: Update API surface lock
+        if: steps.version_check.outputs.version_only != 'true'
         run: pnpm run update:surface
 
       - name: Update API reports
+        if: steps.version_check.outputs.version_only != 'true'
         run: pnpm run update:api-reports
 
       - name: Check for changes
+        if: steps.version_check.outputs.version_only != 'true'
         id: changes
         run: |
           # Check if .api-surface-lock.json has changes
@@ -66,7 +127,7 @@ jobs:
           fi
 
       - name: Commit API surface updates
-        if: steps.changes.outputs.changed == 'true'
+        if: steps.version_check.outputs.version_only != 'true' && steps.changes.outputs.changed == 'true'
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
