@@ -679,6 +679,38 @@ describe('loggerMiddleware', () => {
         }).not.toThrow();
       });
     });
+
+    it('should not add streamInfo method for unknown transport (builder default)', async () => {
+      const middleware = createStreamingInfoMiddleware();
+
+      const ctx = createMockRequestContext({
+        transport: { name: 'unknown' },
+      });
+
+      let streamingCtx: StreamingRequestContext;
+
+      await middleware(ctx, async () => {
+        streamingCtx = ctx as StreamingRequestContext;
+        expect(streamingCtx.streamInfo).toBeUndefined();
+      });
+    });
+
+    it('should handle unknown transport with optional chaining gracefully', async () => {
+      const middleware = createStreamingInfoMiddleware();
+
+      const ctx = createMockRequestContext({
+        transport: { name: 'unknown' },
+      });
+
+      await middleware(ctx, async () => {
+        const streamingCtx = ctx as StreamingRequestContext;
+
+        // This should not throw for unknown transport (stdio detection)
+        expect(() => {
+          streamingCtx.streamInfo?.('This should be ignored for unknown transport');
+        }).not.toThrow();
+      });
+    });
   });
 });
 

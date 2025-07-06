@@ -282,7 +282,13 @@ export function createStreamingInfoMiddleware(): Middleware {
   return async (ctx: RequestContext, next: () => Promise<void>) => {
     const streamingCtx = ctx as StreamingRequestContext;
 
-    if (ctx.transport.name !== 'stdio') {
+    // Only add streamInfo for non-stdio transports
+    // For stdio transport, streamInfo should be undefined to prevent interference with JSON-RPC protocol
+    // We check for both 'stdio' (explicit transport name) and 'unknown' (default from builder pattern)
+    // to ensure info chunks are never sent over stdio transport
+    const isStdioTransport = ctx.transport.name === 'stdio' || ctx.transport.name === 'unknown';
+
+    if (!isStdioTransport) {
       streamingCtx.streamInfo = async (text: string) => {
         await ctx.send({ type: 'info', text });
       };

@@ -17,6 +17,14 @@ describe('MCP Protocol Integration', () => {
       it('should handle missing content', async () => {
         await runFixture(join(fixturesDir, 'tools', 'add-note-missing-content.req.json'));
       });
+
+      it('should handle empty content', async () => {
+        await runFixture(join(fixturesDir, 'tools', 'add-note-empty-content.req.json'));
+      });
+
+      it('should handle content with line breaks', async () => {
+        await runFixture(join(fixturesDir, 'tools', 'add-note-with-linebreaks.req.json'));
+      });
     });
   });
 

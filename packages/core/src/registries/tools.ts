@@ -177,7 +177,19 @@ export class ToolRegistry implements Registry {
 
     await this._checkAuthorization(definition, context, scope);
 
-    await this._validateInput(definition, args);
+    const validationResult = await this._validateInput(definition, args);
+    if (!validationResult.success) {
+      const errorMessage = validationResult.error.replace(`Invalid input for tool '${name}': `, '');
+      return {
+        content: [
+          {
+            type: 'text',
+            text: `Validation error: ${errorMessage}`,
+          },
+        ],
+        isError: true,
+      };
+    }
 
     const enhancedContext: HandlerContext = {
       ...context,
@@ -252,47 +264,52 @@ export class ToolRegistry implements Registry {
   /**
    * Validate input using multiple validation methods
    */
-  private async _validateInput(definition: ToolDefinition, args: Record<string, unknown>): Promise<void> {
+  private async _validateInput(
+    definition: ToolDefinition,
+    args: Record<string, unknown>
+  ): Promise<{ success: true } | { success: false; error: string }> {
     if (definition.validate) {
       const result = definition.validate(args);
       if (!result.success) {
         const errorMessages = result.errors?.map((e) => `${e.path.join('.')}: ${e.message}`).join(', ') || 'Validation failed';
-        throw new Error(`Invalid input for tool '${definition.name}': ${errorMessages}`);
+        return { success: false, error: `Invalid input for tool '${definition.name}': ${errorMessages}` };
       }
-      return;
+      return { success: true };
     }
 
     if (definition.inputSchema) {
       try {
         definition.inputSchema.parse(args);
+        return { success: true };
       } catch (error) {
-        throw new Error(`Invalid input for tool '${definition.name}': ${error}`);
+        return { success: false, error: `Invalid input for tool '${definition.name}': ${error}` };
       }
-      return;
     }
 
     if (definition.parameters) {
       for (const param of definition.parameters) {
         if (param.required && !(param.name in args)) {
-          throw new Error(`Missing required parameter '${param.name}' for tool '${definition.name}'`);
+          return { success: false, error: `Missing required parameter '${param.name}' for tool '${definition.name}'` };
         }
 
         if (param.name in args && param.schema) {
           try {
             param.schema.parse(args[param.name]);
           } catch (error) {
-            throw new Error(`Invalid value for parameter '${param.name}' in tool '${definition.name}': ${error}`);
+            return { success: false, error: `Invalid value for parameter '${param.name}' in tool '${definition.name}': ${error}` };
           }
         }
 
         if (param.name in args && param.enum && param.type === 'string') {
           const value = args[param.name];
           if (typeof value === 'string' && !param.enum.includes(value)) {
-            throw new Error(`Parameter '${param.name}' must be one of [${param.enum.join(', ')}] but got '${value}'`);
+            return { success: false, error: `Parameter '${param.name}' must be one of [${param.enum.join(', ')}] but got '${value}'` };
           }
         }
       }
     }
+
+    return { success: true };
   }
 
   /**

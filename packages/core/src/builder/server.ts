@@ -260,9 +260,16 @@ class McpServerBuilderImpl implements McpServerBuilder {
               }
               const params = jsonRpcRequest.params as { name: string; arguments?: Record<string, unknown> };
               result = await toolRegistry.execute(params.name, params.arguments || {}, handlerContext);
-              requestContext.response = encodeJsonRpcSuccess(jsonRpcRequest.id, {
-                content: [{ type: 'text', text: JSON.stringify(result) }],
-              });
+
+              // If the result is already in tool result format (has content array and isError), return it directly
+              if (result && typeof result === 'object' && 'content' in result && Array.isArray(result.content) && 'isError' in result) {
+                requestContext.response = encodeJsonRpcSuccess(jsonRpcRequest.id, result);
+              } else {
+                // For other results, wrap them in the expected format
+                requestContext.response = encodeJsonRpcSuccess(jsonRpcRequest.id, {
+                  content: [{ type: 'text', text: JSON.stringify(result) }],
+                });
+              }
               break;
             }
             case 'resources/read': {

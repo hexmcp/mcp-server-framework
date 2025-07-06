@@ -158,7 +158,174 @@ describe('ToolRegistry', () => {
 
       await expect(registry.execute('test-tool', { name: 'test' }, mockContext)).resolves.toEqual({ result: 'success' });
 
-      await expect(registry.execute('test-tool', { invalid: 'data' }, mockContext)).rejects.toThrow("Invalid input for tool 'test-tool'");
+      const result = await registry.execute('test-tool', { invalid: 'data' }, mockContext);
+      expect(result).toEqual({
+        content: [
+          {
+            type: 'text',
+            text: expect.stringContaining('Validation error:'),
+          },
+        ],
+        isError: true,
+      });
+    });
+
+    it('should return validation error result for empty string with min length constraint', async () => {
+      const schema = z.object({
+        title: z.string(),
+        content: z.string().min(1, 'Content is required and cannot be empty'),
+      });
+      const definition: ToolDefinition = {
+        name: 'add-note',
+        inputSchema: schema,
+        handler: async () => ({ result: 'success' }),
+      };
+
+      registry.register(definition);
+
+      const result = await registry.execute('add-note', { title: 'Test', content: '' }, mockContext);
+      expect(result).toEqual({
+        content: [
+          {
+            type: 'text',
+            text: expect.stringContaining('Content is required and cannot be empty'),
+          },
+        ],
+        isError: true,
+      });
+    });
+
+    it('should return validation error result for missing required field', async () => {
+      const schema = z.object({
+        name: z.string(),
+        email: z.string().email(),
+      });
+      const definition: ToolDefinition = {
+        name: 'create-user',
+        inputSchema: schema,
+        handler: async () => ({ result: 'success' }),
+      };
+
+      registry.register(definition);
+
+      const result = await registry.execute('create-user', { name: 'John' }, mockContext);
+      expect(result).toEqual({
+        content: [
+          {
+            type: 'text',
+            text: expect.stringContaining('Validation error:'),
+          },
+        ],
+        isError: true,
+      });
+    });
+
+    it('should return validation error result for invalid data type', async () => {
+      const schema = z.object({
+        age: z.number().min(0),
+        active: z.boolean(),
+      });
+      const definition: ToolDefinition = {
+        name: 'update-profile',
+        inputSchema: schema,
+        handler: async () => ({ result: 'success' }),
+      };
+
+      registry.register(definition);
+
+      const result = await registry.execute('update-profile', { age: 'not-a-number', active: 'yes' }, mockContext);
+      expect(result).toEqual({
+        content: [
+          {
+            type: 'text',
+            text: expect.stringContaining('Validation error:'),
+          },
+        ],
+        isError: true,
+      });
+    });
+
+    it('should return validation error result for parameters-based validation', async () => {
+      const toolParameters: ToolParameter[] = [
+        {
+          name: 'action',
+          type: 'string',
+          required: true,
+          enum: ['create', 'update', 'delete'],
+        },
+        {
+          name: 'id',
+          type: 'string',
+          required: true,
+        },
+      ];
+
+      const definition: ToolDefinition = {
+        name: 'manage-resource',
+        parameters: toolParameters,
+        handler: async () => ({ result: 'success' }),
+      };
+
+      registry.register(definition);
+
+      // Test missing required parameter
+      const result1 = await registry.execute('manage-resource', { action: 'create' }, mockContext);
+      expect(result1).toEqual({
+        content: [
+          {
+            type: 'text',
+            text: expect.stringContaining("Missing required parameter 'id'"),
+          },
+        ],
+        isError: true,
+      });
+
+      // Test invalid enum value
+      const result2 = await registry.execute('manage-resource', { action: 'invalid', id: '123' }, mockContext);
+      expect(result2).toEqual({
+        content: [
+          {
+            type: 'text',
+            text: expect.stringContaining("Parameter 'action' must be one of [create, update, delete]"),
+          },
+        ],
+        isError: true,
+      });
+    });
+
+    it('should return validation error result for custom validate function', async () => {
+      const definition: ToolDefinition = {
+        name: 'custom-validation-tool',
+        validate: (args: Record<string, unknown>) => {
+          if (!args.username || typeof args.username !== 'string') {
+            return {
+              success: false,
+              errors: [{ path: ['username'], message: 'Username is required and must be a string' }],
+            };
+          }
+          if ((args.username as string).length < 3) {
+            return {
+              success: false,
+              errors: [{ path: ['username'], message: 'Username must be at least 3 characters long' }],
+            };
+          }
+          return { success: true };
+        },
+        handler: async () => ({ result: 'success' }),
+      };
+
+      registry.register(definition);
+
+      const result = await registry.execute('custom-validation-tool', { username: 'ab' }, mockContext);
+      expect(result).toEqual({
+        content: [
+          {
+            type: 'text',
+            text: expect.stringContaining('Username must be at least 3 characters long'),
+          },
+        ],
+        isError: true,
+      });
     });
 
     it('should enforce scope authorization', async () => {
@@ -244,13 +411,27 @@ describe('ToolRegistry', () => {
         result: 'success',
       });
 
-      await expect(registry.execute('test-tool', { data: { id: 'test' } }, mockContext)).rejects.toThrow(
-        "Missing required parameter 'action' for tool 'test-tool'"
-      );
+      const result1 = await registry.execute('test-tool', { data: { id: 'test' } }, mockContext);
+      expect(result1).toEqual({
+        content: [
+          {
+            type: 'text',
+            text: expect.stringContaining("Missing required parameter 'action'"),
+          },
+        ],
+        isError: true,
+      });
 
-      await expect(registry.execute('test-tool', { action: 'invalid' }, mockContext)).rejects.toThrow(
-        "Invalid value for parameter 'action' in tool 'test-tool'"
-      );
+      const result2 = await registry.execute('test-tool', { action: 'invalid' }, mockContext);
+      expect(result2).toEqual({
+        content: [
+          {
+            type: 'text',
+            text: expect.stringContaining("Invalid value for parameter 'action'"),
+          },
+        ],
+        isError: true,
+      });
     });
 
     it('should support enhanced scopes authorization', async () => {

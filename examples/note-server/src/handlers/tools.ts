@@ -32,7 +32,7 @@ export const addNoteTool: Omit<ToolDefinition, 'name'> = {
       const streamingCtx = context as StreamingRequestContext;
 
       streamingCtx.streamInfo?.('Validating note input...');
-      const validatedInput = AddNoteInputSchema.parse(args);
+      const validatedInput = args as { title: string; content: string };
 
       streamingCtx.streamInfo?.('Creating note in storage...');
       const note = createNote(validatedInput);
