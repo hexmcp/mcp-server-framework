@@ -45,13 +45,15 @@
     "@hexmcp/core": "workspace:*",
     "@hexmcp/transport": "workspace:*",
     "@hexmcp/transport-stdio": "workspace:*",
-    "@modelcontextprotocol/sdk": "^1.13.2"
+    "@modelcontextprotocol/sdk": "^1.13.2",
+    "uuid": "^11.1.0"
   },
   "peerDependencies": {
     "typescript": "^5.0.0"
   },
   "devDependencies": {
     "@types/jest": "^30.0.0",
+    "@types/uuid": "^10.0.0",
     "jest": "^30.0.3",
     "typescript": "^5.8.3"
   },

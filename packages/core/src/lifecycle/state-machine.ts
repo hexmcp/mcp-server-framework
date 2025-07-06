@@ -11,6 +11,7 @@ import {
   LifecycleState,
   LifecycleViolationError,
   NotInitializedError,
+  PostShutdownError,
   type ShutdownEvent,
   type StateChangeEvent,
   VALID_TRANSITIONS,
@@ -219,6 +220,9 @@ export class McpLifecycleManager extends EventEmitter implements LifecycleManage
 
     // Check for initialization requirement
     if (this._currentState === LifecycleState.IDLE) {
+      if (this._hasBeenInitialized) {
+        throw new PostShutdownError(operation);
+      }
       throw new NotInitializedError(operation);
     }
 

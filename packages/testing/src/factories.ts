@@ -1,4 +1,5 @@
 import type { Fixture, JsonRpcChunk, JsonRpcErrorChunk, JsonRpcRequest, JsonRpcResponse } from './types';
+import { generateUuid } from './uuid';
 
 /**
  * Creates a generic JSON-RPC 2.0 request with the specified method and parameters.
@@ -38,6 +39,17 @@ export function createToolRequest(name: string, input: Record<string, unknown>, 
 }
 
 /**
+ * Builds a valid JSON-RPC 2.0 request for calling a tool handler with a real UUID.
+ *
+ * @param name - Name of the registered tool (e.g. "echo", "translate")
+ * @param input - Input payload (object) matching the tool's Schema<I>
+ * @returns A JsonRpcRequest object with method "tools/call" and UUID ID
+ */
+export function createToolRequestWithUuid(name: string, input: Record<string, unknown>): JsonRpcRequest {
+  return createToolRequest(name, input, generateUuid());
+}
+
+/**
  * Creates a prompt execution request for the given prompt name and input.
  *
  * @param name - Prompt name registered via builder.prompt()
@@ -57,6 +69,16 @@ export function createPromptRequest(name: string, input: Record<string, unknown>
 }
 
 /**
+ * Creates a prompt execution request with a real UUID.
+ *
+ * @param name - Prompt name registered via builder.prompt()
+ * @param input - Prompt input payload (object)
+ */
+export function createPromptRequestWithUuid(name: string, input: Record<string, unknown>): JsonRpcRequest {
+  return createPromptRequest(name, input, generateUuid());
+}
+
+/**
  * Creates a resource read request for the given resource URI.
  *
  * @param uri - Resource URI to read
@@ -71,6 +93,15 @@ export function createResourceRequest(uri: string, id: string | number = 1): Jso
       uri,
     },
   };
+}
+
+/**
+ * Creates a resource read request with a real UUID.
+ *
+ * @param uri - Resource URI to read
+ */
+export function createResourceRequestWithUuid(uri: string): JsonRpcRequest {
+  return createResourceRequest(uri, generateUuid());
 }
 
 /**

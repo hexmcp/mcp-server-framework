@@ -838,7 +838,28 @@ export class ResourceRegistry implements Registry {
   private _matchPattern(pattern: string, uri: string): boolean {
     // Handle simple prefix matching for patterns without wildcards
     if (!pattern.includes('*')) {
-      return uri.startsWith(pattern);
+      // Handle trailing slash normalization for exact matches
+      const normalizeUri = (u: string): string => {
+        try {
+          const url = new URL(u);
+          const pathname = url.pathname || '/';
+          // Normalize trailing slash: both "" and "/" become "/"
+          const normalizedPathname = pathname === '' ? '/' : pathname;
+          return `${url.protocol}//${url.host}${normalizedPathname}`;
+        } catch {
+          return u;
+        }
+      };
+
+      const normalizedPattern = normalizeUri(pattern);
+      const normalizedUri = normalizeUri(uri);
+
+      // Check both normalized and with/without trailing slash
+      return (
+        normalizedUri.startsWith(normalizedPattern) ||
+        normalizedUri.startsWith(normalizedPattern.replace(/\/$/, '')) ||
+        normalizedUri.replace(/\/$/, '').startsWith(normalizedPattern.replace(/\/$/, ''))
+      );
     }
 
     // For wildcard patterns, use simple string-based matching
