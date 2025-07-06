@@ -53,6 +53,22 @@ export interface McpServerBuilder {
    * @param name - Unique identifier for the tool
    * @param definition - Tool configuration excluding the name
    * @returns The builder instance for chaining
+   *
+   * @example Simple tool with automatic transport
+   * ```typescript
+   * const server = createMcpKitServer()
+   *   .tool('greet', {
+   *     description: 'Greet a user',
+   *     parameters: {
+   *       type: 'object',
+   *       properties: { name: { type: 'string' } }
+   *     },
+   *     handler: async ({ name }) => ({
+   *       content: [{ type: 'text', text: `Hello, ${name}!` }]
+   *     })
+   *   })
+   *   .listen(); // StdioTransport automatically added
+   * ```
    */
   tool(name: string, definition: Omit<ToolDefinition, 'name'>): McpServerBuilder;
 
@@ -80,10 +96,31 @@ export interface McpServerBuilder {
   transport(transport: ServerTransport): McpServerBuilder;
 
   /**
+   * Disables the default stdio transport.
+   *
+   * Use this when you want to configure transports manually without
+   * the automatic stdio transport being added. This is useful for
+   * servers that need custom transport configurations or multiple
+   * transports.
+   *
+   * @returns The builder instance for chaining
+   * @example
+   * ```typescript
+   * const server = createMcpKitServer()
+   *   .noDefaultTransport()
+   *   .transport(new CustomTransport())
+   *   .listen();
+   * ```
+   */
+  noDefaultTransport(): McpServerBuilder;
+
+  /**
    * Starts the server and begins listening for requests.
    *
    * This method builds the complete server configuration, initializes all
    * registered components, and starts all configured transport adapters.
+   * If no transports have been explicitly registered, a default StdioTransport
+   * will be automatically added.
    *
    * @returns Promise that resolves when the server is ready to accept requests
    */
@@ -101,6 +138,7 @@ export interface InternalBuilderState {
   tools: Map<string, ToolDefinition>;
   resources: Map<string, ResourceDefinition>;
   transports: ServerTransport[];
+  useDefaultStdioTransport: boolean;
 }
 
 export type DispatcherFn = (request: JsonRpcRequest) => Promise<JsonRpcResponse | StreamingChunk[]>;

@@ -13,6 +13,7 @@ const config: UserConfig = {
     'type-enum': [2, 'always', ['build', 'chore', 'ci', 'docs', 'feat', 'fix', 'perf', 'refactor', 'revert', 'style', 'test']],
     'header-max-length': [0, 'never'],
     'body-leading-blank': [2, 'always'],
+    'body-max-line-length': [0, 'never'],
     'footer-leading-blank': [2, 'always'],
   },
 };

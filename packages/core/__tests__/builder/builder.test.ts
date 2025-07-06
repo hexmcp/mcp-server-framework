@@ -1,7 +1,37 @@
 import { createMcpKitServer } from '../../src/builder';
 import type { McpServerBuilder } from '../../src/builder/types';
 
+const mockStdioTransport = {
+  name: 'stdio',
+  start: jest.fn(async () => {
+    // Mock start implementation
+  }),
+  stop: jest.fn(async () => {
+    // Mock stop implementation
+  }),
+};
+
+jest.mock('@hexmcp/transport-stdio', () => ({
+  StdioTransport: jest.fn(() => mockStdioTransport),
+}));
+
 describe('McpServerBuilder', () => {
+  let originalEnv: string | undefined;
+
+  beforeEach(() => {
+    originalEnv = process.env.MCPKIT_NO_DEFAULT_TRANSPORT;
+    process.env.MCPKIT_NO_DEFAULT_TRANSPORT = 'true';
+    jest.clearAllMocks();
+  });
+
+  afterEach(() => {
+    if (originalEnv !== undefined) {
+      process.env.MCPKIT_NO_DEFAULT_TRANSPORT = originalEnv;
+    } else {
+      delete process.env.MCPKIT_NO_DEFAULT_TRANSPORT;
+    }
+  });
+
   describe('factory function', () => {
     it('should create a builder instance', () => {
       const builder = createMcpKitServer();
@@ -11,6 +41,7 @@ describe('McpServerBuilder', () => {
       expect(typeof builder.tool).toBe('function');
       expect(typeof builder.resource).toBe('function');
       expect(typeof builder.transport).toBe('function');
+      expect(typeof builder.noDefaultTransport).toBe('function');
       expect(typeof builder.listen).toBe('function');
     });
   });
@@ -195,15 +226,11 @@ describe('McpServerBuilder', () => {
       expect(dispatchFunctions).toHaveLength(2);
     });
 
-    it('should handle empty transport list', async () => {
+    it('should handle empty transport list when default transport is disabled', async () => {
+      builder.noDefaultTransport();
       await expect(builder.listen()).resolves.toBeUndefined();
 
-      expect(builder).toBeDefined();
-      expect(typeof builder.use).toBe('function');
-      expect(typeof builder.prompt).toBe('function');
-      expect(typeof builder.tool).toBe('function');
-      expect(typeof builder.resource).toBe('function');
-      expect(typeof builder.transport).toBe('function');
+      expect(mockStdioTransport.start).not.toHaveBeenCalled();
     });
 
     it.each([
@@ -244,6 +271,7 @@ describe('McpServerBuilder', () => {
       const result = (builder[method] as any)(...args);
 
       expect(result).toBe(builder);
+      builder.noDefaultTransport();
       await expect(builder.listen()).resolves.toBeUndefined();
       expect(typeof builder[method]).toBe('function');
     });

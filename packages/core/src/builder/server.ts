@@ -1,5 +1,6 @@
 import { encodeJsonRpcError, encodeJsonRpcSuccess, type JsonRpcRequest, RpcError } from '@hexmcp/codec-jsonrpc';
 import type { ServerTransport } from '@hexmcp/transport';
+import { StdioTransport } from '@hexmcp/transport-stdio';
 import type { InitializedNotification, InitializeRequest } from '@modelcontextprotocol/sdk/types.js';
 import { McpCapabilityRegistry, McpHandshakeHandlers, McpLifecycleManager, McpRequestGate, RegistryPrimitiveRegistry } from '../lifecycle';
 import { McpMiddlewareEngine } from '../middleware/engine';
@@ -11,6 +12,12 @@ import type { InternalBuilderState, McpServerBuilder } from './types';
 class McpServerBuilderImpl implements McpServerBuilder {
   private readonly state: InternalBuilderState;
 
+  /**
+   * Creates a new MCP server builder instance.
+   *
+   * Initializes the builder with default settings, including automatic StdioTransport
+   * behavior unless disabled by the MCPKIT_NO_DEFAULT_TRANSPORT environment variable.
+   */
   constructor() {
     this.state = {
       middleware: [],
@@ -18,6 +25,7 @@ class McpServerBuilderImpl implements McpServerBuilder {
       tools: new Map<string, ToolDefinition>(),
       resources: new Map<string, ResourceDefinition>(),
       transports: [],
+      useDefaultStdioTransport: process.env.MCPKIT_NO_DEFAULT_TRANSPORT !== 'true',
     };
   }
 
@@ -66,12 +74,34 @@ class McpServerBuilderImpl implements McpServerBuilder {
   }
 
   transport(transport: ServerTransport): McpServerBuilder {
+    this.state.useDefaultStdioTransport = false;
     this.state.transports.push(transport);
     return this;
   }
 
+  noDefaultTransport(): McpServerBuilder {
+    this.state.useDefaultStdioTransport = false;
+    return this;
+  }
+
+  /**
+   * Starts the server and begins listening for requests.
+   *
+   * This method builds the complete server configuration, initializes all
+   * registered components, and starts all configured transport adapters.
+   *
+   * If no transports have been explicitly registered and the default transport
+   * is enabled, a StdioTransport will be automatically added.
+   *
+   * @throws {Error} If the default StdioTransport cannot be loaded and no other transports are configured
+   * @returns Promise that resolves when the server is ready to accept requests
+   */
   async listen(): Promise<void> {
     const dispatcher = this.buildDispatcher();
+
+    if (this.state.transports.length === 0 && this.state.useDefaultStdioTransport) {
+      this.state.transports.push(new StdioTransport());
+    }
 
     for (const transport of this.state.transports) {
       await transport.start(dispatcher);
@@ -278,7 +308,20 @@ class McpServerBuilderImpl implements McpServerBuilder {
  * The builder provides a fluent API for configuring middleware, registering
  * prompts/tools/resources, and setting up transport adapters.
  *
- * @example
+ * ## Default Transport Behavior
+ *
+ * By default, if no explicit transports are registered, the server will automatically
+ * add a StdioTransport when `listen()` is called. This simplifies the common case
+ * of creating basic MCP servers that communicate over stdin/stdout.
+ *
+ * ## Transport Configuration Options
+ *
+ * 1. **Automatic (Default)**: No transport configuration needed
+ * 2. **Explicit**: Use `.transport()` to add specific transports
+ * 3. **Opt-out**: Use `.noDefaultTransport()` to disable automatic behavior
+ * 4. **Environment**: Set `MCPKIT_NO_DEFAULT_TRANSPORT=true` to disable globally
+ *
+ * @example Basic usage with automatic StdioTransport
  * ```typescript
  * import { createMcpKitServer } from '@hexmcp/core';
  *
@@ -295,8 +338,35 @@ class McpServerBuilderImpl implements McpServerBuilder {
  *       content: [{ type: 'text', text: message }]
  *     })
  *   })
- *   .transport(transport)
+ *   .listen(); // StdioTransport automatically added
+ * ```
+ *
+ * @example Explicit transport configuration
+ * ```typescript
+ * import { createMcpKitServer } from '@hexmcp/core';
+ * import { StdioTransport } from '@hexmcp/transport-stdio';
+ *
+ * const server = createMcpKitServer()
+ *   .tool('echo', { description: 'Echo tool' })
+ *   .transport(new StdioTransport()) // Explicit transport
  *   .listen();
+ * ```
+ *
+ * @example Opt-out of default transport
+ * ```typescript
+ * import { createMcpKitServer } from '@hexmcp/core';
+ * import { CustomTransport } from './custom-transport';
+ *
+ * const server = createMcpKitServer()
+ *   .noDefaultTransport() // Disable automatic StdioTransport
+ *   .transport(new CustomTransport())
+ *   .listen();
+ * ```
+ *
+ * @example Environment variable control
+ * ```bash
+ * # Disable default transport globally
+ * MCPKIT_NO_DEFAULT_TRANSPORT=true node server.js
  * ```
  *
  * @returns A new MCP server builder instance

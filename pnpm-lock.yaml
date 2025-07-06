@@ -115,6 +115,9 @@ importers:
       '@hexmcp/transport':
         specifier: workspace:*
         version: link:../transport
+      '@hexmcp/transport-stdio':
+        specifier: workspace:*
+        version: link:../transport-stdio
       '@modelcontextprotocol/sdk':
         specifier: ^1.13.2
         version: 1.13.2
@@ -143,6 +146,9 @@ importers:
       '@hexmcp/transport':
         specifier: workspace:*
         version: link:../transport
+      '@hexmcp/transport-stdio':
+        specifier: workspace:*
+        version: link:../transport-stdio
       '@modelcontextprotocol/sdk':
         specifier: ^1.13.2
         version: 1.13.2

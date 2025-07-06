@@ -35,9 +35,12 @@ Technical reference materials and specifications.
 
 ## 🚀 Quick Start
 
+### Simple MCP Server (Recommended)
+
 ```typescript
 import { createMcpKitServer } from '@hexmcp/core';
 
+// Create a basic MCP server - StdioTransport is automatically added
 const server = createMcpKitServer()
   .tool('echo', {
     description: 'Echo back the input',
@@ -49,7 +52,25 @@ const server = createMcpKitServer()
     },
     handler: async ({ message }) => ({ content: [{ type: 'text', text: message }] })
   })
-  .transport(/* your transport */)
+  .listen(); // No explicit transport needed!
+```
+
+### Advanced Configuration
+
+```typescript
+import { createMcpKitServer } from '@hexmcp/core';
+import { StdioTransport } from '@hexmcp/transport-stdio';
+
+// Explicit transport configuration for advanced use cases
+const server = createMcpKitServer()
+  .tool('echo', { /* ... */ })
+  .transport(new StdioTransport()) // Explicit transport
+  .listen();
+
+// Or disable default transport for custom setups
+const customServer = createMcpKitServer()
+  .noDefaultTransport()
+  .transport(new CustomTransport())
   .listen();
 ```
 
