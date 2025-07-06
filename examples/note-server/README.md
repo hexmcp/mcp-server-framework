@@ -69,8 +69,8 @@ pnpm test:coverage
 # Type checking
 pnpm typecheck
 
-# Linting
-pnpm lint
+# Linting (use root-level command)
+cd ../.. && pnpm lint
 ```
 
 ### Manual Testing
