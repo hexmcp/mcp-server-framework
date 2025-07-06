@@ -1,6 +1,12 @@
 import { clearAllNotes, createNote, getAllNotes } from '../src/domain/notes.js';
 
-describe('Note Server', () => {
+/**
+ * Domain Logic Tests
+ *
+ * These tests focus on the core business logic and data validation.
+ * For MCP protocol integration tests, see mcp-integration.test.ts
+ */
+describe('Note Server - Domain Logic', () => {
   beforeEach(() => {
     clearAllNotes();
   });

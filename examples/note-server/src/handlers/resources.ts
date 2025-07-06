@@ -12,7 +12,7 @@ export const notesResource: Omit<ResourceDefinition, 'uriPattern'> = {
       try {
         const url = new URL(uri);
 
-        if (url.pathname === '/') {
+        if (url.pathname === '/' || url.pathname === '') {
           const notes = getAllNotes();
           return {
             uri,
@@ -119,7 +119,7 @@ export const notesResource: Omit<ResourceDefinition, 'uriPattern'> = {
       }
 
       const path = url.pathname;
-      if (path !== '/' && !path.match(/^\/[a-f0-9-]{36}$/)) {
+      if (path !== '/' && path !== '' && !path.match(/^\/[a-f0-9-]{36}$/)) {
         return {
           success: false,
           errors: [
