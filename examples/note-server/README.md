@@ -6,13 +6,14 @@ A comprehensive example implementation of an MCP (Model Context Protocol) server
 
 This example showcases:
 
-- **Tool Handlers**: Create notes with validation
-- **Resource Handlers**: Access notes via URI patterns with list/get operations  
+- **Tool Handlers**: Create notes with validation and MCP-compliant JSON Schema
+- **Resource Handlers**: Access notes via URI patterns with list/get operations
 - **Prompt Handlers**: Generate note summaries with configurable length
 - **Middleware Integration**: Transport-aware logging and error handling with stderr-only output for stdio compatibility
 - **Transport Layer**: stdio transport for JSON-RPC communication with automatic logging detection
 - **Testing Infrastructure**: Comprehensive fixture-based testing
 - **Type Safety**: Full TypeScript implementation with Zod validation
+- **MCP Protocol Compliance**: Full compliance with MCP protocol specifications including proper `tools/list` responses
 
 ## 🏗️ Architecture
 

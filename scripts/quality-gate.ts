@@ -79,14 +79,14 @@ const QUALITY_STEPS: QualityStep[] = [
     name: 'check:types',
     description: 'API surface lock validation',
     command: 'pnpm check:types',
-    required: false, // Optional until declaration file issues are resolved
+    required: true,
     timeout: 60000,
   },
   {
     name: 'docs:generate',
     description: 'Documentation generation',
     command: 'pnpm docs:generate',
-    required: false, // Optional until declaration file issues are resolved
+    required: true,
     timeout: 120000,
   },
 ];

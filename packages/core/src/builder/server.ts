@@ -188,7 +188,7 @@ class McpServerBuilderImpl implements McpServerBuilder {
                 );
                 break;
               }
-              const tools = toolRegistry.list();
+              const tools = toolRegistry.listMcpTools();
               requestContext.response = encodeJsonRpcSuccess(jsonRpcRequest.id, { tools });
               break;
             }

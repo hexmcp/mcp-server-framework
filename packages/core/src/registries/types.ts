@@ -1,4 +1,102 @@
+import type { Tool } from '@modelcontextprotocol/sdk/types.js';
 import type { z } from 'zod';
+import { zodToJsonSchema } from 'zod-to-json-schema';
+
+/**
+ * JSON Schema object as expected by MCP protocol
+ */
+export interface JsonSchema {
+  type: 'object';
+  properties?: Record<string, JsonSchemaProperty>;
+  required?: string[];
+  [key: string]: unknown;
+}
+
+/**
+ * JSON Schema property definition
+ */
+export interface JsonSchemaProperty {
+  type: 'string' | 'number' | 'boolean' | 'object' | 'array';
+  description?: string;
+  enum?: string[];
+  items?: JsonSchemaProperty;
+  properties?: Record<string, JsonSchemaProperty>;
+  required?: string[];
+  [key: string]: unknown;
+}
+
+/**
+ * Converts ToolParameter array to MCP-compliant JSON Schema
+ */
+export function convertParametersToJsonSchema(parameters: ToolParameter[]): JsonSchema {
+  const properties: Record<string, JsonSchemaProperty> = {};
+  const required: string[] = [];
+
+  for (const param of parameters) {
+    properties[param.name] = {
+      type: param.type,
+      ...(param.description && { description: param.description }),
+      ...(param.enum && { enum: param.enum }),
+    };
+
+    if (param.required) {
+      required.push(param.name);
+    }
+  }
+
+  return {
+    type: 'object',
+    properties,
+    ...(required.length > 0 && { required }),
+  };
+}
+
+/**
+ * Converts Zod schema to MCP-compliant JSON Schema using zod-to-json-schema
+ */
+export function convertZodToJsonSchema(zodSchema: z.ZodSchema): JsonSchema {
+  try {
+    const jsonSchema = zodToJsonSchema(zodSchema, {
+      target: 'jsonSchema7',
+      // biome-ignore lint/style/useNamingConvention: internal zod-to-json-schema config
+      $refStrategy: 'none',
+    });
+
+    return {
+      type: 'object',
+      ...jsonSchema,
+    } as JsonSchema;
+  } catch {
+    return { type: 'object' };
+  }
+}
+
+/**
+ * Converts internal ToolDefinition to MCP-compliant Tool format
+ */
+export function convertToMcpTool(definition: ToolDefinition): Tool {
+  let inputSchema: JsonSchema;
+
+  if (definition.inputSchema) {
+    inputSchema = convertZodToJsonSchema(definition.inputSchema);
+  } else if (definition.parameters) {
+    inputSchema = convertParametersToJsonSchema(definition.parameters);
+  } else {
+    inputSchema = { type: 'object' };
+  }
+
+  const tool: Tool = {
+    name: definition.name,
+    inputSchema,
+  };
+
+  if (definition.description) {
+    tool.description = definition.description;
+  }
+
+  return tool;
+}
+
 import type { RequestContext } from '../middleware/types';
 import type { RegistryKind } from './base';
 
